@@ -1,7 +1,6 @@
 # ---- تثبيت المكتبات ----
 FROM node:22-alpine AS deps
 WORKDIR /app
-RUN apk add --no-cache openssl
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 RUN npm ci
@@ -9,7 +8,6 @@ RUN npm ci
 # ---- بناء المشروع ----
 FROM node:22-alpine AS build
 WORKDIR /app
-RUN apk add --no-cache openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
@@ -17,7 +15,6 @@ RUN npm run build
 # ---- التشغيل ----
 FROM node:22-alpine AS run
 WORKDIR /app
-RUN apk add --no-cache openssl
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static

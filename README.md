@@ -24,17 +24,19 @@
 | `src/app/(dashboard)/` | صفحات المنصة |
 | `src/app/login/` | صفحة الدخول |
 
-## التشغيل على السيرفر
+## التشغيل على السيرفر (أول مرة)
 ```bash
-git clone <رابط الريبو> admin-dashboard
+git clone git@github.com:NGT-C101/admin-dashboard.git
 cd admin-dashboard
-cp deploy.env.example .env   # واملأ القيم
-docker compose up -d --build
+sudo bash scripts/install.sh
 ```
-أول تشغيل بيعمل حساب المدير والقوائم الافتراضية تلقائياً.
+السكريبت بيثبّت Docker والجدار الناري، ويولّد كلمات سر قوية، ويشغّل المنصة بـ HTTPS، ويعمل نسخة احتياطية يومية.
 
-## التحديث بعد أي تعديل
-```bash
-git pull
-docker compose up -d --build
-```
+## أوامر مفيدة على السيرفر
+| الأمر | بيعمل إيه |
+|---|---|
+| `bash scripts/update.sh` | تحديث المنصة لآخر نسخة (بياخد نسخة احتياطية الأول) |
+| `bash scripts/backup.sh` | نسخة احتياطية دلوقتي (في `/root/backups`) |
+| `bash scripts/restore.sh <ملف>` | استرجاع نسخة احتياطية |
+| `docker compose ps` | حالة الخدمات |
+| `docker compose logs -f app` | سجل المنصة (للمشاكل) |
