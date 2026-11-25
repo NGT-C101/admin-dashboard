@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { DEPARTMENT_LABELS, ROLE_LABELS } from "@/lib/nav";
 import { createUser } from "./actions";
@@ -18,7 +18,7 @@ export default function UserForm() {
   }, [state]);
 
   return (
-    <form ref={formRef} action={action} className="card p-5 space-y-4">
+    <form ref={formRef} onSubmit={(e) => { e.preventDefault(); const d = new FormData(e.currentTarget); startTransition(() => action(d)); }} className="card p-5 space-y-4">
       <h2 className="font-semibold">إضافة مستخدم جديد</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1">

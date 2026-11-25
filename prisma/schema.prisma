@@ -9,19 +9,19 @@ datasource db {
 
 // أدوار المستخدمين
 enum Role {
-  ADMIN    // مدير النظام: كل الصلاحيات
-  MANAGER  // مدير قسم: يتحكم في قسمه
+  ADMIN // مدير النظام: كل الصلاحيات
+  MANAGER // مدير قسم: يتحكم في قسمه
   EMPLOYEE // موظف
 }
 
 // أقسام الشركة
 enum Department {
-  EMPLOYEES     // الموظفين
-  CLIENTS       // العملاء
-  REQUESTS      // الطلبات
+  EMPLOYEES // الموظفين
+  CLIENTS // العملاء
+  REQUESTS // الطلبات
   ADMIN_AFFAIRS // الشؤون الإدارية
-  ACCOUNTS      // الحسابات
-  PR            // العلاقات العامة
+  ACCOUNTS // الحسابات
+  PR // العلاقات العامة
 }
 
 model User {
@@ -34,4 +34,128 @@ model User {
   active       Boolean     @default(true)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+
+  assignedTransactions Transaction[]      @relation("Assignee")
+  createdTransactions  Transaction[]      @relation("Creator")
+  transactionEvents    TransactionEvent[]
+}
+
+// ======================= العملاء والشركات =======================
+
+// العميل (فرد)
+model Client {
+  id          String    @id @default(cuid())
+  name        String
+  nationalId  String?   @unique // رقم الهوية / الإقامة
+  phone       String?
+  email       String?
+  nationality String?
+  notes       String?
+  companies   Company[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// شركة يملكها العميل
+model Company {
+  id            String        @id @default(cuid())
+  client        Client        @relation(fields: [clientId], references: [id])
+  clientId      String
+  name          String
+  crNumber      String?       @unique // رقم السجل التجاري
+  unifiedNumber String?       @unique // الرقم الموحد (700)
+  legalForm     String? // الكيان القانوني
+  city          String?
+  activity      String? // النشاط
+  crExpiry      DateTime? // تاريخ انتهاء السجل
+  notes         String?
+  transactions  Transaction[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([clientId])
+}
+
+// ======================= القوائم القابلة للتعديل =======================
+
+// نوع الخدمة (ترخيص صناعي، تأسيس شركة...)
+model ServiceType {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  order        Int           @default(0)
+  active       Boolean       @default(true)
+  transactions Transaction[]
+}
+
+// الجهة / المنصة الحكومية (قوى، تقييم، وزارة التجارة...)
+model GovEntity {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  order        Int           @default(0)
+  active       Boolean       @default(true)
+  transactions Transaction[]
+}
+
+enum StageKind {
+  OPEN // مرحلة جارية
+  DONE // مكتملة
+  CANCELLED // ملغاة / مرفوضة
+}
+
+// مراحل المعاملة بالترتيب
+model Stage {
+  id           String             @id @default(cuid())
+  name         String             @unique
+  order        Int                @default(0)
+  kind         StageKind          @default(OPEN)
+  active       Boolean            @default(true)
+  transactions Transaction[]
+  events       TransactionEvent[]
+}
+
+// ======================= المعاملات =======================
+
+model Transaction {
+  id            String             @id @default(cuid())
+  number        Int                @unique @default(autoincrement()) // رقم المعاملة
+  title         String
+  description   String?
+  company       Company            @relation(fields: [companyId], references: [id])
+  companyId     String
+  serviceType   ServiceType?       @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId String?
+  govEntity     GovEntity?         @relation(fields: [govEntityId], references: [id])
+  govEntityId   String?
+  stage         Stage              @relation(fields: [stageId], references: [id])
+  stageId       String
+  assignee      User?              @relation("Assignee", fields: [assigneeId], references: [id])
+  assigneeId    String?
+  createdBy     User               @relation("Creator", fields: [createdById], references: [id])
+  createdById   String
+  platformRef   String? // رقم الطلب على المنصة الحكومية
+  fee           Decimal?           @db.Decimal(12, 2) // أتعاب المكتب
+  govFees       Decimal?           @db.Decimal(12, 2) // الرسوم الحكومية
+  dueDate       DateTime?
+  events        TransactionEvent[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([companyId])
+  @@index([stageId])
+  @@index([assigneeId])
+}
+
+// سجل المتابعة: كل تغيير مرحلة أو ملاحظة
+model TransactionEvent {
+  id            String      @id @default(cuid())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String
+  stage         Stage?      @relation(fields: [stageId], references: [id])
+  stageId       String? // لو فيه تغيير مرحلة
+  note          String?
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  createdAt     DateTime    @default(now())
+
+  @@index([transactionId])
 }

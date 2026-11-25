@@ -26,5 +26,5 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 EXPOSE 3000
-# يطبّق تحديثات قاعدة البيانات وبعدين يشغّل المنصة
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+# يطبّق تحديثات قاعدة البيانات + البيانات الافتراضية، وبعدين يشغّل المنصة
+CMD ["sh", "-c", "npx prisma migrate deploy && node node_modules/tsx/dist/cli.mjs prisma/seed.ts && node server.js"]

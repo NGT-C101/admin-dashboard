@@ -6,7 +6,7 @@ import { logout } from "../login/actions";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const sections = SECTIONS.filter((s) => canAccess(user, s.department));
+  const sections = SECTIONS.filter((s) => canAccess(user, s));
 
   return (
     <div className="min-h-screen">

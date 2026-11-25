@@ -21,7 +21,8 @@ const createSchema = z
     message: "لازم تختار قسم لمدير القسم أو الموظف",
   });
 
-export type FormState = { error?: string; success?: string } | undefined;
+export type { FormState } from "@/lib/forms";
+import type { FormState } from "@/lib/forms";
 
 export async function createUser(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();

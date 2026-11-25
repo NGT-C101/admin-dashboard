@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { Building2 } from "lucide-react";
 import { login } from "./actions";
 
@@ -9,7 +9,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-      <form action={action} className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-5">
+      <form onSubmit={(e) => { e.preventDefault(); const d = new FormData(e.currentTarget); startTransition(() => action(d)); }} className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-5">
         <div className="text-center space-y-2">
           <div className="mx-auto w-12 h-12 rounded-xl bg-teal-700 text-white flex items-center justify-center">
             <Building2 size={26} />

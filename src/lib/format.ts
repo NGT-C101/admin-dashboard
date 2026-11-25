@@ -1,0 +1,28 @@
+// تنسيق الأرقام والتواريخ: أرقام إنجليزية + تقويم ميلادي
+const LOCALE = "ar-SA-u-nu-latn-ca-gregory";
+
+const money = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "SAR", maximumFractionDigits: 2 });
+const date = new Intl.DateTimeFormat(LOCALE, { year: "numeric", month: "short", day: "numeric" });
+const dateTime = new Intl.DateTimeFormat(LOCALE, {
+  year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+});
+
+type Num = number | string | { toString(): string } | null | undefined;
+
+export function formatSAR(v: Num) {
+  if (v === null || v === undefined || v === "") return "—";
+  return money.format(Number(v.toString()));
+}
+export function formatDate(d?: Date | null) {
+  return d ? date.format(d) : "—";
+}
+export function formatDateTime(d: Date) {
+  return dateTime.format(d);
+}
+export function txNumber(n: number) {
+  return `TR-${String(n).padStart(4, "0")}`;
+}
+// قيمة تاريخ لحقل <input type="date">
+export function dateInputValue(d?: Date | null) {
+  return d ? d.toISOString().slice(0, 10) : "";
+}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  Building2, ChevronDown, ClipboardList, FolderOpen, Handshake, LayoutDashboard,
+  Building2, ChevronDown, ClipboardList, FolderOpen, Handshake, LayoutDashboard, ListChecks,
   Megaphone, Menu, Settings, Users, Wallet, X,
 } from "lucide-react";
 import type { Section } from "@/lib/nav";
@@ -71,7 +71,7 @@ export default function Sidebar({ sections, isAdmin }: { sections: Section[]; is
                     {s.subs.map((sub) => {
                       const href = `/${s.slug}/${sub.slug}`;
                       return (
-                        <Link key={sub.slug} href={href} className={linkCls(pathname === href)}>
+                        <Link key={sub.slug} href={href} className={linkCls(pathname === href || pathname.startsWith(href + "/"))}>
                           {sub.title}
                         </Link>
                       );
@@ -83,9 +83,15 @@ export default function Sidebar({ sections, isAdmin }: { sections: Section[]; is
           })}
 
           {isAdmin && (
-            <Link href="/settings/users" className={linkCls(pathname.startsWith("/settings"))}>
-              <Settings size={18} /> المستخدمين والصلاحيات
-            </Link>
+            <div className="pt-3 mt-3 border-t border-slate-800 space-y-1">
+              <p className="px-3 text-xs text-slate-500">الإعدادات</p>
+              <Link href="/settings/users" className={linkCls(pathname === "/settings/users")}>
+                <Settings size={18} /> المستخدمين والصلاحيات
+              </Link>
+              <Link href="/settings/lists" className={linkCls(pathname === "/settings/lists")}>
+                <ListChecks size={18} /> القوائم والمراحل
+              </Link>
+            </div>
           )}
         </nav>
       </aside>

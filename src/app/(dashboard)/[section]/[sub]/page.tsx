@@ -14,7 +14,7 @@ export default async function SubSectionPage({
   if (!section || !sub) notFound();
 
   const user = await requireUser();
-  if (!canAccess(user, section.department)) redirect("/");
+  if (!canAccess(user, section)) redirect("/");
 
   return (
     <div className="space-y-6">

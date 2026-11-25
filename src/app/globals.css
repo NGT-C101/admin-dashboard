@@ -20,3 +20,21 @@ body {
     @apply rounded-xl border border-slate-200 bg-white shadow-sm;
   }
 }
+
+@layer components {
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50;
+  }
+  .table {
+    @apply w-full text-sm;
+  }
+  .table th {
+    @apply bg-slate-50 p-3 text-right font-medium text-slate-600 whitespace-nowrap;
+  }
+  .table td {
+    @apply border-t border-slate-100 p-3;
+  }
+  .link {
+    @apply font-medium text-teal-700 hover:underline;
+  }
+}

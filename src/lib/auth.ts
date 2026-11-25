@@ -5,6 +5,7 @@ import { cache } from "react";
 import type { Department, User } from "@prisma/client";
 import { db } from "./db";
 import { SESSION_COOKIE, decryptSession } from "./session";
+import { findSection, type Section } from "./nav";
 
 export type CurrentUser = Pick<User, "id" | "name" | "email" | "role" | "department">;
 
@@ -35,6 +36,23 @@ export async function requireAdmin() {
 }
 
 // هل المستخدم يقدر يدخل القسم ده؟
-export function canAccess(user: CurrentUser, department: Department) {
-  return user.role === "ADMIN" || user.department === department;
+export function canAccess(user: CurrentUser, section: Pick<Section, "department" | "sharedWith">) {
+  if (user.role === "ADMIN") return true;
+  if (!user.department) return false;
+  return user.department === section.department || !!section.sharedWith?.includes(user.department);
 }
+
+// لازم يكون المستخدم له صلاحية على القسم، وإلا يرجع للرئيسية
+export async function requireSection(slug: string) {
+  const user = await requireUser();
+  const section = findSection(slug);
+  if (!section || !canAccess(user, section)) redirect("/");
+  return user;
+}
+
+// المدير ومدير القسم بس يقدروا يعدّلوا البيانات الحساسة
+export function isManager(user: CurrentUser) {
+  return user.role === "ADMIN" || user.role === "MANAGER";
+}
+
+export type { Department };

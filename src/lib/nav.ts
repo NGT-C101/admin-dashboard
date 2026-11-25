@@ -6,6 +6,7 @@ export type Section = {
   slug: string;
   title: string;
   department: Department;
+  sharedWith?: Department[]; // أقسام تانية مسموح لها تدخل القسم ده
   icon: "users" | "handshake" | "clipboard" | "folder" | "wallet" | "megaphone";
   subs: SubSection[];
 };
@@ -22,20 +23,20 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    slug: "clients", title: "العملاء", department: "CLIENTS", icon: "handshake",
+    slug: "clients", title: "العملاء", department: "CLIENTS", sharedWith: ["REQUESTS"], icon: "handshake",
     subs: [
-      { slug: "directory", title: "بيانات العملاء" },
+      { slug: "directory", title: "العملاء" },
+      { slug: "companies", title: "الشركات" },
       { slug: "contracts", title: "العقود والاتفاقيات" },
-      { slug: "projects", title: "المشاريع الاستشارية" },
       { slug: "communications", title: "سجل التواصل والاجتماعات" },
     ],
   },
   {
-    slug: "requests", title: "الطلبات", department: "REQUESTS", icon: "clipboard",
+    slug: "requests", title: "المعاملات", department: "REQUESTS", sharedWith: ["CLIENTS"], icon: "clipboard",
     subs: [
-      { slug: "new", title: "طلبات الخدمة" },
+      { slug: "all", title: "كل المعاملات" },
+      { slug: "tracking", title: "لوحة المتابعة" },
       { slug: "quotes", title: "عروض الأسعار" },
-      { slug: "tracking", title: "متابعة الطلبات" },
       { slug: "deliverables", title: "تسليم المخرجات" },
     ],
   },
