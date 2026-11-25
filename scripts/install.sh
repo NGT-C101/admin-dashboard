@@ -56,7 +56,6 @@ ADMIN_EMAIL=$ADMIN_EMAIL
 ADMIN_PASSWORD=$ADMIN_PASSWORD
 ENV
   chmod 600 .env
-  FIRST_RUN=1
 fi
 source .env
 
@@ -71,10 +70,12 @@ echo
 green "============================================================"
 green "  ✅ المنصة اشتغلت!"
 green "  افتح:  https://$DOMAIN"
-if [ "${FIRST_RUN:-}" = 1 ]; then
+# بيانات الدخول بتظهر لحد أول تثبيت ناجح بس
+if [ ! -f .installed ]; then
   green "  الإيميل:       $ADMIN_EMAIL"
   green "  كلمة المرور:   $ADMIN_PASSWORD"
   yellow "  ⚠️  احفظ كلمة المرور دي في مكان آمن دلوقتي"
+  touch .installed
 fi
 green "  (لو الصفحة مفتحتش، استنى دقيقة لحد ما شهادة HTTPS تتعمل)"
 green "============================================================"
