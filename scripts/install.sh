@@ -64,7 +64,7 @@ docker compose up -d --build
 
 # نسخة احتياطية يومية الساعة 3 الفجر
 CRON="0 3 * * * cd $(pwd) && bash scripts/backup.sh >> /var/log/admin-backup.log 2>&1"
-( crontab -l 2>/dev/null | grep -v 'scripts/backup.sh'; echo "$CRON" ) | crontab -
+( { crontab -l 2>/dev/null || true; } | { grep -v 'scripts/backup.sh' || true; }; echo "$CRON" ) | crontab -
 
 echo
 green "============================================================"
