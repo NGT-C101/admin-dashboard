@@ -1,10 +1,11 @@
 // تنسيق الأرقام والتواريخ: أرقام إنجليزية + تقويم ميلادي
 const LOCALE = "ar-SA-u-nu-latn-ca-gregory";
+const TZ = "Asia/Riyadh"; // كل الأوقات بتوقيت السعودية
 
 const money = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "SAR", maximumFractionDigits: 2 });
-const date = new Intl.DateTimeFormat(LOCALE, { year: "numeric", month: "short", day: "numeric" });
+const date = new Intl.DateTimeFormat(LOCALE, { year: "numeric", month: "short", day: "numeric", timeZone: TZ });
 const dateTime = new Intl.DateTimeFormat(LOCALE, {
-  year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: TZ,
 });
 
 type Num = number | string | { toString(): string } | null | undefined;

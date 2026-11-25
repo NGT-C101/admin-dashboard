@@ -4,7 +4,7 @@ import ActionForm from "@/components/ui/ActionForm";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { deleteDocument, uploadDocument } from "@/app/(dashboard)/clients/document-actions";
 import type { CurrentUser } from "@/lib/auth";
-import { DOC_TYPE_LABELS, MAX_DOCS_PER_OWNER } from "@/lib/documents";
+import { DOC_TYPE_LABELS, MAX_DOCS_PER_CONTRACT, MAX_DOCS_PER_OWNER } from "@/lib/documents";
 import { formatDate } from "@/lib/format";
 
 type Doc = Document & { uploadedBy: { name: string } };
@@ -20,18 +20,19 @@ export function expiryState(d?: Date | null) {
 }
 
 export default function DocumentsSection({ ownerType, ownerId, documents, user }: {
-  ownerType: "client" | "company";
+  ownerType: "client" | "company" | "contract";
   ownerId: string;
   documents: Doc[];
   user: CurrentUser;
 }) {
-  const full = documents.length >= MAX_DOCS_PER_OWNER;
+  const max = ownerType === "contract" ? MAX_DOCS_PER_CONTRACT : MAX_DOCS_PER_OWNER;
+  const full = documents.length >= max;
   const canDelete = (d: Doc) => user.role !== "EMPLOYEE" || d.uploadedById === user.id;
 
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">
-        المستندات <span className="text-sm font-normal text-neutral-500">({documents.length} من {MAX_DOCS_PER_OWNER})</span>
+        المستندات <span className="text-sm font-normal text-neutral-500">({documents.length} من {max})</span>
       </h2>
 
       <div className="card overflow-x-auto">
@@ -92,7 +93,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
 
       {full ? (
         <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3">
-          وصلت للحد الأقصى ({MAX_DOCS_PER_OWNER} مستندات). احذف مستند قديم عشان تقدر ترفع جديد.
+          وصلت للحد الأقصى ({max} مستندات). احذف مستند قديم عشان تقدر ترفع جديد.
         </p>
       ) : (
         <details className="card">
@@ -103,7 +104,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
               <input type="hidden" name="ownerId" value={ownerId} />
               <FieldGrid>
                 <Field label="نوع المستند *">
-                  <select name="type" required defaultValue="" className="input">
+                  <select name="type" required defaultValue={ownerType === "contract" ? "CONTRACT" : ""} className="input">
                     <option value="" disabled>اختار النوع</option>
                     {Object.entries(DOC_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>

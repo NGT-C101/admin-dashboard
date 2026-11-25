@@ -4,22 +4,23 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isManager, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { MAX_DOCS_PER_OWNER } from "@/lib/documents";
+import { MAX_DOCS_PER_CONTRACT, MAX_DOCS_PER_OWNER } from "@/lib/documents";
 import { type FormState, firstError, optionalDate, optionalText } from "@/lib/forms";
 import { MAX_FILE_BYTES, deleteStoredFile, detectType, saveFile } from "@/lib/storage";
 
 const schema = z.object({
-  ownerType: z.enum(["client", "company"]),
+  ownerType: z.enum(["client", "company", "contract"]),
   ownerId: z.string().min(1),
-  type: z.enum(["CR", "NATIONAL_ID", "BALADY_LICENSE", "NATIONAL_ADDRESS", "ZAKAT_CERT", "VAT_CERT", "OTHER_LICENSE", "OTHER"], {
+  type: z.enum(["CR", "NATIONAL_ID", "BALADY_LICENSE", "NATIONAL_ADDRESS", "ZAKAT_CERT", "VAT_CERT", "OTHER_LICENSE", "CONTRACT", "OTHER"], {
     message: "اختار نوع المستند",
   }),
   title: optionalText,
   expiresAt: optionalDate,
 });
 
-const ownerPath = (t: "client" | "company", id: string) =>
-  t === "client" ? `/clients/directory/${id}` : `/clients/companies/${id}`;
+type OwnerType = "client" | "company" | "contract";
+const ownerPath = (t: OwnerType, id: string) =>
+  t === "client" ? `/clients/directory/${id}` : t === "company" ? `/clients/companies/${id}` : `/clients/contracts/${id}`;
 
 export async function uploadDocument(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireSection("clients");
@@ -32,13 +33,16 @@ export async function uploadDocument(_prev: FormState, formData: FormData): Prom
   if (!(file instanceof File) || file.size === 0) return { error: "اختار الملف" };
   if (file.size > MAX_FILE_BYTES) return { error: "حجم الملف أكبر من 10 ميجا" };
 
-  const where = ownerType === "client" ? { clientId: ownerId } : { companyId: ownerId };
+  const where = ownerType === "client" ? { clientId: ownerId } : ownerType === "company" ? { companyId: ownerId } : { contractId: ownerId };
   const owner = ownerType === "client"
     ? await db.client.findUnique({ where: { id: ownerId } })
-    : await db.company.findUnique({ where: { id: ownerId } });
+    : ownerType === "company"
+      ? await db.company.findUnique({ where: { id: ownerId } })
+      : await db.contract.findUnique({ where: { id: ownerId } });
   if (!owner) return { error: "مش موجود" };
-  if ((await db.document.count({ where })) >= MAX_DOCS_PER_OWNER) {
-    return { error: `وصلت للحد الأقصى (${MAX_DOCS_PER_OWNER} مستندات). احذف مستند قديم الأول` };
+  const max = ownerType === "contract" ? MAX_DOCS_PER_CONTRACT : MAX_DOCS_PER_OWNER;
+  if ((await db.document.count({ where })) >= max) {
+    return { error: `وصلت للحد الأقصى (${max} مستندات). احذف مستند قديم الأول` };
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
@@ -67,4 +71,5 @@ export async function deleteDocument(formData: FormData) {
   await deleteStoredFile(doc.storageKey);
   if (doc.clientId) revalidatePath(ownerPath("client", doc.clientId));
   if (doc.companyId) revalidatePath(ownerPath("company", doc.companyId));
+  if (doc.contractId) revalidatePath(ownerPath("contract", doc.contractId));
 }

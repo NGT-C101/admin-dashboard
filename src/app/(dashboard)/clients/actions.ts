@@ -5,18 +5,25 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { type FormState, firstError, optionalDate, optionalText, tenDigits, uniqueError } from "@/lib/forms";
+import { type FormState, firstError, optionalDate, optionalInt, optionalText, tenDigits, uniqueError } from "@/lib/forms";
+
+// رقم الجوال (ممكن يكون مكتوب بمسافات)
+const phoneOk = (v: string | null) => v === null || /^(05\d{8}|\+?\d{9,15})$/.test(v.replace(/\s/g, ""));
 
 const clientSchema = z.object({
   name: z.string().trim().min(2, "اكتب اسم العميل"),
   nationalId: tenDigits("رقم الهوية / الإقامة", "12"),
-  phone: optionalText.refine((v) => v === null || /^(05\d{8}|\+?\d{9,15})$/.test(v.replace(/\s/g, "")), {
-    message: "رقم الجوال غير صحيح (مثال: 0551234567)",
-  }),
+  phone: optionalText.refine(phoneOk, { message: "رقم الجوال غير صحيح (مثال: 0551234567)" }),
   email: optionalText.refine((v) => v === null || z.string().email().safeParse(v).success, {
     message: "الإيميل غير صحيح",
   }),
+  phone2: optionalText.refine(phoneOk, { message: "رقم الجوال الآخر غير صحيح" }),
   nationality: optionalText,
+  city: optionalText,
+  status: z.enum(["LEAD", "ACTIVE", "INACTIVE"]).default("ACTIVE"),
+  vip: z.string().optional().transform((v) => v === "on"),
+  source: optionalText,
+  accountManagerId: optionalText,
   notes: optionalText,
 });
 
@@ -29,11 +36,25 @@ const companySchema = z.object({
   city: optionalText,
   activity: optionalText,
   crExpiry: optionalDate,
+  vatNumber: optionalText.refine((v) => v === null || /^3\d{13}3$/.test(v), {
+    message: "الرقم الضريبي لازم يكون 15 رقم ويبدأ وينتهي بـ 3",
+  }),
+  nationalAddress: optionalText
+    .transform((v) => (v ? v.toUpperCase() : v))
+    .refine((v) => v === null || /^[A-Z]{4}\d{4}$/.test(v), {
+      message: "العنوان الوطني المختصر: 4 حروف إنجليزي + 4 أرقام (مثال: RRRD2929)",
+    }),
+  molFileNumber: optionalText,
+  gosiNumber: optionalText,
+  nitaqat: optionalText,
+  saudiCount: optionalInt,
+  nonSaudiCount: optionalInt,
   notes: optionalText,
 });
 
 const CLIENT_UNIQUE = { nationalId: "رقم الهوية" };
 const COMPANY_UNIQUE = { crNumber: "رقم السجل التجاري", unifiedNumber: "الرقم الموحد" };
+
 
 const quickCompanySchema = z
   .object({ companyName: optionalText, companyCr: tenDigits("رقم السجل التجاري") })

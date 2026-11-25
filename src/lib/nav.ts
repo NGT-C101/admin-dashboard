@@ -28,7 +28,8 @@ export const SECTIONS: Section[] = [
       { slug: "directory", title: "العملاء" },
       { slug: "companies", title: "الشركات" },
       { slug: "contracts", title: "العقود والاتفاقيات" },
-      { slug: "communications", title: "سجل التواصل والاجتماعات" },
+      { slug: "communications", title: "سجل التواصل والمتابعات" },
+      { slug: "alerts", title: "التنبيهات والمواعيد" },
     ],
   },
   {

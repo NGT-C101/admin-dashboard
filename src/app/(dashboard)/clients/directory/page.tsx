@@ -1,75 +1,134 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
+import { MessageCircle, Star } from "lucide-react";
 import ActionForm from "@/components/ui/ActionForm";
+import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import SearchBox from "@/components/ui/SearchBox";
 import { requireSection } from "@/lib/auth";
+import { CLIENT_STATUS_LABELS, CLIENT_STATUS_STYLES, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
+import { formatDate } from "@/lib/format";
 import { createClient } from "../actions";
 import { ClientFields } from "../fields";
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  await requireSection("clients");
-  const { q } = await searchParams;
+type SP = { q?: string; status?: string; manager?: string; vip?: string };
 
-  const where: Prisma.ClientWhereInput = q
-    ? { OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { nationalId: { contains: q } },
-        { phone: { contains: q } },
-        { companies: { some: { OR: [{ name: { contains: q, mode: "insensitive" } }, { crNumber: { contains: q } }] } } },
-      ] }
-    : {};
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const user = await requireSection("clients");
+  const sp = await searchParams;
 
-  const clients = await db.client.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: {
-      companies: { select: { id: true, name: true, crNumber: true }, orderBy: { createdAt: "asc" } },
-      _count: { select: { documents: true } },
-    },
-  });
+  const and: Prisma.ClientWhereInput[] = [];
+  if (sp.q) and.push({ OR: [
+    { name: { contains: sp.q, mode: "insensitive" } },
+    { nationalId: { contains: sp.q } },
+    { phone: { contains: sp.q } },
+    { phone2: { contains: sp.q } },
+    { city: { contains: sp.q, mode: "insensitive" } },
+    { companies: { some: { OR: [
+      { name: { contains: sp.q, mode: "insensitive" } }, { crNumber: { contains: sp.q } },
+      { unifiedNumber: { contains: sp.q } }, { vatNumber: { contains: sp.q } },
+    ] } } },
+  ] });
+  if (sp.status) and.push({ status: sp.status as never });
+  if (sp.manager === "me") and.push({ accountManagerId: user.id });
+  else if (sp.manager === "none") and.push({ accountManagerId: null });
+  else if (sp.manager) and.push({ accountManagerId: sp.manager });
+  if (sp.vip) and.push({ vip: true });
+
+  const [clients, users, counts] = await Promise.all([
+    db.client.findMany({
+      where: { AND: and },
+      orderBy: [{ vip: "desc" }, { createdAt: "desc" }],
+      take: 300,
+      include: {
+        accountManager: { select: { name: true } },
+        companies: { select: { id: true, name: true, crNumber: true }, orderBy: { createdAt: "asc" } },
+        interactions: { select: { occurredAt: true }, orderBy: { occurredAt: "desc" }, take: 1 },
+        _count: { select: { documents: true } },
+      },
+    }),
+    db.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    db.client.groupBy({ by: ["status"], _count: true }),
+  ]);
+  const countOf = (s: string) => counts.find((c) => c.status === s)?._count ?? 0;
 
   return (
     <div className="space-y-6">
       <PageHeader title="العملاء" crumbs={[{ label: "العملاء" }]} />
 
+      <div className="flex flex-wrap gap-2 text-sm">
+        {[["", "الكل", counts.reduce((a, c) => a + c._count, 0)], ["ACTIVE", "نشط", countOf("ACTIVE")], ["LEAD", "محتمل", countOf("LEAD")], ["INACTIVE", "متوقف", countOf("INACTIVE")]].map(([v, l, n]) => (
+          <Link key={v as string} href={v ? `?status=${v}` : "?"}
+            className={`rounded-full px-3 py-1 ring-1 ${(sp.status ?? "") === v ? "bg-brand-700 text-white ring-brand-700" : "bg-white ring-neutral-200 hover:bg-neutral-50"}`}>
+            {l} ({n})
+          </Link>
+        ))}
+      </div>
+
       <Collapsible label="إضافة عميل جديد">
         <ActionForm action={createClient} submitLabel="حفظ العميل">
-          <ClientFields />
+          <ClientFields users={users} />
         </ActionForm>
       </Collapsible>
 
-      <SearchBox placeholder="ابحث بالاسم أو الهوية أو الجوال أو اسم الشركة أو السجل التجاري" defaultValue={q} />
+      <SearchBox placeholder="الاسم، الهوية، الجوال، المدينة، الشركة، السجل، الرقم الموحد أو الضريبي" defaultValue={sp.q}>
+        {sp.status && <input type="hidden" name="status" value={sp.status} />}
+        <select name="manager" defaultValue={sp.manager ?? ""} className="input w-auto">
+          <option value="">كل المسؤولين</option>
+          <option value="me">عملائي أنا</option>
+          <option value="none">بدون مسؤول</option>
+          {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+        </select>
+        <label className="flex items-center gap-1.5 text-sm px-2">
+          <input type="checkbox" name="vip" value="1" defaultChecked={!!sp.vip} className="size-4 accent-brand-600" /> المميزين بس
+        </label>
+      </SearchBox>
 
+      <p className="text-sm text-neutral-500">{clients.length} عميل</p>
       <div className="card overflow-x-auto">
         <table className="table">
           <thead>
-            <tr><th>الاسم</th><th>رقم الهوية</th><th>الجوال</th><th>الشركات والسجل التجاري</th><th>المستندات</th></tr>
+            <tr><th>العميل</th><th>الحالة</th><th>الجوال</th><th>الشركات والسجل التجاري</th><th>المسؤول</th><th>آخر تواصل</th><th>المستندات</th></tr>
           </thead>
           <tbody>
-            {clients.map((c) => (
-              <tr key={c.id}>
-                <td><Link href={`/clients/directory/${c.id}`} className="link">{c.name}</Link></td>
-                <td dir="ltr" className="text-right">{c.nationalId ?? "—"}</td>
-                <td dir="ltr" className="text-right">{c.phone ?? "—"}</td>
-                <td>
-                  {c.companies.length === 0 && <span className="text-neutral-400">—</span>}
-                  {c.companies.map((co) => (
-                    <div key={co.id} className="flex flex-wrap gap-x-2">
-                      <Link href={`/clients/companies/${co.id}`} className="hover:underline">{co.name}</Link>
-                      {co.crNumber && <span className="text-xs text-neutral-500" dir="ltr">{co.crNumber}</span>}
-                    </div>
-                  ))}
-                </td>
-                <td>{c._count.documents}</td>
-              </tr>
-            ))}
+            {clients.map((c) => {
+              const wa = whatsappLink(c.phone);
+              return (
+                <tr key={c.id}>
+                  <td>
+                    <Link href={`/clients/directory/${c.id}`} className="link">{c.name}</Link>
+                    {c.vip && <Star size={14} className="inline mr-1 text-amber-500 fill-amber-400" />}
+                    {c.city && <div className="text-xs text-neutral-500">{c.city}</div>}
+                  </td>
+                  <td><Badge className={CLIENT_STATUS_STYLES[c.status]}>{CLIENT_STATUS_LABELS[c.status]}</Badge></td>
+                  <td className="whitespace-nowrap">
+                    {c.phone ? (
+                      <span className="flex items-center gap-2">
+                        <span dir="ltr">{c.phone}</span>
+                        {wa && <a href={wa} target="_blank" rel="noopener" title="واتساب" className="text-emerald-600"><MessageCircle size={15} /></a>}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td>
+                    {c.companies.length === 0 && <span className="text-neutral-400">—</span>}
+                    {c.companies.map((co) => (
+                      <div key={co.id} className="flex flex-wrap gap-x-2">
+                        <Link href={`/clients/companies/${co.id}`} className="hover:underline">{co.name}</Link>
+                        {co.crNumber && <span className="text-xs text-neutral-500" dir="ltr">{co.crNumber}</span>}
+                      </div>
+                    ))}
+                  </td>
+                  <td>{c.accountManager?.name ?? <span className="text-neutral-400">—</span>}</td>
+                  <td className="text-xs whitespace-nowrap">{c.interactions[0] ? formatDate(c.interactions[0].occurredAt) : <span className="text-neutral-400">—</span>}</td>
+                  <td>{c._count.documents}</td>
+                </tr>
+              );
+            })}
             {clients.length === 0 && (
-              <tr><td colSpan={5} className="text-center text-neutral-500 py-10">
-                {q ? "مفيش نتايج للبحث ده" : "لسه مفيش عملاء — ابدأ بإضافة أول عميل"}
+              <tr><td colSpan={7} className="text-center text-neutral-500 py-10">
+                {sp.q || sp.status || sp.manager || sp.vip ? "مفيش نتايج" : "لسه مفيش عملاء — ابدأ بإضافة أول عميل"}
               </td></tr>
             )}
           </tbody>

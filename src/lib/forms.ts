@@ -23,6 +23,10 @@ export const optionalMoney = optionalText.refine((v) => v === null || /^\d+(\.\d
   message: "المبلغ لازم يكون رقم (مثال: 1500 أو 1500.50)",
 });
 
+export const optionalInt = optionalText.refine((v) => v === null || /^\d{1,6}$/.test(v), {
+  message: "اكتب رقم صحيح",
+}).transform((v) => (v === null ? null : Number(v)));
+
 export const optionalDate = optionalText.transform((v) => (v ? new Date(v) : null));
 
 export function firstError(err: z.ZodError) {
