@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import ActionForm from "@/components/ui/ActionForm";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
+import DocumentsSection from "@/components/DocumentsSection";
 import TransactionsTable, { TX_INCLUDE } from "@/components/TransactionsTable";
 import { requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,9 +13,15 @@ import { updateCompany } from "../../actions";
 import { CompanyFields } from "../../fields";
 
 export default async function CompanyPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSection("clients");
+  const user = await requireSection("clients");
   const { id } = await params;
-  const company = await db.company.findUnique({ where: { id }, include: { client: true } });
+  const company = await db.company.findUnique({
+    where: { id },
+    include: {
+      client: true,
+      documents: { orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } },
+    },
+  });
   if (!company) notFound();
 
   const [transactions, clients] = await Promise.all([
@@ -65,6 +72,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
           <CompanyFields company={company} clients={clients} />
         </ActionForm>
       </Collapsible>
+
+      <DocumentsSection ownerType="company" ownerId={company.id} documents={company.documents} user={user} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">معاملات الشركة ({transactions.length})</h2>

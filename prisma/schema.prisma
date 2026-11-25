@@ -40,22 +40,24 @@ model User {
   assignedTransactions Transaction[]      @relation("Assignee")
   createdTransactions  Transaction[]      @relation("Creator")
   transactionEvents    TransactionEvent[]
+  uploadedDocuments    Document[]
 }
 
 // ======================= العملاء والشركات =======================
 
 // العميل (فرد)
 model Client {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
-  nationalId  String?   @unique // رقم الهوية / الإقامة
+  nationalId  String?    @unique // رقم الهوية / الإقامة
   phone       String?
   email       String?
   nationality String?
   notes       String?
   companies   Company[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  documents   Document[]
 }
 
 // شركة يملكها العميل
@@ -72,6 +74,7 @@ model Company {
   crExpiry      DateTime? // تاريخ انتهاء السجل
   notes         String?
   transactions  Transaction[]
+  documents     Document[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -172,4 +175,39 @@ model TransactionEvent {
 model AppMeta {
   key   String @id
   value String
+}
+
+// ======================= المستندات =======================
+
+enum DocType {
+  CR // سجل تجاري
+  NATIONAL_ID // هوية / إقامة
+  BALADY_LICENSE // رخصة بلدي
+  NATIONAL_ADDRESS // العنوان الوطني
+  ZAKAT_CERT // شهادة الزكاة
+  VAT_CERT // شهادة الضريبة
+  OTHER_LICENSE // رخصة أخرى
+  OTHER // أخرى
+}
+
+// مستند مرفوع لعميل أو لشركة (واحد منهم بس)
+model Document {
+  id           String    @id @default(cuid())
+  client       Client?   @relation(fields: [clientId], references: [id])
+  clientId     String?
+  company      Company?  @relation(fields: [companyId], references: [id])
+  companyId    String?
+  type         DocType
+  title        String? // وصف إضافي (مثلاً: رخصة الدفاع المدني)
+  expiresAt    DateTime? // تاريخ الانتهاء
+  fileName     String // اسم الملف الأصلي
+  mimeType     String
+  size         Int
+  storageKey   String    @unique // اسم الملف على السيرفر
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime  @default(now())
+
+  @@index([clientId])
+  @@index([companyId])
 }

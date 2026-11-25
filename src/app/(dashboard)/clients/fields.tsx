@@ -18,6 +18,18 @@ export function ClientFields({ client }: { client?: Client }) {
         <input name="email" type="email" dir="ltr" defaultValue={client?.email ?? ""} className="input" />
       </Field>
       <Field label="الجنسية"><input name="nationality" defaultValue={client?.nationality ?? ""} className="input" /></Field>
+      {!client && (
+        // عند الإضافة بس: تسجيل أول شركة للعميل مع بياناته
+        <>
+          <div className="sm:col-span-2 lg:col-span-3 border-t border-neutral-100 pt-3 text-sm font-medium text-neutral-700">
+            شركة العميل <span className="font-normal text-neutral-500">(اختياري، وتقدر تضيف شركات تانية بعدين)</span>
+          </div>
+          <Field label="اسم الشركة"><input name="companyName" className="input" /></Field>
+          <Field label="رقم السجل التجاري">
+            <input name="companyCr" inputMode="numeric" maxLength={10} dir="ltr" className="input" />
+          </Field>
+        </>
+      )}
       <Field label="ملاحظات" wide>
         <textarea name="notes" rows={2} defaultValue={client?.notes ?? ""} className="input" />
       </Field>

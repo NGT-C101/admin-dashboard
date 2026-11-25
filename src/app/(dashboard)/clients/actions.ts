@@ -35,15 +35,29 @@ const companySchema = z.object({
 const CLIENT_UNIQUE = { nationalId: "رقم الهوية" };
 const COMPANY_UNIQUE = { crNumber: "رقم السجل التجاري", unifiedNumber: "الرقم الموحد" };
 
+const quickCompanySchema = z
+  .object({ companyName: optionalText, companyCr: tenDigits("رقم السجل التجاري") })
+  .refine((d) => !d.companyCr || d.companyName, { message: "اكتب اسم الشركة مع السجل التجاري" });
+
 export async function createClient(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireSection("clients");
-  const parsed = clientSchema.safeParse(Object.fromEntries(formData));
+  const raw = Object.fromEntries(formData);
+  const parsed = clientSchema.safeParse(raw);
   if (!parsed.success) return { error: firstError(parsed.error) };
+  const company = quickCompanySchema.safeParse(raw);
+  if (!company.success) return { error: firstError(company.error) };
+  const { companyName, companyCr } = company.data;
+
   let id: string;
   try {
-    id = (await db.client.create({ data: parsed.data })).id;
+    id = (await db.client.create({
+      data: {
+        ...parsed.data,
+        ...(companyName ? { companies: { create: { name: companyName, crNumber: companyCr } } } : {}),
+      },
+    })).id;
   } catch (e) {
-    return { error: uniqueError(e, CLIENT_UNIQUE) ?? "حصل خطأ، حاول تاني" };
+    return { error: uniqueError(e, { ...CLIENT_UNIQUE, ...COMPANY_UNIQUE }) ?? "حصل خطأ، حاول تاني" };
   }
   redirect(`/clients/directory/${id}`);
 }

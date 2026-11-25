@@ -26,7 +26,10 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     where,
     orderBy: { createdAt: "desc" },
     take: 200,
-    include: { _count: { select: { companies: true } } },
+    include: {
+      companies: { select: { id: true, name: true, crNumber: true }, orderBy: { createdAt: "asc" } },
+      _count: { select: { documents: true } },
+    },
   });
 
   return (
@@ -44,7 +47,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       <div className="card overflow-x-auto">
         <table className="table">
           <thead>
-            <tr><th>الاسم</th><th>رقم الهوية</th><th>الجوال</th><th>عدد الشركات</th></tr>
+            <tr><th>الاسم</th><th>رقم الهوية</th><th>الجوال</th><th>الشركات والسجل التجاري</th><th>المستندات</th></tr>
           </thead>
           <tbody>
             {clients.map((c) => (
@@ -52,11 +55,20 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                 <td><Link href={`/clients/directory/${c.id}`} className="link">{c.name}</Link></td>
                 <td dir="ltr" className="text-right">{c.nationalId ?? "—"}</td>
                 <td dir="ltr" className="text-right">{c.phone ?? "—"}</td>
-                <td>{c._count.companies}</td>
+                <td>
+                  {c.companies.length === 0 && <span className="text-neutral-400">—</span>}
+                  {c.companies.map((co) => (
+                    <div key={co.id} className="flex flex-wrap gap-x-2">
+                      <Link href={`/clients/companies/${co.id}`} className="hover:underline">{co.name}</Link>
+                      {co.crNumber && <span className="text-xs text-neutral-500" dir="ltr">{co.crNumber}</span>}
+                    </div>
+                  ))}
+                </td>
+                <td>{c._count.documents}</td>
               </tr>
             ))}
             {clients.length === 0 && (
-              <tr><td colSpan={4} className="text-center text-neutral-500 py-10">
+              <tr><td colSpan={5} className="text-center text-neutral-500 py-10">
                 {q ? "مفيش نتايج للبحث ده" : "لسه مفيش عملاء — ابدأ بإضافة أول عميل"}
               </td></tr>
             )}

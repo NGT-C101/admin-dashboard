@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import ActionForm from "@/components/ui/ActionForm";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
+import DocumentsSection from "@/components/DocumentsSection";
 import TransactionsTable, { TX_INCLUDE } from "@/components/TransactionsTable";
 import { requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,11 +13,14 @@ import { createCompany, updateClient } from "../../actions";
 import { ClientFields, CompanyFields } from "../../fields";
 
 export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSection("clients");
+  const user = await requireSection("clients");
   const { id } = await params;
   const client = await db.client.findUnique({
     where: { id },
-    include: { companies: { orderBy: { createdAt: "asc" }, include: { _count: { select: { transactions: true } } } } },
+    include: {
+      documents: { orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } },
+      companies: { orderBy: { createdAt: "asc" }, include: { _count: { select: { transactions: true } } } },
+    },
   });
   if (!client) notFound();
 
@@ -62,6 +66,8 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           <ClientFields client={client} />
         </ActionForm>
       </Collapsible>
+
+      <DocumentsSection ownerType="client" ownerId={client.id} documents={client.documents} user={user} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">الشركات ({client.companies.length})</h2>
