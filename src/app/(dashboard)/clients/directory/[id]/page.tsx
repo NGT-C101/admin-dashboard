@@ -49,12 +49,12 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {info.map(([label, value]) => (
             <div key={label}>
-              <dt className="text-xs text-slate-500">{label}</dt>
+              <dt className="text-xs text-neutral-500">{label}</dt>
               <dd className="font-medium" dir="auto">{value || "—"}</dd>
             </div>
           ))}
         </dl>
-        {client.notes && <p className="mt-4 text-sm text-slate-600 whitespace-pre-line">{client.notes}</p>}
+        {client.notes && <p className="mt-4 text-sm text-neutral-600 whitespace-pre-line">{client.notes}</p>}
       </div>
 
       <Collapsible label="تعديل بيانات العميل">
@@ -82,7 +82,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 </tr>
               ))}
               {client.companies.length === 0 && (
-                <tr><td colSpan={6} className="text-center text-slate-500 py-8">لسه مفيش شركات للعميل ده</td></tr>
+                <tr><td colSpan={6} className="text-center text-neutral-500 py-8">لسه مفيش شركات للعميل ده</td></tr>
               )}
             </tbody>
           </table>

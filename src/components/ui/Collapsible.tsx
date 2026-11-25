@@ -13,7 +13,7 @@ export default function Collapsible({ label, children, defaultOpen = false }: {
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 font-semibold">
         <span className="flex items-center gap-2">{open ? <X size={18} /> : <Plus size={18} />} {label}</span>
       </button>
-      {open && <div className="border-t border-slate-100 p-4">{children}</div>}
+      {open && <div className="border-t border-neutral-100 p-4">{children}</div>}
     </div>
   );
 }

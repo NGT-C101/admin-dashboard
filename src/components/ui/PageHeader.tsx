@@ -10,10 +10,10 @@ export default function PageHeader({
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
         {crumbs && (
-          <nav className="flex items-center gap-1 text-sm text-slate-500 mb-1">
+          <nav className="flex items-center gap-1 text-sm text-neutral-500 mb-1">
             {crumbs.map((c, i) => (
               <span key={i} className="flex items-center gap-1">
-                {c.href ? <Link href={c.href} className="hover:text-teal-700">{c.label}</Link> : c.label}
+                {c.href ? <Link href={c.href} className="hover:text-brand-700">{c.label}</Link> : c.label}
                 {i < crumbs.length - 1 && <ChevronLeft size={14} />}
               </span>
             ))}

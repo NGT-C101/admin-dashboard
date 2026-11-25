@@ -62,12 +62,12 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {info.map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-xs text-slate-500">{label}</dt>
+                  <dt className="text-xs text-neutral-500">{label}</dt>
                   <dd className="font-medium" dir="auto">{value || "—"}</dd>
                 </div>
               ))}
             </dl>
-            {tx.description && <p className="mt-4 text-sm text-slate-600 whitespace-pre-line border-t border-slate-100 pt-4">{tx.description}</p>}
+            {tx.description && <p className="mt-4 text-sm text-neutral-600 whitespace-pre-line border-t border-neutral-100 pt-4">{tx.description}</p>}
           </div>
 
           <Collapsible label="تعديل بيانات المعاملة">
@@ -95,13 +95,13 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
 
           <div className="card p-5">
             <h2 className="font-semibold mb-4">سجل المتابعة</h2>
-            <ol className="relative border-r-2 border-slate-200 pr-4 space-y-5">
+            <ol className="relative border-r-2 border-neutral-200 pr-4 space-y-5">
               {tx.events.map((e) => (
                 <li key={e.id} className="relative">
-                  <span className="absolute -right-[23px] top-1.5 w-3 h-3 rounded-full bg-teal-600 ring-4 ring-white" />
+                  <span className="absolute -right-[23px] top-1.5 w-3 h-3 rounded-full bg-brand-600 ring-4 ring-white" />
                   {e.stage && <StageBadge name={e.stage.name} kind={e.stage.kind} />}
                   {e.note && <p className="text-sm mt-1 whitespace-pre-line">{e.note}</p>}
-                  <p className="text-xs text-slate-500 mt-1">{e.user.name} · {formatDateTime(e.createdAt)}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{e.user.name} · {formatDateTime(e.createdAt)}</p>
                 </li>
               ))}
             </ol>

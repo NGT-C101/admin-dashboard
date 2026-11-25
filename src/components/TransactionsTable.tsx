@@ -35,24 +35,24 @@ export default function TransactionsTable({ transactions, showCompany }: { trans
               </td>
               <td>
                 <Link href={`/requests/all/${t.id}`} className="hover:underline">{t.title}</Link>
-                {t.serviceType && <div className="text-xs text-slate-500">{t.serviceType.name}</div>}
+                {t.serviceType && <div className="text-xs text-neutral-500">{t.serviceType.name}</div>}
               </td>
               {showCompany && (
                 <td>
                   <Link href={`/clients/companies/${t.company.id}`} className="hover:underline">{t.company.name}</Link>
-                  <div className="text-xs text-slate-500">{t.company.client.name}</div>
+                  <div className="text-xs text-neutral-500">{t.company.client.name}</div>
                 </td>
               )}
-              <td className="text-slate-600">{t.govEntity?.name ?? "—"}</td>
+              <td className="text-neutral-600">{t.govEntity?.name ?? "—"}</td>
               <td><StageBadge name={t.stage.name} kind={t.stage.kind} /></td>
-              <td>{t.assignee?.name ?? <span className="text-slate-400">غير محدد</span>}</td>
+              <td>{t.assignee?.name ?? <span className="text-neutral-400">غير محدد</span>}</td>
               <td className={`whitespace-nowrap ${isOverdue(t) ? "text-rose-600 font-semibold" : ""}`}>
                 {formatDate(t.dueDate)}{isOverdue(t) && " ⚠️"}
               </td>
             </tr>
           ))}
           {transactions.length === 0 && (
-            <tr><td colSpan={7} className="text-center text-slate-500 py-10">مفيش معاملات</td></tr>
+            <tr><td colSpan={7} className="text-center text-neutral-500 py-10">مفيش معاملات</td></tr>
           )}
         </tbody>
       </table>

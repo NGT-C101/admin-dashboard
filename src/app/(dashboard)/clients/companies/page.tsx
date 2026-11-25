@@ -38,7 +38,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
 
       <Collapsible label="إضافة شركة جديدة">
         {clients.length === 0 ? (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-neutral-600">
             لازم تضيف <Link href="/clients/directory" className="link">العميل</Link> الأول، وبعدين تضيف شركاته.
           </p>
         ) : (
@@ -67,12 +67,12 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
               </tr>
             ))}
             {companies.length === 0 && (
-              <tr><td colSpan={6} className="text-center text-slate-500 py-10">{q ? "مفيش نتايج" : "لسه مفيش شركات"}</td></tr>
+              <tr><td colSpan={6} className="text-center text-neutral-500 py-10">{q ? "مفيش نتايج" : "لسه مفيش شركات"}</td></tr>
             )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">التاريخ باللون الأحمر = السجل منتهي أو هينتهي خلال 30 يوم</p>
+      <p className="text-xs text-neutral-500">التاريخ باللون الأحمر = السجل منتهي أو هينتهي خلال 30 يوم</p>
     </div>
   );
 }

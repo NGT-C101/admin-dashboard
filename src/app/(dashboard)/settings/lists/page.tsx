@@ -37,7 +37,7 @@ function ListCard({ title, hint, list, items }: { title: string; hint: string; l
     <section className="card p-5 space-y-4">
       <div>
         <h2 className="font-semibold">{title}</h2>
-        <p className="text-sm text-slate-500">{hint}</p>
+        <p className="text-sm text-neutral-500">{hint}</p>
       </div>
       <div className="space-y-3">
         {items.map((item) => (
@@ -47,7 +47,7 @@ function ListCard({ title, hint, list, items }: { title: string; hint: string; l
           </ActionForm>
         ))}
       </div>
-      <div className="border-t border-slate-100 pt-4">
+      <div className="border-t border-neutral-100 pt-4">
         <p className="text-sm font-medium mb-2">إضافة جديد</p>
         <ActionForm action={saveListItem} submitLabel="إضافة" className="flex flex-wrap items-center gap-2">
           <ItemFields list={list} nextOrder={nextOrder} />
@@ -68,7 +68,7 @@ export default async function ListsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="القوائم والمراحل" crumbs={[{ label: "الإعدادات" }, { label: "القوائم والمراحل" }]} />
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-neutral-600">
         الرقم الصغير على اليمين هو <b>الترتيب</b>. لو عاوز توقف عنصر من غير ما تمسحه اختار &quot;موقوف&quot;، وساعتها مش هيظهر في المعاملات الجديدة.
       </p>
       <ListCard title="مراحل المعاملة" list="stage" items={stages}

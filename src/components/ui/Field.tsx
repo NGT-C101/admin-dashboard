@@ -2,7 +2,7 @@
 export function Field({ label, children, wide }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <label className={`block space-y-1 ${wide ? "sm:col-span-2 lg:col-span-3" : ""}`}>
-      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-sm text-neutral-600">{label}</span>
       {children}
     </label>
   );

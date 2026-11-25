@@ -19,10 +19,10 @@ export default async function SubSectionPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm text-slate-500">{section.title}</p>
+        <p className="text-sm text-neutral-500">{section.title}</p>
         <h1 className="text-2xl font-bold">{sub.title}</h1>
       </div>
-      <div className="card p-12 text-center text-slate-500">
+      <div className="card p-12 text-center text-neutral-500">
         <Construction className="mx-auto mb-3 text-amber-500" size={40} />
         القسم ده هيتبني في المراحل الجاية
       </div>

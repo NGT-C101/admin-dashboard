@@ -52,12 +52,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {info.map(([label, value]) => (
             <div key={label}>
-              <dt className="text-xs text-slate-500">{label}</dt>
+              <dt className="text-xs text-neutral-500">{label}</dt>
               <dd className="font-medium" dir="auto">{value || "—"}</dd>
             </div>
           ))}
         </dl>
-        {company.notes && <p className="mt-4 text-sm text-slate-600 whitespace-pre-line">{company.notes}</p>}
+        {company.notes && <p className="mt-4 text-sm text-neutral-600 whitespace-pre-line">{company.notes}</p>}
       </div>
 
       <Collapsible label="تعديل بيانات الشركة">

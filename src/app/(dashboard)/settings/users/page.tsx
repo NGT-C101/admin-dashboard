@@ -16,7 +16,7 @@ export default async function UsersPage() {
 
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600">
+          <thead className="bg-neutral-50 text-neutral-600">
             <tr>
               <th className="text-right font-medium p-3">الاسم</th>
               <th className="text-right font-medium p-3">البريد</th>
@@ -29,13 +29,13 @@ export default async function UsersPage() {
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-t border-slate-100">
+              <tr key={u.id} className="border-t border-neutral-100">
                 <td className="p-3 font-medium">{u.name}</td>
                 <td className="p-3" dir="ltr">{u.email}</td>
                 <td className="p-3">{ROLE_LABELS[u.role]}</td>
                 <td className="p-3">{u.department ? DEPARTMENT_LABELS[u.department] : "كل الأقسام"}</td>
                 <td className="p-3">
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${u.active ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${u.active ? "bg-brand-50 text-brand-700" : "bg-neutral-100 text-neutral-500"}`}>
                     {u.active ? "نشط" : "موقوف"}
                   </span>
                 </td>
@@ -51,7 +51,7 @@ export default async function UsersPage() {
                   {u.id !== me.id && (
                     <form action={toggleUserActive}>
                       <input type="hidden" name="id" value={u.id} />
-                      <button className="text-xs text-slate-600 hover:text-teal-700 underline">
+                      <button className="text-xs text-neutral-600 hover:text-brand-700 underline">
                         {u.active ? "إيقاف" : "تفعيل"}
                       </button>
                     </form>

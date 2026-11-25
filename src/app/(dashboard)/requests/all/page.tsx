@@ -72,7 +72,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         {sel("assignee", "كل الموظفين", users, <option value="me">معاملاتي أنا</option>)}
       </SearchBox>
 
-      <p className="text-sm text-slate-500">{transactions.length} معاملة</p>
+      <p className="text-sm text-neutral-500">{transactions.length} معاملة</p>
       <TransactionsTable transactions={transactions} showCompany />
     </div>
   );

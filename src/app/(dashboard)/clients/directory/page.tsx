@@ -56,7 +56,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
               </tr>
             ))}
             {clients.length === 0 && (
-              <tr><td colSpan={4} className="text-center text-slate-500 py-10">
+              <tr><td colSpan={4} className="text-center text-neutral-500 py-10">
                 {q ? "مفيش نتايج للبحث ده" : "لسه مفيش عملاء — ابدأ بإضافة أول عميل"}
               </td></tr>
             )}

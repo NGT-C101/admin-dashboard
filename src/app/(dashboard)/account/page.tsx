@@ -11,10 +11,10 @@ export default async function AccountPage() {
     <div className="space-y-6 max-w-xl">
       <PageHeader title="حسابي" />
       <div className="card p-5 text-sm space-y-1">
-        <div><span className="text-slate-500">الاسم: </span>{user.name}</div>
-        <div><span className="text-slate-500">البريد: </span><span dir="ltr">{user.email}</span></div>
+        <div><span className="text-neutral-500">الاسم: </span>{user.name}</div>
+        <div><span className="text-neutral-500">البريد: </span><span dir="ltr">{user.email}</span></div>
         <div>
-          <span className="text-slate-500">الدور: </span>{ROLE_LABELS[user.role]}
+          <span className="text-neutral-500">الدور: </span>{ROLE_LABELS[user.role]}
           {user.department && ` · ${DEPARTMENT_LABELS[user.department]}`}
         </div>
       </div>

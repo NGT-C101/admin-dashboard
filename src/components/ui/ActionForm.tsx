@@ -38,7 +38,7 @@ export default function ActionForm({ action, children, submitLabel, resetOnSucce
     >
       {children}
       {state?.error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-2">{state.error}</p>}
-      {state?.success && <p className="text-sm text-teal-700 bg-teal-50 rounded-lg p-2">{state.success}</p>}
+      {state?.success && <p className="text-sm text-brand-700 bg-brand-50 rounded-lg p-2">{state.success}</p>}
       <button disabled={pending} className="btn-primary">
         {pending ? "جاري الحفظ..." : submitLabel}
       </button>

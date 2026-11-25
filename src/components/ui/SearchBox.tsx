@@ -7,7 +7,7 @@ export default function SearchBox({ placeholder, defaultValue, children }: {
   return (
     <form className="flex flex-wrap gap-2">
       <div className="relative flex-1 min-w-56">
-        <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-neutral-400" />
         <input name="q" defaultValue={defaultValue} placeholder={placeholder} className="input pr-9" />
       </div>
       {children}

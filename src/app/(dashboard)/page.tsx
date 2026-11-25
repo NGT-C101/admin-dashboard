@@ -29,18 +29,18 @@ export default async function HomePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">أهلاً، {user.name} 👋</h1>
-        <p className="text-slate-500 mt-1">نظرة سريعة على أحوال الشركة</p>
+        <p className="text-neutral-500 mt-1">نظرة سريعة على أحوال الشركة</p>
       </div>
 
       {stats.length > 0 && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map(({ label, value, icon: Icon, href, alert }) => (
-          <Link key={label} href={href} className="card p-5 flex items-center gap-4 hover:ring-2 hover:ring-teal-600/20">
-            <div className={`w-11 h-11 rounded-lg flex items-center justify-center ${alert ? "bg-rose-50 text-rose-600" : "bg-teal-50 text-teal-700"}`}>
+          <Link key={label} href={href} className="card p-5 flex items-center gap-4 hover:ring-2 hover:ring-brand-600/20">
+            <div className={`w-11 h-11 rounded-lg flex items-center justify-center ${alert ? "bg-rose-50 text-rose-600" : "bg-brand-50 text-brand-700"}`}>
               <Icon size={22} />
             </div>
             <div>
               <div className={`text-2xl font-bold ${alert ? "text-rose-600" : ""}`}>{value}</div>
-              <div className="text-sm text-slate-500">{label}</div>
+              <div className="text-sm text-neutral-500">{label}</div>
             </div>
           </Link>
         ))}
@@ -57,7 +57,7 @@ export default async function HomePage() {
                   <Link
                     key={sub.slug}
                     href={`/${s.slug}/${sub.slug}`}
-                    className="text-xs rounded-full bg-slate-100 px-3 py-1 text-slate-700 hover:bg-teal-50 hover:text-teal-800"
+                    className="text-xs rounded-full bg-neutral-100 px-3 py-1 text-neutral-700 hover:bg-brand-50 hover:text-brand-800"
                   >
                     {sub.title}
                   </Link>

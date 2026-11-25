@@ -18,7 +18,7 @@ export default async function NewTransactionPage({
       <PageHeader title="معاملة جديدة" crumbs={[{ label: "المعاملات", href: "/requests/all" }, { label: "جديدة" }]} />
       <div className="card p-5">
         {options.companies.length === 0 ? (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-neutral-600">
             لازم يكون فيه شركة مسجّلة الأول. روح لـ <Link href="/clients/directory" className="link">العملاء</Link> وضيف العميل وشركته.
           </p>
         ) : (
