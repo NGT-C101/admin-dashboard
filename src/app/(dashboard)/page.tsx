@@ -10,8 +10,8 @@ export default async function HomePage() {
   const user = await requireUser();
   const open = { stage: { kind: "OPEN" as const } };
   const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps] = await Promise.all([
-    db.client.count(),
-    db.company.count(),
+    db.client.count({ where: { archivedAt: null } }),
+    db.company.count({ where: { client: { archivedAt: null } } }),
     db.transaction.count({ where: open }),
     db.transaction.count({ where: { ...open, dueDate: { lt: new Date() } } }),
     db.transaction.count({ where: { ...open, assigneeId: user.id } }),

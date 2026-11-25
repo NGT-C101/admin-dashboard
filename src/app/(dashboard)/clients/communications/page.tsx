@@ -25,7 +25,7 @@ export default async function CommunicationsPage({ searchParams }: { searchParam
       where, include: INTERACTION_INCLUDE, take: 200,
       orderBy: view === "all" ? { occurredAt: "desc" } : { followUpAt: "asc" },
     }),
-    db.client.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    db.client.findMany({ where: { archivedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.interaction.count({ where: { assigneeId: user.id, followUpDone: false, followUpAt: { not: null, lte: today } } }),
   ]);

@@ -71,11 +71,14 @@ export default function TransactionFields({ tx, options, companyId }: {
 export async function loadTxOptions(
   db: typeof import("@/lib/db").db,
   clientId?: string,
-  current?: { serviceTypeId: string | null; govEntityId: string | null },
+  current?: { serviceTypeId: string | null; govEntityId: string | null; companyId?: string },
 ): Promise<TxFormOptions> {
   const [companies, serviceTypes, govEntities, users] = await Promise.all([
     db.company.findMany({
-      where: clientId ? { clientId } : undefined,
+      where: {
+        ...(clientId ? { clientId } : {}),
+        OR: [{ client: { archivedAt: null } }, ...(current?.companyId ? [{ id: current.companyId }] : [])],
+      },
       select: { id: true, name: true, client: { select: { name: true } } },
       orderBy: [{ client: { name: "asc" } }, { name: "asc" }],
     }),

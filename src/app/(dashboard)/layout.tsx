@@ -10,10 +10,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const sections = SECTIONS.filter((s) => canAccess(user, s));
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen print:bg-white">
       <Sidebar sections={sections} isAdmin={user.role === "ADMIN"} />
-      <div className="lg:mr-64">
-        <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-end gap-4 px-4 lg:px-8">
+      <div className="lg:mr-64 print:mr-0">
+        <header className="print:hidden h-16 bg-white border-b border-neutral-200 flex items-center justify-end gap-4 px-4 lg:px-8">
           <div className="text-left">
             <div className="text-sm font-semibold">{user.name}</div>
             <div className="text-xs text-neutral-500">
@@ -30,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </button>
           </form>
         </header>
-        <main className="p-4 lg:p-8">{children}</main>
+        <main className="p-4 lg:p-8 print:p-0">{children}</main>
       </div>
     </div>
   );

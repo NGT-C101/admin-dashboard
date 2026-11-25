@@ -51,3 +51,9 @@ body {
     @apply font-medium text-brand-700 hover:underline;
   }
 }
+
+@media print {
+  body { background: white; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: A4; margin: 14mm; }
+}

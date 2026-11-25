@@ -30,7 +30,7 @@ export default function Sidebar({ sections, isAdmin }: { sections: Section[]; is
     <>
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 right-3 z-30 rounded-lg bg-brand-950 p-2 text-white"
+        className="print:hidden lg:hidden fixed top-3 right-3 z-30 rounded-lg bg-brand-950 p-2 text-white"
         aria-label="فتح القائمة"
       >
         <Menu size={20} />
@@ -38,7 +38,7 @@ export default function Sidebar({ sections, isAdmin }: { sections: Section[]; is
       {mobileOpen && <div className="lg:hidden fixed inset-0 z-30 bg-black/40" onClick={() => setMobileOpen(false)} />}
 
       <aside
-        className={`fixed inset-y-0 right-0 z-40 w-64 bg-gradient-to-b from-brand-950 to-[#1a0304] flex flex-col transition-transform lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 right-0 z-40 w-64 bg-gradient-to-b from-brand-950 to-[#1a0304] flex flex-col transition-transform lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

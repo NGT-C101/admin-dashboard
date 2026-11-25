@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { MessageCircle, Star } from "lucide-react";
+import { FileDown, FileUp, MessageCircle, Star } from "lucide-react";
 import ActionForm from "@/components/ui/ActionForm";
 import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/format";
 import { createClient } from "../actions";
 import { ClientFields } from "../fields";
 
-type SP = { q?: string; status?: string; manager?: string; vip?: string };
+type SP = { q?: string; status?: string; manager?: string; vip?: string; archived?: string };
 
 export default async function ClientsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const user = await requireSection("clients");
@@ -36,6 +36,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   else if (sp.manager === "none") and.push({ accountManagerId: null });
   else if (sp.manager) and.push({ accountManagerId: sp.manager });
   if (sp.vip) and.push({ vip: true });
+  and.push({ archivedAt: sp.archived ? { not: null } : null });
 
   const [clients, users, counts] = await Promise.all([
     db.client.findMany({
@@ -50,13 +51,20 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       },
     }),
     db.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    db.client.groupBy({ by: ["status"], _count: true }),
+    db.client.groupBy({ by: ["status"], where: { archivedAt: null }, _count: true }),
   ]);
   const countOf = (s: string) => counts.find((c) => c.status === s)?._count ?? 0;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="العملاء" crumbs={[{ label: "العملاء" }]} />
+      <PageHeader title="العملاء" crumbs={[{ label: "العملاء" }]} actions={
+        <>
+          {/* تحميل ملف: لازم رابط عادي مش تنقّل بين الصفحات */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/api/export/clients" className="btn-secondary"><FileDown size={16} /> تصدير Excel</a>
+          <Link href="/clients/import" className="btn-secondary"><FileUp size={16} /> استيراد</Link>
+        </>
+      } />
 
       <div className="flex flex-wrap gap-2 text-sm">
         {[["", "الكل", counts.reduce((a, c) => a + c._count, 0)], ["ACTIVE", "نشط", countOf("ACTIVE")], ["LEAD", "محتمل", countOf("LEAD")], ["INACTIVE", "متوقف", countOf("INACTIVE")]].map(([v, l, n]) => (
@@ -83,6 +91,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         </select>
         <label className="flex items-center gap-1.5 text-sm px-2">
           <input type="checkbox" name="vip" value="1" defaultChecked={!!sp.vip} className="size-4 accent-brand-600" /> المميزين بس
+        </label>
+        <label className="flex items-center gap-1.5 text-sm px-2">
+          <input type="checkbox" name="archived" value="1" defaultChecked={!!sp.archived} className="size-4 accent-brand-600" /> المؤرشفين
         </label>
       </SearchBox>
 

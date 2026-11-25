@@ -71,6 +71,7 @@ model Client {
   accountManager   User?         @relation("ClientManager", fields: [accountManagerId], references: [id])
   accountManagerId String? // الموظف المسؤول عن العميل
   notes            String?
+  archivedAt       DateTime? // العميل المؤرشف بيختفي من القوايم من غير ما يتمسح
   companies        Company[]
   documents        Document[]
   contracts        Contract[]

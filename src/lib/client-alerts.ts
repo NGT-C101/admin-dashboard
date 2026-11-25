@@ -13,14 +13,11 @@ export async function getClientAlerts(scope: Scope = {}) {
   const docHorizon = inDays(ALERT_HORIZON_DAYS);
   const contractHorizon = inDays(CONTRACT_HORIZON_DAYS);
   const clientWhere: Prisma.ClientWhereInput = {
-    ...(scope.clientId ? { id: scope.clientId } : {}),
+    ...(scope.clientId ? { id: scope.clientId } : { archivedAt: null }),
     ...(scope.managerId ? { accountManagerId: scope.managerId } : {}),
   };
-  const hasClientFilter = Object.keys(clientWhere).length > 0;
-  const viaClient = hasClientFilter ? { client: clientWhere } : {};
-  const docOwner: Prisma.DocumentWhereInput = hasClientFilter
-    ? { OR: [{ client: clientWhere }, { company: { client: clientWhere } }] }
-    : { OR: [{ clientId: { not: null } }, { companyId: { not: null } }] };
+  const viaClient = { client: clientWhere };
+  const docOwner: Prisma.DocumentWhereInput = { OR: [{ client: clientWhere }, { company: { client: clientWhere } }] };
 
   const [followUps, documents, crs, contracts] = await Promise.all([
     db.interaction.findMany({

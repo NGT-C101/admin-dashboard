@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { Plus } from "lucide-react";
+import { FileDown, Plus } from "lucide-react";
 import ContractsTable, { CONTRACT_INCLUDE } from "@/components/ContractsTable";
 import PageHeader from "@/components/ui/PageHeader";
 import SearchBox from "@/components/ui/SearchBox";
@@ -46,7 +46,12 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-6">
       <PageHeader title="العقود والاتفاقيات" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "العقود" }]}
-        actions={<Link href="/clients/contracts/new" className="btn-primary"><Plus size={16} /> عقد جديد</Link>} />
+        actions={<>
+          {/* تحميل ملف: لازم رابط عادي مش تنقّل بين الصفحات */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/api/export/contracts" className="btn-secondary"><FileDown size={16} /> تصدير Excel</a>
+          <Link href="/clients/contracts/new" className="btn-primary"><Plus size={16} /> عقد جديد</Link>
+        </>} />
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((s) => {
           const inner = (

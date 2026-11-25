@@ -5,8 +5,9 @@ import { CONTRACT_TYPE_LABELS } from "@/lib/clients";
 import { dateInputValue } from "@/lib/format";
 import type { db as DB } from "@/lib/db";
 
-export async function loadContractClients(db: typeof DB) {
+export async function loadContractClients(db: typeof DB, currentClientId?: string) {
   return db.client.findMany({
+    where: { OR: [{ archivedAt: null }, ...(currentClientId ? [{ id: currentClientId }] : [])] },
     select: { id: true, name: true, companies: { select: { id: true, name: true }, orderBy: { name: "asc" } } },
     orderBy: { name: "asc" },
   });

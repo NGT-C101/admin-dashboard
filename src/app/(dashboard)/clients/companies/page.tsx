@@ -15,20 +15,20 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
   const { q } = await searchParams;
 
   const where: Prisma.CompanyWhereInput = q
-    ? { OR: [
+    ? { client: { archivedAt: null }, OR: [
         { name: { contains: q, mode: "insensitive" } },
         { crNumber: { contains: q } },
         { unifiedNumber: { contains: q } },
         { client: { name: { contains: q, mode: "insensitive" } } },
       ] }
-    : {};
+    : { client: { archivedAt: null } };
 
   const [companies, clients] = await Promise.all([
     db.company.findMany({
       where, orderBy: { createdAt: "desc" }, take: 200,
       include: { client: { select: { id: true, name: true } }, _count: { select: { transactions: true } } },
     }),
-    db.client.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    db.client.findMany({ where: { archivedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const soon = new Date(Date.now() + 30 * 24 * 3600 * 1000);
 

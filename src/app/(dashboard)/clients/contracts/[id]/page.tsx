@@ -25,7 +25,7 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
     },
   });
   if (!c) notFound();
-  const clients = await loadContractClients(db);
+  const clients = await loadContractClients(db, c.clientId);
   const st = contractState(c);
   const left = c.endDate ? daysUntil(c.endDate) : null;
 

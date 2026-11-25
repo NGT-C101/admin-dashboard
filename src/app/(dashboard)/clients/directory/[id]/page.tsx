@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FileSignature, MessageCircle, Plus, Star } from "lucide-react";
+import { Archive, ArchiveRestore, FileBarChart, FileSignature, MessageCircle, Plus, Star } from "lucide-react";
 import ClientAlertsView from "@/components/ClientAlertsView";
 import ContractsTable, { CONTRACT_INCLUDE } from "@/components/ContractsTable";
 import DocumentsSection from "@/components/DocumentsSection";
@@ -11,12 +11,12 @@ import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import Tabs from "@/components/ui/Tabs";
-import { requireSection } from "@/lib/auth";
+import { isManager, requireSection } from "@/lib/auth";
 import { getClientAlerts } from "@/lib/client-alerts";
 import { CLIENT_STATUS_LABELS, CLIENT_STATUS_STYLES, saudizationRate, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatSAR } from "@/lib/format";
-import { createCompany, updateClient } from "../../actions";
+import { createCompany, toggleArchiveClient, updateClient } from "../../actions";
 import { ClientFields, CompanyFields } from "../../fields";
 
 const TABS = ["overview", "companies", "documents", "contracts", "communications", "transactions"] as const;
@@ -63,10 +63,26 @@ export default async function ClientPage({ params, searchParams }: {
           </>
         }
       />
+      {client.archivedAt && (
+        <div className="rounded-lg bg-neutral-200 p-3 text-sm text-neutral-700">
+          📦 العميل ده مؤرشف من {formatDate(client.archivedAt)} — مش بيظهر في القوايم والتنبيهات.
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 -mt-3">
         <Badge className={CLIENT_STATUS_STYLES[client.status]}>{CLIENT_STATUS_LABELS[client.status]}</Badge>
         {client.vip && <Badge className="bg-amber-50 text-amber-700 ring-amber-200"><Star size={12} className="inline -mt-0.5" /> مميز</Badge>}
         {client.accountManager && <span className="text-sm text-neutral-600">المسؤول: <b>{client.accountManager.name}</b></span>}
+        <div className="mr-auto flex gap-2">
+          <Link href={`/clients/directory/${id}/report`} className="btn-secondary !py-1.5"><FileBarChart size={15} /> التقرير الشهري</Link>
+          {isManager(user) && (
+            <form action={toggleArchiveClient}>
+              <input type="hidden" name="id" value={id} />
+              <button className="btn-secondary !py-1.5">
+                {client.archivedAt ? <><ArchiveRestore size={15} /> إلغاء الأرشفة</> : <><Archive size={15} /> أرشفة</>}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       <Tabs base={base} current={tab} tabs={[

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireSection } from "@/lib/auth";
+import { isManager, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type FormState, firstError, optionalDate, optionalInt, optionalText, tenDigits, uniqueError } from "@/lib/forms";
 
@@ -122,4 +122,17 @@ export async function updateCompany(_prev: FormState, formData: FormData): Promi
   }
   revalidatePath(`/clients/companies/${id}`);
   return { success: "تم حفظ التعديلات" };
+}
+
+// أرشفة العميل (للمدير ومدير القسم): بيختفي من القوايم والتنبيهات من غير ما يتمسح
+export async function toggleArchiveClient(formData: FormData) {
+  const user = await requireSection("clients");
+  if (!isManager(user)) return;
+  const id = String(formData.get("id"));
+  const c = await db.client.findUnique({ where: { id } });
+  if (!c) return;
+  await db.client.update({ where: { id }, data: { archivedAt: c.archivedAt ? null : new Date() } });
+  revalidatePath(`/clients/directory/${id}`);
+  revalidatePath("/clients/directory");
+  revalidatePath("/clients/alerts");
 }
