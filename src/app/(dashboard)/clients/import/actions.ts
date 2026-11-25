@@ -15,13 +15,13 @@ export async function importClients(_prev: ImportState, formData: FormData): Pro
   const user = await requireSection("clients");
   const mode = formData.get("mode") === "commit" ? "commit" : "check";
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "اختار ملف Excel" };
-  if (file.size > 5 * 1024 * 1024) return { error: "الملف أكبر من 5 ميجا" };
+  if (!(file instanceof File) || file.size === 0) return { error: "يرجى اختيار ملف Excel" };
+  if (file.size > 5 * 1024 * 1024) return { error: "حجم الملف يتجاوز 5 ميجابايت" };
 
   const wb = new ExcelJS.Workbook();
-  try { await wb.xlsx.load(await file.arrayBuffer()); } catch { return { error: "الملف مش ملف Excel (xlsx) سليم" }; }
+  try { await wb.xlsx.load(await file.arrayBuffer()); } catch { return { error: "الملف ليس ملف Excel (xlsx) صالحاً" }; }
   const ws = wb.worksheets[0];
-  if (!ws) return { error: "الملف فاضي" };
+  if (!ws) return { error: "الملف فارغ" };
 
   // نحدد الأعمدة من صف العناوين
   const colOf = new Map<ImportKey, number>();
@@ -30,7 +30,7 @@ export async function importClients(_prev: ImportState, formData: FormData): Pro
     const c = IMPORT_COLUMNS.find((x) => x.header === h);
     if (c) colOf.set(c.key, col);
   });
-  if (!colOf.has("name")) return { error: `مش لاقي عمود "اسم العميل" في أول صف. استخدم القالب الجاهز` };
+  if (!colOf.has("name")) return { error: `لم يُعثر على عمود "اسم العميل" في الصف الأول. يرجى استخدام القالب الجاهز` };
 
   type Row = Record<ImportKey, string> & { row: number };
   const rows: Row[] = [];
@@ -40,8 +40,8 @@ export async function importClients(_prev: ImportState, formData: FormData): Pro
     for (const c of IMPORT_COLUMNS) o[c.key] = colOf.has(c.key) ? cellText(r.getCell(colOf.get(c.key)!).value) : "";
     if (Object.values(o).some((v, k) => k > 0 && v)) rows.push(o);
   });
-  if (rows.length === 0) return { error: "مفيش بيانات في الملف" };
-  if (rows.length > MAX_ROWS) return { error: `الملف فيه أكتر من ${MAX_ROWS} صف. قسّمه على أكتر من ملف` };
+  if (rows.length === 0) return { error: "لا توجد بيانات في الملف" };
+  if (rows.length > MAX_ROWS) return { error: `يحتوي الملف على أكثر من ${MAX_ROWS} صف. يرجى تقسيمه إلى عدة ملفات` };
 
   const report: ImportReport = { mode, rows: rows.length, newClients: 0, existingClients: 0, newCompanies: 0, errors: [], notes: [] };
   const err = (row: number, msg: string) => report.errors.push({ row, msg });
@@ -68,18 +68,18 @@ export async function importClients(_prev: ImportState, formData: FormData): Pro
 
   for (const r of rows) {
     const before = report.errors.length;
-    if (r.name.length < 2) err(r.row, "اسم العميل ناقص");
-    if (r.nationalId && !/^[12]\d{9}$/.test(r.nationalId)) err(r.row, "رقم الهوية لازم 10 أرقام ويبدأ بـ 1 أو 2");
+    if (r.name.length < 2) err(r.row, "اسم العميل مفقود");
+    if (r.nationalId && !/^[12]\d{9}$/.test(r.nationalId)) err(r.row, "يجب أن يتكون رقم الهوية من 10 أرقام ويبدأ بـ 1 أو 2");
     const phone = r.phone.replace(/\s/g, "");
     if (phone && !/^(05\d{8}|\+?\d{9,15})$/.test(phone)) err(r.row, "رقم الجوال غير صحيح");
-    if (r.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) err(r.row, "البريد غير صحيح");
-    if (r.status && !STATUS[r.status]) err(r.row, `الحالة لازم تكون: نشط أو محتمل أو متوقف`);
-    if (r.crNumber && !/^\d{10}$/.test(r.crNumber)) err(r.row, "السجل التجاري لازم 10 أرقام");
-    if (r.unifiedNumber && !/^7\d{9}$/.test(r.unifiedNumber)) err(r.row, "الرقم الموحد لازم 10 أرقام ويبدأ بـ 7");
-    if (r.vatNumber && !/^3\d{13}3$/.test(r.vatNumber)) err(r.row, "الرقم الضريبي لازم 15 رقم ويبدأ وينتهي بـ 3");
+    if (r.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) err(r.row, "البريد الإلكتروني غير صحيح");
+    if (r.status && !STATUS[r.status]) err(r.row, `يجب أن تكون الحالة: نشط أو محتمل أو متوقف`);
+    if (r.crNumber && !/^\d{10}$/.test(r.crNumber)) err(r.row, "يجب أن يتكون السجل التجاري من 10 أرقام");
+    if (r.unifiedNumber && !/^7\d{9}$/.test(r.unifiedNumber)) err(r.row, "يجب أن يتكون الرقم الموحد من 10 أرقام ويبدأ بـ 7");
+    if (r.vatNumber && !/^3\d{13}3$/.test(r.vatNumber)) err(r.row, "يجب أن يتكون الرقم الضريبي من 15 رقماً ويبدأ وينتهي بـ 3");
     const expiry = r.crExpiry ? new Date(r.crExpiry) : null;
-    if (expiry && isNaN(expiry.getTime())) err(r.row, "تاريخ انتهاء السجل مش مفهوم (اكتبه كده: 2027-03-15)");
-    if ((r.crNumber || r.unifiedNumber || r.vatNumber || r.crExpiry) && !r.companyName) err(r.row, "فيه بيانات شركة من غير اسم الشركة");
+    if (expiry && isNaN(expiry.getTime())) err(r.row, "صيغة تاريخ انتهاء السجل غير صحيحة (الصيغة المطلوبة: 2027-03-15)");
+    if ((r.crNumber || r.unifiedNumber || r.vatNumber || r.crExpiry) && !r.companyName) err(r.row, "توجد بيانات شركة دون اسم الشركة");
     if (report.errors.length > before) continue;
 
     // نفس العميل: برقم الهوية، أو بالاسم + الجوال
@@ -95,15 +95,15 @@ export async function importClients(_prev: ImportState, formData: FormData): Pro
         },
       };
       plans.set(key, plan);
-      if (existingId) { report.existingClients++; report.notes.push({ row: r.row, msg: `العميل "${r.name}" موجود قبل كده — هنضيف شركاته الجديدة بس` }); }
+      if (existingId) { report.existingClients++; report.notes.push({ row: r.row, msg: `العميل "${r.name}" مسجّل مسبقاً — ستُضاف شركاته الجديدة فقط` }); }
       else report.newClients++;
     }
 
     if (r.companyName) {
       if (r.crNumber && (existingCr.has(r.crNumber) || seenCr.has(r.crNumber))) {
-        report.notes.push({ row: r.row, msg: `السجل ${r.crNumber} موجود قبل كده — الشركة دي هتتخطى` });
+        report.notes.push({ row: r.row, msg: `السجل ${r.crNumber} مسجّل مسبقاً — سيتم تخطي هذه الشركة` });
       } else if (r.unifiedNumber && existingUni.has(r.unifiedNumber)) {
-        report.notes.push({ row: r.row, msg: `الرقم الموحد ${r.unifiedNumber} موجود قبل كده — الشركة دي هتتخطى` });
+        report.notes.push({ row: r.row, msg: `الرقم الموحد ${r.unifiedNumber} مسجّل مسبقاً — سيتم تخطي هذه الشركة` });
       } else {
         if (r.crNumber) seenCr.add(r.crNumber);
         plan.companies.push({

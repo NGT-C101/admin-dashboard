@@ -12,7 +12,7 @@ export const CLIENT_STATUS_STYLES: Record<ClientStatus, string> = {
   INACTIVE: "bg-neutral-100 text-neutral-500 ring-neutral-200",
 };
 
-export const CLIENT_SOURCES = ["توصية من عميل", "سوشيال ميديا", "إعلان", "موقع إلكتروني", "زيارة مباشرة", "معرفة شخصية", "أخرى"];
+export const CLIENT_SOURCES = ["توصية من عميل", "وسائل التواصل الاجتماعي", "إعلان", "موقع إلكتروني", "زيارة مباشرة", "معرفة شخصية", "أخرى"];
 
 export const NITAQAT_OPTIONS = ["بلاتيني", "أخضر مرتفع", "أخضر متوسط", "أخضر منخفض", "أصفر", "أحمر", "غير مصنّف"];
 
@@ -27,7 +27,7 @@ export const INTERACTION_TYPE_LABELS: Record<InteractionType, string> = {
   WHATSAPP: "واتساب",
   MEETING: "اجتماع",
   VISIT: "زيارة",
-  EMAIL: "إيميل",
+  EMAIL: "بريد إلكتروني",
   OTHER: "أخرى",
 };
 
@@ -85,4 +85,13 @@ export function whatsappLink(phone?: string | null) {
   if (d.startsWith("05") && d.length === 10) d = "966" + d.slice(1);
   if (d.startsWith("5") && d.length === 9) d = "966" + d;
   return d.length >= 9 ? `https://wa.me/${d}` : null;
+}
+
+// صيغة العدد مع "يوم" حسب قواعد العربية
+export function daysText(n: number) {
+  n = Math.abs(n);
+  if (n === 1) return "يوم واحد";
+  if (n === 2) return "يومان";
+  if (n >= 3 && n <= 10) return `${n} أيام`;
+  return `${n} يوماً`;
 }

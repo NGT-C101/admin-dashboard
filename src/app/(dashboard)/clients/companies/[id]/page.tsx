@@ -10,7 +10,7 @@ import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import Tabs from "@/components/ui/Tabs";
 import { requireSection } from "@/lib/auth";
-import { daysUntil, saudizationRate } from "@/lib/clients";
+import { daysText, daysUntil, saudizationRate } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { updateCompany } from "../../actions";
@@ -80,7 +80,7 @@ export default async function CompanyPage({ params, searchParams }: {
         ["السجل التجاري", c.crNumber && <span dir="ltr">{c.crNumber}</span>],
         ["انتهاء السجل", c.crExpiry && (
           <span className={crLeft! < 0 ? "text-rose-600" : crLeft! <= 60 ? "text-amber-600" : ""}>
-            {formatDate(c.crExpiry)}{crLeft! < 0 ? " (منتهي)" : crLeft! <= 60 ? ` (باقي ${crLeft} يوم)` : ""}
+            {formatDate(c.crExpiry)}{crLeft! < 0 ? " (منتهٍ)" : crLeft! <= 60 ? ` (متبقٍ ${daysText(crLeft!)})` : ""}
           </span>
         )],
         ["الرقم الموحد", c.unifiedNumber && <span dir="ltr">{c.unifiedNumber}</span>],

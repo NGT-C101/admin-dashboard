@@ -11,11 +11,11 @@ import { type FormState, firstError, optionalDate, optionalInt, optionalText, te
 const phoneOk = (v: string | null) => v === null || /^(05\d{8}|\+?\d{9,15})$/.test(v.replace(/\s/g, ""));
 
 const clientSchema = z.object({
-  name: z.string().trim().min(2, "اكتب اسم العميل"),
+  name: z.string().trim().min(2, "يرجى إدخال اسم العميل"),
   nationalId: tenDigits("رقم الهوية / الإقامة", "12"),
   phone: optionalText.refine(phoneOk, { message: "رقم الجوال غير صحيح (مثال: 0551234567)" }),
   email: optionalText.refine((v) => v === null || z.string().email().safeParse(v).success, {
-    message: "الإيميل غير صحيح",
+    message: "البريد الإلكتروني غير صحيح",
   }),
   phone2: optionalText.refine(phoneOk, { message: "رقم الجوال الآخر غير صحيح" }),
   nationality: optionalText,
@@ -28,8 +28,8 @@ const clientSchema = z.object({
 });
 
 const companySchema = z.object({
-  clientId: z.string().min(1, "اختار العميل المالك"),
-  name: z.string().trim().min(2, "اكتب اسم الشركة"),
+  clientId: z.string().min(1, "يرجى اختيار العميل المالك"),
+  name: z.string().trim().min(2, "يرجى إدخال اسم الشركة"),
   crNumber: tenDigits("رقم السجل التجاري"),
   unifiedNumber: tenDigits("الرقم الموحد", "7"),
   legalForm: optionalText,
@@ -37,12 +37,12 @@ const companySchema = z.object({
   activity: optionalText,
   crExpiry: optionalDate,
   vatNumber: optionalText.refine((v) => v === null || /^3\d{13}3$/.test(v), {
-    message: "الرقم الضريبي لازم يكون 15 رقم ويبدأ وينتهي بـ 3",
+    message: "يجب أن يتكون الرقم الضريبي من 15 رقماً ويبدأ وينتهي بالرقم 3",
   }),
   nationalAddress: optionalText
     .transform((v) => (v ? v.toUpperCase() : v))
     .refine((v) => v === null || /^[A-Z]{4}\d{4}$/.test(v), {
-      message: "العنوان الوطني المختصر: 4 حروف إنجليزي + 4 أرقام (مثال: RRRD2929)",
+      message: "العنوان الوطني المختصر: 4 أحرف إنجليزية و4 أرقام (مثال: RRRD2929)",
     }),
   molFileNumber: optionalText,
   gosiNumber: optionalText,
@@ -58,7 +58,7 @@ const COMPANY_UNIQUE = { crNumber: "رقم السجل التجاري", unifiedNu
 
 const quickCompanySchema = z
   .object({ companyName: optionalText, companyCr: tenDigits("رقم السجل التجاري") })
-  .refine((d) => !d.companyCr || d.companyName, { message: "اكتب اسم الشركة مع السجل التجاري" });
+  .refine((d) => !d.companyCr || d.companyName, { message: "يرجى إدخال اسم الشركة مع السجل التجاري" });
 
 export async function createClient(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireSection("clients");
@@ -78,7 +78,7 @@ export async function createClient(_prev: FormState, formData: FormData): Promis
       },
     })).id;
   } catch (e) {
-    return { error: uniqueError(e, { ...CLIENT_UNIQUE, ...COMPANY_UNIQUE }) ?? "حصل خطأ، حاول تاني" };
+    return { error: uniqueError(e, { ...CLIENT_UNIQUE, ...COMPANY_UNIQUE }) ?? "حدث خطأ، يرجى المحاولة مرة أخرى" };
   }
   redirect(`/clients/directory/${id}`);
 }
@@ -91,7 +91,7 @@ export async function updateClient(_prev: FormState, formData: FormData): Promis
   try {
     await db.client.update({ where: { id }, data: parsed.data });
   } catch (e) {
-    return { error: uniqueError(e, CLIENT_UNIQUE) ?? "حصل خطأ، حاول تاني" };
+    return { error: uniqueError(e, CLIENT_UNIQUE) ?? "حدث خطأ، يرجى المحاولة مرة أخرى" };
   }
   revalidatePath(`/clients/directory/${id}`);
   return { success: "تم حفظ التعديلات" };
@@ -105,7 +105,7 @@ export async function createCompany(_prev: FormState, formData: FormData): Promi
   try {
     id = (await db.company.create({ data: parsed.data })).id;
   } catch (e) {
-    return { error: uniqueError(e, COMPANY_UNIQUE) ?? "حصل خطأ، حاول تاني" };
+    return { error: uniqueError(e, COMPANY_UNIQUE) ?? "حدث خطأ، يرجى المحاولة مرة أخرى" };
   }
   redirect(`/clients/companies/${id}`);
 }
@@ -118,7 +118,7 @@ export async function updateCompany(_prev: FormState, formData: FormData): Promi
   try {
     await db.company.update({ where: { id }, data: parsed.data });
   } catch (e) {
-    return { error: uniqueError(e, COMPANY_UNIQUE) ?? "حصل خطأ، حاول تاني" };
+    return { error: uniqueError(e, COMPANY_UNIQUE) ?? "حدث خطأ، يرجى المحاولة مرة أخرى" };
   }
   revalidatePath(`/clients/companies/${id}`);
   return { success: "تم حفظ التعديلات" };

@@ -8,7 +8,7 @@ import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import { isManager, requireSection } from "@/lib/auth";
-import { CONTRACT_STATE_LABELS, CONTRACT_STATE_STYLES, CONTRACT_TYPE_LABELS, contractState, daysUntil } from "@/lib/clients";
+import { CONTRACT_STATE_LABELS, CONTRACT_STATE_STYLES, CONTRACT_TYPE_LABELS, contractState, daysText, daysUntil } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatDate, formatSAR } from "@/lib/format";
 import { renewContract, toggleCancelContract, updateContract } from "../../contract-actions";
@@ -31,11 +31,11 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
 
   const info: [string, React.ReactNode][] = [
     ["العميل", <Link key="c" href={`/clients/directory/${c.client.id}`} className="link">{c.client.name}</Link>],
-    ["الشركة", c.company ? <Link key="co" href={`/clients/companies/${c.company.id}`} className="link">{c.company.name}</Link> : "كل شركات العميل"],
+    ["الشركة", c.company ? <Link key="co" href={`/clients/companies/${c.company.id}`} className="link">{c.company.name}</Link> : "جميع شركات العميل"],
     ["النوع", CONTRACT_TYPE_LABELS[c.type] + (c.autoRenew ? " · تجديد تلقائي" : "")],
     ["القيمة", formatSAR(c.value) + (c.type === "MONTHLY" && c.value ? " / شهر" : "")],
     ["البداية", formatDate(c.startDate)],
-    ["النهاية", c.endDate ? `${formatDate(c.endDate)}${left !== null && left >= 0 && !c.cancelledAt ? ` (باقي ${left} يوم)` : ""}` : "مفتوح"],
+    ["النهاية", c.endDate ? `${formatDate(c.endDate)}${left !== null && left >= 0 && !c.cancelledAt ? ` (متبقٍ ${daysText(left)})` : ""}` : "مفتوح"],
     ["أنشأه", `${c.createdBy.name} — ${formatDate(c.createdAt)}`],
   ];
 

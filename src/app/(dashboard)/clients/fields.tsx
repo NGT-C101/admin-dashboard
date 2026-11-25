@@ -46,7 +46,7 @@ export function ClientFields({ client, users }: { client?: Client; users: Opt[] 
           {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
       </Field>
-      <Field label="جالنا منين؟">
+      <Field label="مصدر العميل">
         <input name="source" list="client-sources" defaultValue={client?.source ?? ""} className="input" />
         <datalist id="client-sources">{CLIENT_SOURCES.map((s) => <option key={s} value={s} />)}</datalist>
       </Field>
@@ -58,7 +58,7 @@ export function ClientFields({ client, users }: { client?: Client; users: Opt[] 
       {!client && (
         // عند الإضافة بس: تسجيل أول شركة للعميل مع بياناته
         <>
-          <SectionTitle hint="اختياري، وتقدر تضيف شركات تانية بعدين">شركة العميل</SectionTitle>
+          <SectionTitle hint="اختياري، ويمكن إضافة شركات أخرى لاحقاً">شركة العميل</SectionTitle>
           <Field label="اسم الشركة"><input name="companyName" className="input" /></Field>
           <Field label="رقم السجل التجاري">
             <input name="companyCr" inputMode="numeric" maxLength={10} dir="ltr" className="input" />
@@ -85,7 +85,7 @@ export function CompanyFields({ company, clients, clientId }: {
       {clients ? (
         <Field label="العميل المالك *">
           <select name="clientId" required defaultValue={company?.clientId ?? clientId ?? ""} className="input">
-            <option value="" disabled>اختار العميل</option>
+            <option value="" disabled>اختر العميل</option>
             {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </Field>

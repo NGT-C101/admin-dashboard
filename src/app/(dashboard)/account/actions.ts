@@ -8,12 +8,12 @@ import { type FormState, firstError } from "@/lib/forms";
 
 const schema = z
   .object({
-    current: z.string().min(1, "اكتب كلمة المرور الحالية"),
-    next: z.string().min(10, "كلمة المرور الجديدة لازم تكون 10 حروف على الأقل"),
+    current: z.string().min(1, "يرجى إدخال كلمة المرور الحالية"),
+    next: z.string().min(10, "يجب ألا تقل كلمة المرور الجديدة عن 10 أحرف"),
     confirm: z.string(),
   })
-  .refine((d) => d.next === d.confirm, { message: "كلمة المرور الجديدة والتأكيد مش زي بعض" })
-  .refine((d) => d.next !== d.current, { message: "الجديدة لازم تكون مختلفة عن الحالية" });
+  .refine((d) => d.next === d.confirm, { message: "كلمة المرور الجديدة وتأكيدها غير متطابقين" })
+  .refine((d) => d.next !== d.current, { message: "يجب أن تختلف كلمة المرور الجديدة عن الحالية" });
 
 export async function changePassword(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await requireUser();

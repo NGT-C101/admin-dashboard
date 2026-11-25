@@ -37,7 +37,7 @@ export default function ContractsTable({ contracts, showClient }: { contracts: C
               </tr>
             );
           })}
-          {contracts.length === 0 && <tr><td colSpan={7} className="text-center text-neutral-500 py-8">مفيش عقود</td></tr>}
+          {contracts.length === 0 && <tr><td colSpan={7} className="text-center text-neutral-500 py-8">لا توجد عقود</td></tr>}
         </tbody>
       </table>
     </div>

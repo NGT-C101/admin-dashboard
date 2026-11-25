@@ -8,16 +8,16 @@ import { type FormState, firstError, optionalText } from "@/lib/forms";
 
 const schema = z
   .object({
-    clientId: z.string().min(1, "اختار العميل"),
+    clientId: z.string().min(1, "يرجى اختيار العميل"),
     companyId: optionalText,
     type: z.enum(["CALL", "WHATSAPP", "MEETING", "VISIT", "EMAIL", "OTHER"]),
     occurredAt: optionalText.transform((v) => (v ? new Date(v) : new Date())),
-    summary: z.string().trim().min(3, "اكتب ملخص التواصل"),
+    summary: z.string().trim().min(3, "يرجى إدخال ملخص التواصل"),
     followUpAt: optionalText.transform((v) => (v ? new Date(v) : null)),
     followUpNote: optionalText,
     assigneeId: optionalText,
   })
-  .refine((d) => !d.followUpNote || d.followUpAt, { message: "حدد موعد المتابعة" });
+  .refine((d) => !d.followUpNote || d.followUpAt, { message: "يرجى تحديد موعد المتابعة" });
 
 function revalidateAll(clientId: string, companyId?: string | null) {
   revalidatePath(`/clients/directory/${clientId}`);
@@ -34,7 +34,7 @@ export async function createInteraction(_prev: FormState, formData: FormData): P
   const d = parsed.data;
   if (d.companyId) {
     const co = await db.company.findUnique({ where: { id: d.companyId } });
-    if (!co || co.clientId !== d.clientId) return { error: "الشركة مش تبع العميل ده" };
+    if (!co || co.clientId !== d.clientId) return { error: "الشركة لا تتبع هذا العميل" };
   }
   await db.interaction.create({
     data: { ...d, assigneeId: d.followUpAt ? d.assigneeId ?? user.id : null, createdById: user.id },

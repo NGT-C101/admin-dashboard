@@ -14,13 +14,13 @@ export default function ClientCompanyPicker({ clients, clientId, companyId }: { 
     <>
       <Field label="العميل *">
         <select name="clientId" required value={cid} onChange={(e) => { setCid(e.target.value); setCoid(""); }} className="input">
-          <option value="" disabled>اختار العميل</option>
+          <option value="" disabled>اختر العميل</option>
           {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </Field>
       <Field label="الشركة (اختياري)">
         <select name="companyId" value={coid} onChange={(e) => setCoid(e.target.value)} className="input" disabled={!cid}>
-          <option value="">— كل شركات العميل —</option>
+          <option value="">— جميع شركات العميل —</option>
           {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </Field>

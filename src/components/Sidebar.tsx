@@ -89,7 +89,7 @@ export default function Sidebar({ sections, isAdmin }: { sections: Section[]; is
             <div className="pt-3 mt-3 border-t border-white/10 space-y-1">
               <p className="px-3 text-xs text-neutral-500">الإعدادات</p>
               <Link href="/settings/users" className={linkCls(pathname === "/settings/users")}>
-                <Settings size={18} /> المستخدمين والصلاحيات
+                <Settings size={18} /> المستخدمون والصلاحيات
               </Link>
               <Link href="/settings/lists" className={linkCls(pathname === "/settings/lists")}>
                 <ListChecks size={18} /> القوائم والمراحل

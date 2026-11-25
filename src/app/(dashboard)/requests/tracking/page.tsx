@@ -30,7 +30,7 @@ export default async function TrackingPage({ searchParams }: { searchParams: Pro
         crumbs={[{ label: "المعاملات", href: "/requests/all" }, { label: "لوحة المتابعة" }]}
         actions={
           <Link href={mine ? "/requests/tracking" : "/requests/tracking?mine=1"} className="btn-secondary">
-            {mine ? "عرض كل المعاملات" : "معاملاتي أنا بس"}
+            {mine ? "عرض كل المعاملات" : "معاملاتي فقط"}
           </Link>
         }
       />

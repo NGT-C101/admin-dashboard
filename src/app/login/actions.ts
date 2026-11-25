@@ -16,11 +16,11 @@ export type LoginState = { error?: string } | undefined;
 
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "من فضلك اكتب إيميل وكلمة مرور صحيحين" };
+  if (!parsed.success) return { error: "يرجى إدخال بريد إلكتروني وكلمة مرور صحيحين" };
 
   const user = await db.user.findUnique({ where: { email: parsed.data.email } });
   const ok = user && user.active && (await bcrypt.compare(parsed.data.password, user.passwordHash));
-  if (!ok) return { error: "الإيميل أو كلمة المرور غير صحيحة" };
+  if (!ok) return { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
 
   const store = await cookies();
   store.set(SESSION_COOKIE, await encryptSession({ userId: user.id }), sessionCookieOptions);

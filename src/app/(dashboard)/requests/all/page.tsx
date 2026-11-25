@@ -76,7 +76,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             </optgroup>
           ))}
         </select>
-        {sel("assignee", "كل الموظفين", users, <option value="me">معاملاتي أنا</option>)}
+        {sel("assignee", "كل الموظفين", users, <option value="me">معاملاتي</option>)}
       </SearchBox>
 
       <p className="text-sm text-neutral-500">{transactions.length} معاملة</p>

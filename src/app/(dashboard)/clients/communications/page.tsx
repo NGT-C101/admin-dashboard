@@ -30,7 +30,7 @@ export default async function CommunicationsPage({ searchParams }: { searchParam
     db.interaction.count({ where: { assigneeId: user.id, followUpDone: false, followUpAt: { not: null, lte: today } } }),
   ]);
 
-  const views = [["mine", `متابعاتي (${myDue} مستحقة)`], ["due", "كل المتابعات المستحقة"], ["all", "سجل التواصل كامل"]];
+  const views = [["mine", `متابعاتي (${myDue} مستحقة)`], ["due", "كل المتابعات المستحقة"], ["all", "سجل التواصل الكامل"]];
   return (
     <div className="space-y-6">
       <PageHeader title="سجل التواصل والمتابعات" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "التواصل" }]} />

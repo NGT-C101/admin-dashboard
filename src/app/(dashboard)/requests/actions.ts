@@ -8,8 +8,8 @@ import { db } from "@/lib/db";
 import { type FormState, firstError, optionalDate, optionalMoney, optionalText } from "@/lib/forms";
 
 const txSchema = z.object({
-  companyId: z.string().min(1, "اختار الشركة"),
-  title: z.string().trim().min(3, "اكتب عنوان واضح للمعاملة"),
+  companyId: z.string().min(1, "يرجى اختيار الشركة"),
+  title: z.string().trim().min(3, "يرجى إدخال عنوان واضح للمعاملة"),
   description: optionalText,
   serviceTypeId: optionalText,
   govEntityId: optionalText,
@@ -26,7 +26,7 @@ export async function createTransaction(_prev: FormState, formData: FormData): P
   if (!parsed.success) return { error: firstError(parsed.error) };
 
   const firstStage = await db.stage.findFirst({ where: { active: true, kind: "OPEN" }, orderBy: { order: "asc" } });
-  if (!firstStage) return { error: "مفيش مراحل معرّفة — ضيف مراحل من الإعدادات الأول" };
+  if (!firstStage) return { error: "لا توجد مراحل معرّفة — يرجى إضافة المراحل من الإعدادات أولاً" };
 
   const tx = await db.transaction.create({
     data: {
@@ -57,9 +57,9 @@ export async function addTransactionEvent(_prev: FormState, formData: FormData):
   const note = String(formData.get("note") ?? "").trim();
 
   const tx = await db.transaction.findUnique({ where: { id } });
-  if (!tx) return { error: "المعاملة مش موجودة" };
+  if (!tx) return { error: "المعاملة غير موجودة" };
   const stageChanged = stageId !== "" && stageId !== tx.stageId;
-  if (!stageChanged && !note) return { error: "غيّر المرحلة أو اكتب ملاحظة" };
+  if (!stageChanged && !note) return { error: "يرجى تغيير المرحلة أو إضافة ملاحظة" };
   if (stageChanged && !(await db.stage.findUnique({ where: { id: stageId } }))) return { error: "مرحلة غير صحيحة" };
 
   await db.$transaction([
@@ -69,5 +69,5 @@ export async function addTransactionEvent(_prev: FormState, formData: FormData):
     }),
   ]);
   revalidatePath(`/requests/all/${id}`);
-  return { success: stageChanged ? "تم تحديث المرحلة" : "تم إضافة الملاحظة" };
+  return { success: stageChanged ? "تم تحديث المرحلة" : "تمت إضافة الملاحظة" };
 }

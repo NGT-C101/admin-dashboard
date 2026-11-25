@@ -25,7 +25,7 @@ export default function TransactionFields({ tx, options, companyId }: {
       {tx && <input type="hidden" name="id" value={tx.id} />}
       <Field label="الشركة *">
         <select name="companyId" required defaultValue={tx?.companyId ?? companyId ?? ""} className="input">
-          <option value="" disabled>اختار الشركة</option>
+          <option value="" disabled>اختر الشركة</option>
           {[...byClient].map(([client, cos]) => (
             <optgroup key={client} label={client}>
               {cos.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

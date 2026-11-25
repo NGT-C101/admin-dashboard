@@ -35,7 +35,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">أهلاً، {user.name} 👋</h1>
-        <p className="text-neutral-500 mt-1">نظرة سريعة على أحوال الشركة</p>
+        <p className="text-neutral-500 mt-1">نظرة عامة على أداء الشركة</p>
       </div>
 
       {stats.length > 0 && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

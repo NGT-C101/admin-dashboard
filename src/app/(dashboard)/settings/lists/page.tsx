@@ -87,28 +87,28 @@ export default async function ListsPage() {
   ]);
   const groups: { id: string | null; name: string; items: Item[] }[] = [
     ...entities.map((e) => ({ id: e.id as string | null, name: e.name, items: services.filter((s) => s.govEntityId === e.id) })),
-    { id: null, name: "خدمات عامة (مش تبع جهة)", items: services.filter((s) => !s.govEntityId) },
+    { id: null, name: "خدمات عامة (غير مرتبطة بجهة)", items: services.filter((s) => !s.govEntityId) },
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader title="القوائم والمراحل" crumbs={[{ label: "الإعدادات" }, { label: "القوائم والمراحل" }]} />
       <p className="text-sm text-neutral-600">
-        الرقم الصغير على اليمين هو <b>الترتيب</b>. لو عاوز توقف عنصر من غير ما تمسحه اختار &quot;موقوف&quot;، وساعتها مش هيظهر في المعاملات الجديدة.
+        الرقم الصغير على اليمين هو <b>الترتيب</b>. لإيقاف عنصر دون حذفه اختر &quot;موقوف&quot;، ولن يظهر حينها في المعاملات الجديدة.
       </p>
 
       <ListCard title="مراحل المعاملة" list="stage" items={stages}
-        hint="المعاملة الجديدة بتبدأ من أول مرحلة جارية. المراحل المكتملة والملغاة مش بتظهر في لوحة المتابعة." />
+        hint="تبدأ المعاملة الجديدة من أول مرحلة جارية، ولا تظهر المراحل المكتملة والملغاة في لوحة المتابعة." />
 
       <ListCard title="الجهات والمنصات الحكومية" list="govEntity" items={entities}
-        hint="الجهات اللي بتتعامل معاها المعاملات" />
+        hint="الجهات الحكومية التي تُنجز لديها المعاملات" />
 
       <section className="card p-5 space-y-4">
         <div>
           <h2 className="font-semibold">الخدمات حسب الجهة</h2>
           <p className="text-sm text-neutral-500">
-            لما الموظف يختار جهة في المعاملة، بتظهرله خدماتها بس + الخدمات العامة. دوس على أي جهة عشان تفتحها.
-            ولو عاوز تنقل خدمة لجهة تانية غيّر الجهة اللي جنبها ودوس حفظ.
+            عند اختيار جهة في المعاملة تظهر خدماتها إضافة إلى الخدمات العامة. اضغط على أي جهة لعرض خدماتها،
+            ولنقل خدمة إلى جهة أخرى غيّر الجهة المجاورة لها ثم اضغط &quot;حفظ&quot;.
           </p>
         </div>
         {groups.map((g) => (

@@ -36,7 +36,7 @@ export function InteractionForm({ clients, clientId, companies, users }: {
         {clients ? (
           <Field label="العميل *">
             <select name="clientId" required defaultValue="" className="input">
-              <option value="" disabled>اختار العميل</option>
+              <option value="" disabled>اختر العميل</option>
               {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
@@ -58,7 +58,7 @@ export function InteractionForm({ clients, clientId, companies, users }: {
           <input name="occurredAt" type="datetime-local" defaultValue={localNow()} className="input" />
         </Field>
         <Field label="الملخص *" wide>
-          <textarea name="summary" required rows={2} placeholder="اتكلمنا في إيه؟ اتفقنا على إيه؟" className="input" />
+          <textarea name="summary" required rows={2} placeholder="ملخص ما تمت مناقشته وما تم الاتفاق عليه" className="input" />
         </Field>
         <Field label="موعد المتابعة (اختياري)">
           <input name="followUpAt" type="datetime-local" className="input" />
@@ -70,7 +70,7 @@ export function InteractionForm({ clients, clientId, companies, users }: {
           </select>
         </Field>
         <Field label="المطلوب في المتابعة">
-          <input name="followUpNote" placeholder="مثال: نكلّمه نأكد استلام العرض" className="input" />
+          <input name="followUpNote" placeholder="مثال: التواصل للتأكد من استلام العرض" className="input" />
         </Field>
       </FieldGrid>
     </ActionForm>
@@ -78,7 +78,7 @@ export function InteractionForm({ clients, clientId, companies, users }: {
 }
 
 export function InteractionList({ items, user, showClient }: { items: InteractionRow[]; user: CurrentUser; showClient?: boolean }) {
-  if (items.length === 0) return <div className="card p-8 text-center text-neutral-500">لسه مفيش تواصل متسجّل</div>;
+  if (items.length === 0) return <div className="card p-8 text-center text-neutral-500">لا يوجد تواصل مسجّل</div>;
   const today = endOfToday();
   return (
     <ol className="space-y-3">
@@ -107,7 +107,7 @@ export function InteractionList({ items, user, showClient }: { items: Interactio
                   it.followUpDone ? "bg-neutral-50 text-neutral-500 line-through"
                   : late ? "bg-rose-50 text-rose-700" : isToday ? "bg-amber-50 text-amber-800" : "bg-sky-50 text-sky-800"}`}>
                   <CalendarClock size={14} />
-                  <span>متابعة {late ? "متأخرة" : isToday ? "النهارده" : ""}: {formatDateTime(it.followUpAt)}</span>
+                  <span>متابعة {late ? "متأخرة" : isToday ? "اليوم" : ""}: {formatDateTime(it.followUpAt)}</span>
                   {it.assignee && <span>· {it.assignee.name}</span>}
                   {it.followUpNote && <span>· {it.followUpNote}</span>}
                 </div>
@@ -118,7 +118,7 @@ export function InteractionList({ items, user, showClient }: { items: Interactio
                 <form action={toggleFollowUp}>
                   <input type="hidden" name="id" value={it.id} />
                   <button className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1 ${it.followUpDone ? "text-neutral-500 hover:bg-neutral-100" : "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"}`}>
-                    <Check size={14} /> {it.followUpDone ? "رجّعها" : "تمت المتابعة"}
+                    <Check size={14} /> {it.followUpDone ? "إلغاء الإتمام" : "تمت المتابعة"}
                   </button>
                 </form>
               )}

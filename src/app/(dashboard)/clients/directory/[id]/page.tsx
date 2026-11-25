@@ -65,7 +65,7 @@ export default async function ClientPage({ params, searchParams }: {
       />
       {client.archivedAt && (
         <div className="rounded-lg bg-neutral-200 p-3 text-sm text-neutral-700">
-          📦 العميل ده مؤرشف من {formatDate(client.archivedAt)} — مش بيظهر في القوايم والتنبيهات.
+          📦 هذا العميل مؤرشف منذ {formatDate(client.archivedAt)}، ولا يظهر في القوائم والتنبيهات.
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 -mt-3">
@@ -113,7 +113,7 @@ export default async function ClientPage({ params, searchParams }: {
       ["الجنسية", client!.nationality],
       ["المدينة", client!.city],
       ["المصدر", client!.source],
-      ["عميل من", formatDate(client!.createdAt)],
+      ["تاريخ التسجيل", formatDate(client!.createdAt)],
     ];
     const stats = [
       ["الشركات", client!.companies.length],
@@ -167,7 +167,7 @@ export default async function ClientPage({ params, searchParams }: {
                   </tr>
                 );
               })}
-              {client!.companies.length === 0 && <tr><td colSpan={7} className="text-center text-neutral-500 py-8">لسه مفيش شركات</td></tr>}
+              {client!.companies.length === 0 && <tr><td colSpan={7} className="text-center text-neutral-500 py-8">لا توجد شركات مسجّلة</td></tr>}
             </tbody>
           </table>
         </div>
@@ -185,7 +185,7 @@ export default async function ClientPage({ params, searchParams }: {
         <DocumentsSection ownerType="client" ownerId={id} documents={documents} user={user} />
         {client!.companies.length > 0 && (
           <p className="text-sm text-neutral-600">
-            💡 مستندات الشركات (السجل، الرخص، الشهادات) بتتحفظ في صفحة كل شركة:{" "}
+            💡 تُحفظ مستندات الشركات (السجل، الرخص، الشهادات) في صفحة كل شركة:{" "}
             {client!.companies.map((co, i) => (
               <span key={co.id}>{i > 0 && "، "}<Link href={`/clients/companies/${co.id}?tab=documents`} className="link">{co.name}</Link> ({co._count.documents})</span>
             ))}

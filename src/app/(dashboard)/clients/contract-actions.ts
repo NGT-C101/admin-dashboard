@@ -9,22 +9,22 @@ import { type FormState, firstError, optionalMoney, optionalText } from "@/lib/f
 
 const schema = z
   .object({
-    clientId: z.string().min(1, "اختار العميل"),
+    clientId: z.string().min(1, "يرجى اختيار العميل"),
     companyId: optionalText,
-    title: z.string().trim().min(3, "اكتب عنوان العقد"),
+    title: z.string().trim().min(3, "يرجى إدخال عنوان العقد"),
     type: z.enum(["ONE_TIME", "MONTHLY", "ANNUAL"]),
     value: optionalMoney,
-    startDate: z.string().min(1, "حدد تاريخ البداية").transform((v) => new Date(v)),
+    startDate: z.string().min(1, "يرجى تحديد تاريخ البداية").transform((v) => new Date(v)),
     endDate: optionalText.transform((v) => (v ? new Date(v) : null)),
     autoRenew: z.string().optional().transform((v) => v === "on"),
     terms: optionalText,
   })
-  .refine((d) => !d.endDate || d.endDate > d.startDate, { message: "تاريخ النهاية لازم يكون بعد البداية" });
+  .refine((d) => !d.endDate || d.endDate > d.startDate, { message: "يجب أن يكون تاريخ النهاية بعد تاريخ البداية" });
 
 async function check(d: z.infer<typeof schema>) {
   if (!d.companyId) return null;
   const co = await db.company.findUnique({ where: { id: d.companyId } });
-  return !co || co.clientId !== d.clientId ? "الشركة مش تبع العميل ده" : null;
+  return !co || co.clientId !== d.clientId ? "الشركة لا تتبع هذا العميل" : null;
 }
 
 function revalidateAll(id: string, clientId: string, companyId?: string | null) {

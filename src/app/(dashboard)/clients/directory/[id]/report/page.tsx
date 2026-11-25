@@ -7,7 +7,7 @@ import { contractNumber } from "@/components/ContractsTable";
 import { requireSection } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";
 import { getClientAlerts } from "@/lib/client-alerts";
-import { CONTRACT_STATE_LABELS, CONTRACT_TYPE_LABELS, INTERACTION_TYPE_LABELS, contractState, daysUntil, saudizationRate } from "@/lib/clients";
+import { CONTRACT_STATE_LABELS, CONTRACT_TYPE_LABELS, INTERACTION_TYPE_LABELS, contractState, daysText, daysUntil, saudizationRate } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { DOC_TYPE_LABELS } from "@/lib/documents";
 import { formatDate, txNumber } from "@/lib/format";
@@ -69,7 +69,7 @@ export default async function ClientReport({ params, searchParams }: {
   return (
     <div className="space-y-4">
       <div className="print:hidden flex flex-wrap items-end justify-between gap-3">
-        <div className="text-sm"><Link href={`/clients/directory/${id}`} className="link">← رجوع لملف العميل</Link></div>
+        <div className="text-sm"><Link href={`/clients/directory/${id}`} className="link">← العودة إلى ملف العميل</Link></div>
         <form className="flex items-end gap-2">
           <label className="text-sm space-y-1"><span className="block text-neutral-600">الشهر</span>
             <input type="month" name="month" defaultValue={month} className="input w-auto" /></label>
@@ -100,7 +100,7 @@ export default async function ClientReport({ params, searchParams }: {
         </section>
 
         <H>المعاملات</H>
-        {txs.length === 0 ? <p className="text-neutral-500">مفيش معاملات خلال الشهر.</p> : (
+        {txs.length === 0 ? <p className="text-neutral-500">لا توجد معاملات خلال هذا الشهر.</p> : (
           <table className="w-full text-sm border-collapse">
             <thead><tr className="bg-neutral-100 text-right">
               <th className="p-2">الرقم</th><th className="p-2">المعاملة</th><th className="p-2">الجهة</th><th className="p-2">الحالة</th><th className="p-2">آخر تحديث</th>
@@ -133,26 +133,26 @@ export default async function ClientReport({ params, searchParams }: {
                   <td className="p-2 font-medium">{co.name}</td>
                   <td className="p-2" dir="ltr">{co.crNumber ?? "—"}</td>
                   <td className={`p-2 ${left !== null && left < 0 ? "text-rose-700 font-semibold" : left !== null && left <= 60 ? "text-amber-700 font-semibold" : ""}`}>
-                    {formatDate(co.crExpiry)}{left !== null && left < 0 ? " (منتهي)" : left !== null && left <= 60 ? ` (باقي ${left} يوم)` : ""}
+                    {formatDate(co.crExpiry)}{left !== null && left < 0 ? " (منتهٍ)" : left !== null && left <= 60 ? ` (متبقٍ ${daysText(left)})` : ""}
                   </td>
                   <td className="p-2">{co.nitaqat ?? "—"}</td>
                   <td className="p-2">{rate === null ? "—" : `${rate}%`}</td>
                 </tr>
               );
             })}
-            {client.companies.length === 0 && <tr><td colSpan={5} className="p-2 text-neutral-500">مفيش منشآت مسجّلة</td></tr>}
+            {client.companies.length === 0 && <tr><td colSpan={5} className="p-2 text-neutral-500">لا توجد منشآت مسجّلة</td></tr>}
           </tbody>
         </table>
 
-        <H>مستندات وشهادات محتاجة انتباه</H>
-        {alerts.documents.length === 0 ? <p className="text-emerald-700">✅ كل المستندات سارية.</p> : (
+        <H>مستندات وشهادات تتطلب المتابعة</H>
+        {alerts.documents.length === 0 ? <p className="text-emerald-700">✅ جميع المستندات سارية.</p> : (
           <ul className="space-y-1 text-sm">
             {alerts.documents.map((d) => {
               const left = daysUntil(d.expiresAt!);
               return (
                 <li key={d.id} className={`rounded px-3 py-1.5 ${left < 0 ? "bg-rose-50 text-rose-800" : "bg-amber-50 text-amber-900"}`}>
                   <b>{DOC_TYPE_LABELS[d.type]}</b>{d.title ? ` (${d.title})` : ""} — {d.company?.name ?? client.name} — {formatDate(d.expiresAt)}
-                  {left < 0 ? " · منتهي، محتاج تجديد" : ` · باقي ${left} يوم`}
+                  {left < 0 ? " · منتهٍ ويحتاج إلى تجديد" : ` · متبقٍ ${daysText(left)}`}
                 </li>
               );
             })}

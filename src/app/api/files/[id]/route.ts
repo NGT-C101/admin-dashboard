@@ -10,10 +10,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const { id } = await params;
   const doc = await db.document.findUnique({ where: { id } });
-  if (!doc) return new Response("مش موجود", { status: 404 });
+  if (!doc) return new Response("غير موجود", { status: 404 });
 
   const data = await readStoredFile(doc.storageKey).catch(() => null);
-  if (!data) return new Response("الملف مش موجود على السيرفر", { status: 404 });
+  if (!data) return new Response("الملف غير موجود على الخادم", { status: 404 });
 
   const download = new URL(req.url).searchParams.has("download");
   return new Response(new Uint8Array(data), {

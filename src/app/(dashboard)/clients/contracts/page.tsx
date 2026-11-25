@@ -39,7 +39,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
 
   const stats = [
     { label: "عقود سارية", value: activeCount },
-    { label: "تنتهي خلال 30 يوم", value: endingCount, alert: endingCount > 0, href: "?status=ending" },
+    { label: "تنتهي خلال 30 يوماً", value: endingCount, alert: endingCount > 0, href: "?status=ending" },
     { label: "دخل الباقات الشهرية", value: formatSAR(monthly._sum.value ?? 0) },
   ];
 
@@ -66,7 +66,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
       <SearchBox placeholder="ابحث بعنوان العقد أو العميل أو الشركة" defaultValue={sp.q}>
         <select name="status" defaultValue={status} className="input w-auto">
           <option value="active">السارية</option>
-          <option value="ending">تنتهي خلال 30 يوم</option>
+          <option value="ending">تنتهي خلال 30 يوماً</option>
           <option value="expired">المنتهية</option>
           <option value="cancelled">الملغاة</option>
           <option value="all">الكل</option>

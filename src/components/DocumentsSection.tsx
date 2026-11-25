@@ -59,7 +59,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
                   </td>
                   <td className={st === "expired" ? "text-rose-600 font-semibold" : st === "soon" ? "text-amber-600 font-semibold" : ""}>
                     {formatDate(d.expiresAt)}
-                    {st === "expired" && <div className="text-xs">منتهي ⚠️</div>}
+                    {st === "expired" && <div className="text-xs">منتهٍ ⚠️</div>}
                     {st === "soon" && <div className="text-xs">ينتهي قريباً</div>}
                   </td>
                   <td className="text-xs text-neutral-600">{d.uploadedBy.name}<br />{formatDate(d.createdAt)}</td>
@@ -85,7 +85,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
               );
             })}
             {documents.length === 0 && (
-              <tr><td colSpan={5} className="text-center text-neutral-500 py-8">لسه مفيش مستندات</td></tr>
+              <tr><td colSpan={5} className="text-center text-neutral-500 py-8">لا توجد مستندات</td></tr>
             )}
           </tbody>
         </table>
@@ -93,7 +93,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
 
       {full ? (
         <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3">
-          وصلت للحد الأقصى ({max} مستندات). احذف مستند قديم عشان تقدر ترفع جديد.
+          تم بلوغ الحد الأقصى ({max} مستندات). يرجى حذف مستند قديم لرفع مستند جديد.
         </p>
       ) : (
         <details className="card">
@@ -105,7 +105,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
               <FieldGrid>
                 <Field label="نوع المستند *">
                   <select name="type" required defaultValue={ownerType === "contract" ? "CONTRACT" : ""} className="input">
-                    <option value="" disabled>اختار النوع</option>
+                    <option value="" disabled>اختر النوع</option>
                     {Object.entries(DOC_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
                 </Field>
@@ -115,7 +115,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
                 <Field label="تاريخ الانتهاء (اختياري)">
                   <input name="expiresAt" type="date" className="input" />
                 </Field>
-                <Field label="الملف * (PDF أو صورة، حتى 10 ميجا)" wide>
+                <Field label="الملف * (PDF أو صورة، بحد أقصى 10 ميجابايت)" wide>
                   <input name="file" type="file" required accept=".pdf,image/jpeg,image/png,image/webp"
                     className="block w-full text-sm file:me-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-brand-800 hover:file:bg-brand-100" />
                 </Field>

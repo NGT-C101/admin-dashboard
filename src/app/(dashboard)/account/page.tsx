@@ -24,7 +24,7 @@ export default async function AccountPage() {
           <Field label="كلمة المرور الحالية">
             <input name="current" type="password" required dir="ltr" autoComplete="current-password" className="input" />
           </Field>
-          <Field label="كلمة المرور الجديدة (10 حروف على الأقل)">
+          <Field label="كلمة المرور الجديدة (10 أحرف على الأقل)">
             <input name="next" type="password" required minLength={10} dir="ltr" autoComplete="new-password" className="input" />
           </Field>
           <Field label="تأكيد كلمة المرور الجديدة">

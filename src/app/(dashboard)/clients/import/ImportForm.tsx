@@ -39,12 +39,12 @@ export default function ImportForm() {
           {r.mode === "commit" ? (
             <p className="flex items-center gap-2 text-emerald-700 font-semibold"><CheckCircle2 size={20} /> تم الاستيراد بنجاح 🎉</p>
           ) : r.errors.length ? (
-            <p className="flex items-center gap-2 text-rose-700 font-semibold"><XCircle size={20} /> فيه أخطاء في الملف — صلّحها وافحصه تاني. مفيش حاجة اتحفظت.</p>
+            <p className="flex items-center gap-2 text-rose-700 font-semibold"><XCircle size={20} /> توجد أخطاء في الملف — يرجى تصحيحها وإعادة الفحص. لم يتم حفظ أي بيانات.</p>
           ) : (
-            <p className="flex items-center gap-2 text-emerald-700 font-semibold"><CheckCircle2 size={20} /> الملف سليم — راجع الملخص ودوس &quot;استيراد&quot;</p>
+            <p className="flex items-center gap-2 text-emerald-700 font-semibold"><CheckCircle2 size={20} /> الملف سليم — راجع الملخص ثم اضغط &quot;استيراد&quot;</p>
           )}
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 text-center">
-            {[["صفوف", r.rows], ["عملاء جداد", r.newClients], ["عملاء موجودين", r.existingClients], ["شركات جديدة", r.newCompanies]].map(([l, v]) => (
+            {[["صفوف", r.rows], ["عملاء جدد", r.newClients], ["مسجّلون مسبقاً", r.existingClients], ["شركات جديدة", r.newCompanies]].map(([l, v]) => (
               <div key={l as string} className="rounded-lg bg-neutral-50 p-3"><div className="text-xl font-bold">{v}</div><div className="text-xs text-neutral-500">{l}</div></div>
             ))}
           </div>

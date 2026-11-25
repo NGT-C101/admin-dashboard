@@ -11,7 +11,7 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">المستخدمين والصلاحيات</h1>
+      <h1 className="text-2xl font-bold">المستخدمون والصلاحيات</h1>
       <UserForm />
 
       <div className="card overflow-x-auto">
@@ -33,7 +33,7 @@ export default async function UsersPage() {
                 <td className="p-3 font-medium">{u.name}</td>
                 <td className="p-3" dir="ltr">{u.email}</td>
                 <td className="p-3">{ROLE_LABELS[u.role]}</td>
-                <td className="p-3">{u.department ? DEPARTMENT_LABELS[u.department] : "كل الأقسام"}</td>
+                <td className="p-3">{u.department ? DEPARTMENT_LABELS[u.department] : "جميع الأقسام"}</td>
                 <td className="p-3">
                   <span className={`rounded-full px-2 py-0.5 text-xs ${u.active ? "bg-brand-50 text-brand-700" : "bg-neutral-100 text-neutral-500"}`}>
                     {u.active ? "نشط" : "موقوف"}

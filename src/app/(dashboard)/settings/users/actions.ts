@@ -9,8 +9,8 @@ import { db } from "@/lib/db";
 const createSchema = z
   .object({
     name: z.string().trim().min(2, "الاسم قصير جداً"),
-    email: z.string().trim().toLowerCase().email("الإيميل غير صحيح"),
-    password: z.string().min(8, "كلمة المرور لازم تكون 8 حروف على الأقل"),
+    email: z.string().trim().toLowerCase().email("البريد الإلكتروني غير صحيح"),
+    password: z.string().min(8, "يجب ألا تقل كلمة المرور عن 8 أحرف"),
     role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]),
     department: z
       .enum(["EMPLOYEES", "CLIENTS", "REQUESTS", "ADMIN_AFFAIRS", "ACCOUNTS", "PR"])
@@ -18,7 +18,7 @@ const createSchema = z
       .transform((v) => (v === "" ? null : v)),
   })
   .refine((d) => d.role === "ADMIN" || d.department, {
-    message: "لازم تختار قسم لمدير القسم أو الموظف",
+    message: "يجب تحديد القسم لمدير القسم أو الموظف",
   });
 
 export type { FormState } from "@/lib/forms";
@@ -31,11 +31,11 @@ export async function createUser(_prev: FormState, formData: FormData): Promise<
 
   const { password, ...data } = parsed.data;
   if (await db.user.findUnique({ where: { email: data.email } })) {
-    return { error: "الإيميل ده مستخدم قبل كده" };
+    return { error: "البريد الإلكتروني مستخدم مسبقاً" };
   }
   await db.user.create({ data: { ...data, passwordHash: await bcrypt.hash(password, 10) } });
   revalidatePath("/settings/users");
-  return { success: `تم إضافة ${data.name}` };
+  return { success: `تمت إضافة ${data.name}` };
 }
 
 export async function toggleUserActive(formData: FormData) {
@@ -53,7 +53,7 @@ export async function resetUserPassword(_prev: FormState, formData: FormData): P
   await requireAdmin();
   const id = String(formData.get("id"));
   const password = String(formData.get("password") ?? "");
-  if (password.length < 8) return { error: "8 حروف على الأقل" };
+  if (password.length < 8) return { error: "يجب ألا تقل كلمة المرور عن 8 أحرف" };
   await db.user.update({ where: { id }, data: { passwordHash: await bcrypt.hash(password, 10) } });
   return { success: "تم ✅" };
 }

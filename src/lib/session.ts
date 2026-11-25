@@ -9,7 +9,7 @@ export type SessionPayload = { userId: string };
 function key() {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) {
-    throw new Error("SESSION_SECRET لازم يكون 32 حرف على الأقل");
+    throw new Error("يجب ألا يقل SESSION_SECRET عن 32 حرفاً");
   }
   return new TextEncoder().encode(secret);
 }

@@ -24,7 +24,7 @@ export default async function SubSectionPage({
       </div>
       <div className="card p-12 text-center text-neutral-500">
         <Construction className="mx-auto mb-3 text-amber-500" size={40} />
-        القسم ده هيتبني في المراحل الجاية
+        هذا القسم قيد التطوير وسيُتاح قريباً
       </div>
     </div>
   );

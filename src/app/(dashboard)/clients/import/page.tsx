@@ -10,12 +10,12 @@ export default async function ImportPage() {
     <div className="space-y-6 max-w-4xl">
       <PageHeader title="استيراد العملاء من Excel" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "استيراد" }]} />
       <div className="card p-5 space-y-3 text-sm">
-        <h2 className="font-semibold">إزاي؟</h2>
+        <h2 className="font-semibold">طريقة الاستيراد</h2>
         <ol className="list-decimal pr-5 space-y-1.5 text-neutral-700">
-          <li>نزّل القالب الجاهز واملاه (كل صف = عميل + شركة واحدة).</li>
-          <li>لو العميل عنده أكتر من شركة: كرّر اسمه ورقم هويته في صف جديد لكل شركة.</li>
-          <li>ارفع الملف ودوس <b>&quot;افحص الملف&quot;</b> — مفيش حاجة هتتحفظ في الخطوة دي.</li>
-          <li>لو مفيش أخطاء دوس <b>&quot;استيراد&quot;</b>.</li>
+          <li>نزّل القالب الجاهز واملأه (يمثل كل صف عميلاً وشركة واحدة).</li>
+          <li>إذا كان للعميل أكثر من شركة: كرّر اسمه ورقم هويته في صف مستقل لكل شركة.</li>
+          <li>ارفع الملف واضغط <b>&quot;افحص الملف&quot;</b> — لن يتم حفظ أي بيانات في هذه الخطوة.</li>
+          <li>إذا لم تظهر أخطاء اضغط <b>&quot;استيراد&quot;</b>.</li>
         </ol>
         <p className="text-neutral-500">
           الأعمدة: {IMPORT_COLUMNS.map((c) => c.header + ("required" in c ? " *" : "")).join(" · ")}

@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
       { header: "الجوال", key: "phone" }, { header: "جوال آخر", key: "phone2" }, { header: "البريد", key: "email", width: 26 },
       { header: "المدينة", key: "city" }, { header: "الحالة", key: "status", width: 12 }, { header: "مميز", key: "vip", width: 8 },
       { header: "المصدر", key: "source" }, { header: "المسؤول", key: "manager" }, { header: "عدد الشركات", key: "companies", width: 12 },
-      { header: "عميل من", key: "createdAt", date: true }, { header: "ملاحظات", key: "notes", width: 30 },
+      { header: "تاريخ التسجيل", key: "createdAt", date: true }, { header: "ملاحظات", key: "notes", width: 30 },
     ], clients.map((c) => ({
       name: c.name, nationalId: c.nationalId, phone: c.phone, phone2: c.phone2, email: c.email, city: c.city,
       status: CLIENT_STATUS_LABELS[c.status], vip: c.vip ? "⭐" : "", source: c.source, manager: c.accountManager?.name,
@@ -71,16 +71,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
     ws.getRow(2).font = { color: { argb: "FF888888" }, italic: true };
     ws.getColumn("crExpiry").numFmt = "@";
     addSheet(wb, "تعليمات", [{ header: "تعليمات", key: "t", width: 90 }], [
-      { t: "الصف الرمادي مثال — امسحه أو اكتب فوقه." },
-      { t: "اسم العميل إجباري. باقي الأعمدة اختيارية." },
-      { t: "الحالة: نشط أو محتمل أو متوقف (لو فاضية = نشط)." },
-      { t: "التاريخ بالشكل ده: 2027-03-15" },
-      { t: "عميل عنده كذا شركة: كرّر اسمه ورقم هويته في صف لكل شركة." },
-      { t: "العميل الموجود قبل كده (بنفس رقم الهوية) مش هيتكرر، هتتضاف شركاته الجديدة بس." },
-      { t: "الشركة اللي سجلها التجاري موجود قبل كده هتتخطى." },
+      { t: "الصف الرمادي مثال توضيحي — احذفه أو اكتب فوقه." },
+      { t: "اسم العميل إلزامي، وبقية الأعمدة اختيارية." },
+      { t: "الحالة: نشط أو محتمل أو متوقف (إذا تُركت فارغة تُعتبر: نشط)." },
+      { t: "صيغة التاريخ: 2027-03-15" },
+      { t: "إذا كان للعميل أكثر من شركة: كرّر اسمه ورقم هويته في صف مستقل لكل شركة." },
+      { t: "العميل المسجّل مسبقاً (برقم الهوية نفسه) لن يتكرر، وستُضاف شركاته الجديدة فقط." },
+      { t: "سيتم تخطي الشركة التي سجلها التجاري مسجّل مسبقاً." },
     ]);
     return xlsxResponse(wb, "قالب-استيراد-العملاء.xlsx");
   }
 
-  return new Response("مش موجود", { status: 404 });
+  return new Response("غير موجود", { status: 404 });
 }

@@ -12,7 +12,7 @@ const schema = z.object({
   ownerType: z.enum(["client", "company", "contract"]),
   ownerId: z.string().min(1),
   type: z.enum(["CR", "NATIONAL_ID", "BALADY_LICENSE", "NATIONAL_ADDRESS", "ZAKAT_CERT", "VAT_CERT", "OTHER_LICENSE", "CONTRACT", "OTHER"], {
-    message: "اختار نوع المستند",
+    message: "يرجى اختيار نوع المستند",
   }),
   title: optionalText,
   expiresAt: optionalDate,
@@ -30,8 +30,8 @@ export async function uploadDocument(_prev: FormState, formData: FormData): Prom
   const { ownerType, ownerId, ...data } = parsed.data;
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "اختار الملف" };
-  if (file.size > MAX_FILE_BYTES) return { error: "حجم الملف أكبر من 10 ميجا" };
+  if (!(file instanceof File) || file.size === 0) return { error: "يرجى اختيار الملف" };
+  if (file.size > MAX_FILE_BYTES) return { error: "حجم الملف يتجاوز 10 ميجابايت" };
 
   const where = ownerType === "client" ? { clientId: ownerId } : ownerType === "company" ? { companyId: ownerId } : { contractId: ownerId };
   const owner = ownerType === "client"
@@ -39,15 +39,15 @@ export async function uploadDocument(_prev: FormState, formData: FormData): Prom
     : ownerType === "company"
       ? await db.company.findUnique({ where: { id: ownerId } })
       : await db.contract.findUnique({ where: { id: ownerId } });
-  if (!owner) return { error: "مش موجود" };
+  if (!owner) return { error: "غير موجود" };
   const max = ownerType === "contract" ? MAX_DOCS_PER_CONTRACT : MAX_DOCS_PER_OWNER;
   if ((await db.document.count({ where })) >= max) {
-    return { error: `وصلت للحد الأقصى (${max} مستندات). احذف مستند قديم الأول` };
+    return { error: `تم بلوغ الحد الأقصى (${max} مستندات). يرجى حذف مستند قديم أولاً` };
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
   const kind = detectType(buf);
-  if (!kind) return { error: "نوع الملف مش مدعوم. المسموح: PDF أو صورة (JPG / PNG / WEBP)" };
+  if (!kind) return { error: "نوع الملف غير مدعوم. الأنواع المسموح بها: PDF أو صورة (JPG / PNG / WEBP)" };
 
   const storageKey = await saveFile(buf, kind.ext);
   await db.document.create({

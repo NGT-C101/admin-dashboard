@@ -85,15 +85,15 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         {sp.status && <input type="hidden" name="status" value={sp.status} />}
         <select name="manager" defaultValue={sp.manager ?? ""} className="input w-auto">
           <option value="">كل المسؤولين</option>
-          <option value="me">عملائي أنا</option>
+          <option value="me">عملائي</option>
           <option value="none">بدون مسؤول</option>
           {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
         <label className="flex items-center gap-1.5 text-sm px-2">
-          <input type="checkbox" name="vip" value="1" defaultChecked={!!sp.vip} className="size-4 accent-brand-600" /> المميزين بس
+          <input type="checkbox" name="vip" value="1" defaultChecked={!!sp.vip} className="size-4 accent-brand-600" /> المميزون فقط
         </label>
         <label className="flex items-center gap-1.5 text-sm px-2">
-          <input type="checkbox" name="archived" value="1" defaultChecked={!!sp.archived} className="size-4 accent-brand-600" /> المؤرشفين
+          <input type="checkbox" name="archived" value="1" defaultChecked={!!sp.archived} className="size-4 accent-brand-600" />المؤرشفون
         </label>
       </SearchBox>
 
@@ -139,7 +139,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
             })}
             {clients.length === 0 && (
               <tr><td colSpan={7} className="text-center text-neutral-500 py-10">
-                {sp.q || sp.status || sp.manager || sp.vip ? "مفيش نتايج" : "لسه مفيش عملاء — ابدأ بإضافة أول عميل"}
+                {sp.q || sp.status || sp.manager || sp.vip ? "لا توجد نتائج" : "لا يوجد عملاء بعد — ابدأ بإضافة أول عميل"}
               </td></tr>
             )}
           </tbody>

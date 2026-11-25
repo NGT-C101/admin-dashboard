@@ -13,12 +13,12 @@ export default async function AlertsPage({ searchParams }: { searchParams: Promi
       <PageHeader title="التنبيهات والمواعيد" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "التنبيهات" }]}
         actions={
           <Link href={mine ? "/clients/alerts" : "/clients/alerts?mine=1"} className="btn-secondary">
-            {mine ? "كل العملاء" : "عملائي أنا بس"}
+            {mine ? "كل العملاء" : "عملائي فقط"}
           </Link>
         } />
       <p className="text-sm text-neutral-600">
-        كل اللي محتاج يتعمل لعملائكم في مكان واحد. افتح الصفحة دي كل يوم الصبح 👌
-        {mine && <b> (معروض دلوقتي: العملاء اللي إنت مسؤول عنهم)</b>}
+        جميع المهام والمواعيد المتعلقة بعملائكم في مكان واحد. يُنصح بمراجعة هذه الصفحة يومياً.
+        {mine && <b> (المعروض حالياً: العملاء المسندون إليك)</b>}
       </p>
       <ClientAlertsView alerts={alerts} />
     </div>

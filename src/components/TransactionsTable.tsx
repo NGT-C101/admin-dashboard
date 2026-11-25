@@ -52,7 +52,7 @@ export default function TransactionsTable({ transactions, showCompany }: { trans
             </tr>
           ))}
           {transactions.length === 0 && (
-            <tr><td colSpan={7} className="text-center text-neutral-500 py-10">مفيش معاملات</td></tr>
+            <tr><td colSpan={7} className="text-center text-neutral-500 py-10">لا توجد معاملات</td></tr>
           )}
         </tbody>
       </table>

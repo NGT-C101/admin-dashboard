@@ -37,7 +37,7 @@ export default function ContractFields({ contract, clients, clientId, companyId 
       <Field label="تاريخ البداية *">
         <input name="startDate" type="date" required defaultValue={dateInputValue(contract?.startDate ?? new Date())} className="input" />
       </Field>
-      <Field label="تاريخ النهاية (فاضي = مفتوح)">
+      <Field label="تاريخ النهاية (اتركه فارغاً للعقد المفتوح)">
         <input name="endDate" type="date" defaultValue={dateInputValue(contract?.endDate)} className="input" />
       </Field>
       <label className="flex items-center gap-2 text-sm self-end pb-2">

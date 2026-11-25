@@ -29,7 +29,7 @@ export async function saveListItem(_prev: FormState, formData: FormData): Promis
   // الخدمة مينفعش تتكرر بنفس الاسم تحت نفس الجهة
   if (list === "serviceType") {
     const dup = await db.serviceType.findFirst({ where: { name: data.name, govEntityId, NOT: id ? { id } : undefined } });
-    if (dup) return { error: "الخدمة دي موجودة قبل كده تحت نفس الجهة" };
+    if (dup) return { error: "هذه الخدمة مسجّلة مسبقاً تحت الجهة نفسها" };
   }
 
   try {
@@ -41,7 +41,7 @@ export async function saveListItem(_prev: FormState, formData: FormData): Promis
     if (id) await model.update({ where: { id }, data: full });
     else await model.create({ data: full });
   } catch (e) {
-    return { error: uniqueError(e, { name: "الاسم" }) ?? "حصل خطأ" };
+    return { error: uniqueError(e, { name: "الاسم" }) ?? "حدث خطأ" };
   }
   revalidatePath("/settings/lists");
   return { success: id ? "تم الحفظ" : "تمت الإضافة" };
