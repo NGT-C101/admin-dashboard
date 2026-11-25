@@ -13,14 +13,24 @@ const schema = z.object({
   order: z.coerce.number().int().min(0).default(0),
   active: z.string().optional().transform((v) => v !== "off"),
   kind: z.enum(["OPEN", "DONE", "CANCELLED"]).optional(),
+  govEntityId: z.string().optional().transform((v) => (v ? v : null)),
 });
 
 export async function saveListItem(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
-  const { list, id, kind, ...data } = parsed.data;
-  const full = list === "stage" ? { ...data, kind: kind ?? "OPEN" } : data;
+  const { list, id, kind, govEntityId, ...data } = parsed.data;
+  const full =
+    list === "stage" ? { ...data, kind: kind ?? "OPEN" }
+    : list === "serviceType" ? { ...data, govEntityId }
+    : data;
+
+  // الخدمة مينفعش تتكرر بنفس الاسم تحت نفس الجهة
+  if (list === "serviceType") {
+    const dup = await db.serviceType.findFirst({ where: { name: data.name, govEntityId, NOT: id ? { id } : undefined } });
+    if (dup) return { error: "الخدمة دي موجودة قبل كده تحت نفس الجهة" };
+  }
 
   try {
     // Prisma محتاج نستخدم كل جدول باسمه

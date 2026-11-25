@@ -29,7 +29,7 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
 
   const [stages, options] = await Promise.all([
     db.stage.findMany({ where: { OR: [{ active: true }, { id: tx.stageId }] }, orderBy: { order: "asc" } }),
-    loadTxOptions(db),
+    loadTxOptions(db, undefined, tx),
   ]);
   const total = tx.fee || tx.govFees ? Number(tx.fee ?? 0) + Number(tx.govFees ?? 0) : null;
 

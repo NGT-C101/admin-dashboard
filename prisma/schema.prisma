@@ -83,10 +83,15 @@ model Company {
 // نوع الخدمة (ترخيص صناعي، تأسيس شركة...)
 model ServiceType {
   id           String        @id @default(cuid())
-  name         String        @unique
+  name         String
+  govEntity    GovEntity?    @relation(fields: [govEntityId], references: [id])
+  govEntityId  String? // الجهة اللي الخدمة دي تبعها (فاضي = خدمة عامة)
   order        Int           @default(0)
   active       Boolean       @default(true)
   transactions Transaction[]
+
+  @@unique([name, govEntityId])
+  @@index([govEntityId])
 }
 
 // الجهة / المنصة الحكومية (قوى، تقييم، وزارة التجارة...)
@@ -95,6 +100,7 @@ model GovEntity {
   name         String        @unique
   order        Int           @default(0)
   active       Boolean       @default(true)
+  services     ServiceType[]
   transactions Transaction[]
 }
 
@@ -160,4 +166,10 @@ model TransactionEvent {
   createdAt     DateTime    @default(now())
 
   @@index([transactionId])
+}
+
+// إعدادات داخلية (مثلاً: هل تحديث معيّن للبيانات اتطبق قبل كده)
+model AppMeta {
+  key   String @id
+  value String
 }

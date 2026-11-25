@@ -2,40 +2,9 @@
 // آمن إنه يتشغّل أكتر من مرة: مش بيكرر ولا بيمسح تعديلاتك
 import { PrismaClient, type StageKind } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { CATALOG, GENERAL_SERVICES, RETIRED_GENERAL } from "./catalog";
 
 const prisma = new PrismaClient();
-
-const SERVICE_TYPES = [
-  "تأسيس شركة",
-  "ترخيص صناعي",
-  "إصدار / تعديل سجل تجاري",
-  "رخصة بلدية",
-  "ترخيص استثمار",
-  "خدمات قوى والعمالة",
-  "تأشيرات واستقدام",
-  "شهادات الزكاة والضريبة",
-  "التأمينات الاجتماعية",
-  "خدمات التقييم",
-  "دراسة جدوى",
-  "استشارة إدارية",
-  "أخرى",
-];
-
-const GOV_ENTITIES = [
-  "وزارة التجارة",
-  "المركز السعودي للأعمال",
-  "وزارة الصناعة والثروة المعدنية",
-  "وزارة الاستثمار",
-  "منصة بلدي",
-  "منصة قوى",
-  "الهيئة السعودية للمقيمين المعتمدين (تقييم)",
-  "وزارة الموارد البشرية والتنمية الاجتماعية",
-  "هيئة الزكاة والضريبة والجمارك",
-  "المؤسسة العامة للتأمينات الاجتماعية",
-  "الغرفة التجارية",
-  "المديرية العامة للدفاع المدني",
-  "أخرى",
-];
 
 const STAGES: [string, StageKind][] = [
   ["جديد", "OPEN"],
@@ -73,19 +42,54 @@ async function seedAdmin() {
 async function main() {
   await seedAdmin();
 
-  // القوائم بتتملى مرة واحدة بس لو فاضية
-  if ((await prisma.serviceType.count()) === 0) {
-    await prisma.serviceType.createMany({ data: SERVICE_TYPES.map((name, order) => ({ name, order })) });
-    console.log("✔ أنواع الخدمات");
-  }
-  if ((await prisma.govEntity.count()) === 0) {
-    await prisma.govEntity.createMany({ data: GOV_ENTITIES.map((name, order) => ({ name, order })) });
-    console.log("✔ الجهات الحكومية");
-  }
   if ((await prisma.stage.count()) === 0) {
     await prisma.stage.createMany({ data: STAGES.map(([name, kind], order) => ({ name, kind, order })) });
     console.log("✔ مراحل المعاملات");
   }
+  await syncCatalog();
+}
+
+// تحميل كتالوج الخدمات مرة واحدة (آمن على سيرفر فيه بيانات):
+// - بيضيف الجهات والخدمات الناقصة بس، ومش بيمسح أي حاجة
+// - الخدمات العامة القديمة اللي اتستبدلت بتتوقف (مش بتتمسح) عشان المعاملات القديمة تفضل سليمة
+const CATALOG_VERSION = "catalog-v1";
+
+async function syncCatalog() {
+  if (await prisma.appMeta.findUnique({ where: { key: CATALOG_VERSION } })) return;
+
+  let entityOrder = (await prisma.govEntity.aggregate({ _max: { order: true } }))._max.order ?? -1;
+  let added = 0;
+
+  for (const [entityName, services] of CATALOG) {
+    let entity = await prisma.govEntity.findUnique({ where: { name: entityName } });
+    if (!entity) entity = await prisma.govEntity.create({ data: { name: entityName, order: ++entityOrder } });
+
+    for (const [order, name] of services.entries()) {
+      const exists = await prisma.serviceType.findFirst({ where: { name, govEntityId: entity.id } });
+      if (!exists) {
+        await prisma.serviceType.create({ data: { name, order, govEntityId: entity.id } });
+        added++;
+      }
+    }
+  }
+
+  for (const [order, name] of GENERAL_SERVICES.entries()) {
+    const exists = await prisma.serviceType.findFirst({ where: { name, govEntityId: null } });
+    if (exists) await prisma.serviceType.update({ where: { id: exists.id }, data: { order, active: true } });
+    else { await prisma.serviceType.create({ data: { name, order } }); added++; }
+  }
+
+  const retired = await prisma.serviceType.updateMany({
+    where: { govEntityId: null, name: { in: RETIRED_GENERAL } },
+    data: { active: false },
+  });
+
+  // الجهة "أخرى" تفضل في الآخر
+  const other = await prisma.govEntity.findUnique({ where: { name: "أخرى" } });
+  if (other) await prisma.govEntity.update({ where: { id: other.id }, data: { order: 999 } });
+
+  await prisma.appMeta.create({ data: { key: CATALOG_VERSION, value: new Date().toISOString() } });
+  console.log(`✔ كتالوج الخدمات: ${added} خدمة جديدة، ${retired.count} خدمة عامة قديمة اتوقفت`);
 }
 
 main().finally(() => prisma.$disconnect());

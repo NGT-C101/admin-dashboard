@@ -39,7 +39,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     db.transaction.findMany({ where: { AND: and }, include: TX_INCLUDE, orderBy: { createdAt: "desc" }, take: 300 }),
     db.stage.findMany({ orderBy: { order: "asc" } }),
     db.govEntity.findMany({ orderBy: { order: "asc" } }),
-    db.serviceType.findMany({ orderBy: { order: "asc" } }),
+    db.serviceType.findMany({ orderBy: [{ govEntity: { order: "asc" } }, { order: "asc" }], include: { govEntity: { select: { name: true } } } }),
     db.user.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
@@ -68,7 +68,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </select>
         {sel("stage", "كل المراحل", stages)}
         {sel("entity", "كل الجهات", entities)}
-        {sel("service", "كل الخدمات", services)}
+        <select name="service" defaultValue={sp.service ?? ""} className="input w-auto max-w-64">
+          <option value="">كل الخدمات</option>
+          {Object.entries(Object.groupBy(services, (s) => s.govEntity?.name ?? "خدمات عامة")).map(([group, list]) => (
+            <optgroup key={group} label={group}>
+              {list!.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </optgroup>
+          ))}
+        </select>
         {sel("assignee", "كل الموظفين", users, <option value="me">معاملاتي أنا</option>)}
       </SearchBox>
 

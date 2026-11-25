@@ -1,11 +1,12 @@
 import type { Transaction } from "@prisma/client";
+import ServicePicker from "@/components/ServicePicker";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { dateInputValue } from "@/lib/format";
 
 type Opt = { id: string; name: string };
 export type TxFormOptions = {
   companies: { id: string; name: string; client: { name: string } }[];
-  serviceTypes: Opt[];
+  serviceTypes: (Opt & { govEntityId: string | null })[];
   govEntities: Opt[];
   users: Opt[];
 };
@@ -35,18 +36,12 @@ export default function TransactionFields({ tx, options, companyId }: {
       <Field label="عنوان المعاملة *">
         <input name="title" required placeholder="مثال: إصدار ترخيص صناعي لمصنع الرياض" defaultValue={tx?.title} className="input" />
       </Field>
-      <Field label="نوع الخدمة">
-        <select name="serviceTypeId" defaultValue={tx?.serviceTypeId ?? ""} className="input">
-          <option value="">—</option>
-          {options.serviceTypes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </Field>
-      <Field label="الجهة / المنصة الحكومية">
-        <select name="govEntityId" defaultValue={tx?.govEntityId ?? ""} className="input">
-          <option value="">—</option>
-          {options.govEntities.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </Field>
+      <ServicePicker
+        entities={options.govEntities}
+        services={options.serviceTypes}
+        defaultEntityId={tx?.govEntityId}
+        defaultServiceId={tx?.serviceTypeId}
+      />
       <Field label="الموظف المسؤول">
         <select name="assigneeId" defaultValue={tx?.assigneeId ?? ""} className="input">
           <option value="">غير محدد</option>
@@ -72,15 +67,28 @@ export default function TransactionFields({ tx, options, companyId }: {
   );
 }
 
-export async function loadTxOptions(db: typeof import("@/lib/db").db, clientId?: string): Promise<TxFormOptions> {
+// current = المعاملة اللي بتتعدّل: نضمن إن خدمتها وجهتها يظهروا حتى لو اتوقفوا
+export async function loadTxOptions(
+  db: typeof import("@/lib/db").db,
+  clientId?: string,
+  current?: { serviceTypeId: string | null; govEntityId: string | null },
+): Promise<TxFormOptions> {
   const [companies, serviceTypes, govEntities, users] = await Promise.all([
     db.company.findMany({
       where: clientId ? { clientId } : undefined,
       select: { id: true, name: true, client: { select: { name: true } } },
       orderBy: [{ client: { name: "asc" } }, { name: "asc" }],
     }),
-    db.serviceType.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { order: "asc" } }),
-    db.govEntity.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { order: "asc" } }),
+    db.serviceType.findMany({
+      where: { OR: [{ active: true }, ...(current?.serviceTypeId ? [{ id: current.serviceTypeId }] : [])] },
+      select: { id: true, name: true, govEntityId: true },
+      orderBy: { order: "asc" },
+    }),
+    db.govEntity.findMany({
+      where: { OR: [{ active: true }, ...(current?.govEntityId ? [{ id: current.govEntityId }] : [])] },
+      select: { id: true, name: true },
+      orderBy: { order: "asc" },
+    }),
     db.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   return { companies, serviceTypes, govEntities, users };
