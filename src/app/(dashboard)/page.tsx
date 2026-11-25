@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { AlertTriangle, BellRing, Building, CalendarClock, ClipboardList, Handshake, UserCheck } from "lucide-react";
+import { AlertTriangle, BellRing, Building, CalendarClock, ClipboardList, Handshake, IdCard, UserCheck, Users } from "lucide-react";
 import { getClientAlerts } from "@/lib/client-alerts";
+import { getHrAlerts } from "@/lib/hr-alerts";
 import { endOfToday } from "@/lib/clients";
 import { canAccess, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -9,7 +10,7 @@ import { SECTIONS, findSection } from "@/lib/nav";
 export default async function HomePage() {
   const user = await requireUser();
   const open = { stage: { kind: "OPEN" as const } };
-  const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps] = await Promise.all([
+  const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps, staff, hrAlerts] = await Promise.all([
     db.client.count({ where: { archivedAt: null } }),
     db.company.count({ where: { client: { archivedAt: null } } }),
     db.transaction.count({ where: open }),
@@ -17,6 +18,8 @@ export default async function HomePage() {
     db.transaction.count({ where: { ...open, assigneeId: user.id } }),
     getClientAlerts(),
     db.interaction.count({ where: { assigneeId: user.id, followUpDone: false, followUpAt: { not: null, lte: endOfToday() } } }),
+    db.employee.count({ where: { status: { not: "TERMINATED" } } }),
+    getHrAlerts(),
   ]);
 
   const allStats = [
@@ -27,6 +30,8 @@ export default async function HomePage() {
     { label: "معاملاتي الجارية", value: myTx, icon: UserCheck, href: "/requests/all?assignee=me" },
     { label: "تنبيهات العملاء", value: clientAlerts.counts.total, icon: BellRing, href: "/clients/alerts", alert: clientAlerts.counts.expired > 0 },
     { label: "متابعاتي المستحقة", value: myFollowUps, icon: CalendarClock, href: "/clients/communications", alert: myFollowUps > 0 },
+    { label: "الموظفون الحاليون", value: staff, icon: Users, href: "/employees/profiles" },
+    { label: "تنبيهات الموظفين", value: hrAlerts.length, icon: IdCard, href: "/employees/profiles", alert: hrAlerts.some((a) => a.date < new Date()) },
   ];
   // كل رقم يظهر بس للي عنده صلاحية على القسم بتاعه
   const stats = allStats.filter((s) => canAccess(user, findSection(s.href.split("/")[1])!));

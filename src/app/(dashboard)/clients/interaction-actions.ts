@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { isManager, requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type FormState, firstError, optionalText } from "@/lib/forms";
 
@@ -28,7 +28,7 @@ function revalidateAll(clientId: string, companyId?: string | null) {
 }
 
 export async function createInteraction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireSection("clients");
+  const user = await requireSection("clients", "EDIT");
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
   const d = parsed.data;
@@ -44,7 +44,7 @@ export async function createInteraction(_prev: FormState, formData: FormData): P
 }
 
 export async function toggleFollowUp(formData: FormData) {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const it = await db.interaction.findUnique({ where: { id: String(formData.get("id")) } });
   if (!it) return;
   await db.interaction.update({ where: { id: it.id }, data: { followUpDone: !it.followUpDone } });
@@ -52,9 +52,9 @@ export async function toggleFollowUp(formData: FormData) {
 }
 
 export async function deleteInteraction(formData: FormData) {
-  const user = await requireSection("clients");
+  const user = await requireSection("clients", "EDIT");
   const it = await db.interaction.findUnique({ where: { id: String(formData.get("id")) } });
-  if (!it || (!isManager(user) && it.createdById !== user.id)) return;
+  if (!it || (!can(user, "clients", "MANAGE") && it.createdById !== user.id)) return;
   await db.interaction.delete({ where: { id: it.id } });
   revalidateAll(it.clientId, it.companyId);
 }

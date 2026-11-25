@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -16,7 +17,7 @@ const schema = z
   .refine((d) => d.next !== d.current, { message: "يجب أن تختلف كلمة المرور الجديدة عن الحالية" });
 
 export async function changePassword(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await requireUser();
+  const me = await requireUser({ allowPasswordChange: true });
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
 
@@ -24,6 +25,10 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
   if (!user || !(await bcrypt.compare(parsed.data.current, user.passwordHash))) {
     return { error: "كلمة المرور الحالية غير صحيحة" };
   }
-  await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(parsed.data.next, 10) } });
+  await db.user.update({
+    where: { id: me.id },
+    data: { passwordHash: await bcrypt.hash(parsed.data.next, 10), mustChangePassword: false },
+  });
+  if (me.mustChangePassword) redirect("/");
   return { success: "تم تغيير كلمة المرور ✅" };
 }

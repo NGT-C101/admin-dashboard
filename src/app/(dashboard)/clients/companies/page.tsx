@@ -4,14 +4,14 @@ import ActionForm from "@/components/ui/ActionForm";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import SearchBox from "@/components/ui/SearchBox";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { createCompany } from "../actions";
 import { CompanyFields } from "../fields";
 
 export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  await requireSection("clients");
+  const user = await requireSection("clients");
   const { q } = await searchParams;
 
   const where: Prisma.CompanyWhereInput = q
@@ -36,7 +36,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
     <div className="space-y-6">
       <PageHeader title="الشركات" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "الشركات" }]} />
 
-      <Collapsible label="إضافة شركة جديدة">
+      {can(user, "clients", "EDIT") && <Collapsible label="إضافة شركة جديدة">
         {clients.length === 0 ? (
           <p className="text-sm text-neutral-600">
             يجب إضافة <Link href="/clients/directory" className="link">العميل</Link> أولاً، ثم إضافة شركاته.
@@ -46,7 +46,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
             <CompanyFields clients={clients} />
           </ActionForm>
         )}
-      </Collapsible>
+      </Collapsible>}
 
       <SearchBox placeholder="ابحث باسم الشركة أو السجل التجاري أو الرقم الموحد أو اسم العميل" defaultValue={q} />
 

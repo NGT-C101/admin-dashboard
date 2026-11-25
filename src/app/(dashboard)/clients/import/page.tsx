@@ -5,7 +5,7 @@ import { IMPORT_COLUMNS } from "@/lib/import-columns";
 import ImportForm from "./ImportForm";
 
 export default async function ImportPage() {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   return (
     <div className="space-y-6 max-w-4xl">
       <PageHeader title="استيراد العملاء من Excel" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "استيراد" }]} />

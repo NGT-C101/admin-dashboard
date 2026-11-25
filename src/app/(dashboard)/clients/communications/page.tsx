@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { INTERACTION_INCLUDE, InteractionForm, InteractionList } from "@/components/InteractionsSection";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { INTERACTION_TYPE_LABELS, endOfToday } from "@/lib/clients";
 import { db } from "@/lib/db";
 
@@ -34,9 +34,11 @@ export default async function CommunicationsPage({ searchParams }: { searchParam
   return (
     <div className="space-y-6">
       <PageHeader title="سجل التواصل والمتابعات" crumbs={[{ label: "العملاء", href: "/clients/directory" }, { label: "التواصل" }]} />
-      <Collapsible label="تسجيل تواصل جديد">
-        <InteractionForm clients={clients} users={users} />
-      </Collapsible>
+      {can(user, "clients", "EDIT") && (
+        <Collapsible label="تسجيل تواصل جديد">
+          <InteractionForm clients={clients} users={users} />
+        </Collapsible>
+      )}
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {views.map(([v, l]) => (
           <Link key={v} href={`?view=${v}${sp.type ? `&type=${sp.type}` : ""}`}

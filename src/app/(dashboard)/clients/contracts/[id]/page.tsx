@@ -7,7 +7,7 @@ import ActionForm from "@/components/ui/ActionForm";
 import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
-import { isManager, requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { CONTRACT_STATE_LABELS, CONTRACT_STATE_STYLES, CONTRACT_TYPE_LABELS, contractState, daysText, daysUntil } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatDate, formatSAR } from "@/lib/format";
@@ -51,7 +51,7 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
           {info.map(([l, v]) => <div key={l}><dt className="text-xs text-neutral-500">{l}</dt><dd className="font-medium">{v}</dd></div>)}
         </dl>
         {c.terms && <p className="text-sm text-neutral-700 whitespace-pre-line border-t border-neutral-100 pt-4">{c.terms}</p>}
-        {isManager(user) && (
+        {can(user, "clients", "MANAGE") && (
           <div className="flex flex-wrap gap-2 border-t border-neutral-100 pt-4">
             {c.endDate && !c.cancelledAt && (
               <form action={renewContract}>
@@ -66,12 +66,12 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </div>
-      <Collapsible label="تعديل العقد">
+      {can(user, "clients", "EDIT") && <Collapsible label="تعديل العقد">
         <ActionForm action={updateContract} submitLabel="حفظ التعديلات" resetOnSuccess={false}>
           <ContractFields contract={c} clients={clients} />
         </ActionForm>
-      </Collapsible>
-      <DocumentsSection ownerType="contract" ownerId={c.id} documents={c.documents} user={user} />
+      </Collapsible>}
+      <DocumentsSection ownerType="contract" ownerId={c.id} documents={c.documents} userId={user.id} canUpload={can(user, "clients", "EDIT")} canManage={can(user, "clients", "MANAGE")} />
     </div>
   );
 }

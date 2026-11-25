@@ -1,16 +1,20 @@
-// فتح مستند: للمستخدمين اللي ليهم صلاحية على قسم العملاء بس
-import { canAccess, getCurrentUser } from "@/lib/auth";
+// فتح مستند حسب صلاحية القسم اللي المستند تبعه
+import { can, getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { findSection } from "@/lib/nav";
 import { readStoredFile } from "@/lib/storage";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !canAccess(user, findSection("clients")!)) return new Response("غير مسموح", { status: 403 });
-
+  if (!user) return new Response("غير مسموح", { status: 403 });
   const { id } = await params;
   const doc = await db.document.findUnique({ where: { id } });
   if (!doc) return new Response("غير موجود", { status: 404 });
+
+  // مستند الموظف: لصاحب الإدارة الكاملة على الموظفين أو للموظف نفسه
+  const allowed = doc.employeeId
+    ? can(user, "employees", "MANAGE") || user.employeeId === doc.employeeId
+    : can(user, "clients", "VIEW");
+  if (!allowed) return new Response("غير مسموح", { status: 403 });
 
   const data = await readStoredFile(doc.storageKey).catch(() => null);
   if (!data) return new Response("الملف غير موجود على الخادم", { status: 404 });

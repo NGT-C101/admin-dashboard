@@ -12,7 +12,7 @@ const MAX_ROWS = 2000;
 export type ImportState = { error?: string; report?: ImportReport } | undefined;
 
 export async function importClients(_prev: ImportState, formData: FormData): Promise<ImportState> {
-  const user = await requireSection("clients");
+  const user = await requireSection("clients", "EDIT");
   const mode = formData.get("mode") === "commit" ? "commit" : "check";
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "يرجى اختيار ملف Excel" };

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { isManager, requireSection } from "@/lib/auth";
+import { requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type FormState, firstError, optionalMoney, optionalText } from "@/lib/forms";
 
@@ -36,7 +36,7 @@ function revalidateAll(id: string, clientId: string, companyId?: string | null) 
 }
 
 export async function createContract(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireSection("clients");
+  const user = await requireSection("clients", "EDIT");
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
   const err = await check(parsed.data);
@@ -46,7 +46,7 @@ export async function createContract(_prev: FormState, formData: FormData): Prom
 }
 
 export async function updateContract(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const id = String(formData.get("id"));
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
@@ -59,8 +59,7 @@ export async function updateContract(_prev: FormState, formData: FormData): Prom
 
 // تجديد: بيمد تاريخ النهاية مدة جديدة (شهر للباقة الشهرية، سنة للسنوي)
 export async function renewContract(formData: FormData) {
-  const user = await requireSection("clients");
-  if (!isManager(user)) return;
+  await requireSection("clients", "MANAGE");
   const c = await db.contract.findUnique({ where: { id: String(formData.get("id")) } });
   if (!c || !c.endDate || c.cancelledAt) return;
   const end = new Date(c.endDate);
@@ -71,8 +70,7 @@ export async function renewContract(formData: FormData) {
 }
 
 export async function toggleCancelContract(formData: FormData) {
-  const user = await requireSection("clients");
-  if (!isManager(user)) return;
+  await requireSection("clients", "MANAGE");
   const c = await db.contract.findUnique({ where: { id: String(formData.get("id")) } });
   if (!c) return;
   await db.contract.update({ where: { id: c.id }, data: { cancelledAt: c.cancelledAt ? null : new Date() } });

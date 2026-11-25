@@ -3,8 +3,7 @@ import { Download, Eye, FileText, Image as ImageIcon, Trash2 } from "lucide-reac
 import ActionForm from "@/components/ui/ActionForm";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { deleteDocument, uploadDocument } from "@/app/(dashboard)/clients/document-actions";
-import type { CurrentUser } from "@/lib/auth";
-import { DOC_TYPE_LABELS, MAX_DOCS_PER_CONTRACT, MAX_DOCS_PER_OWNER } from "@/lib/documents";
+import { DOC_TYPE_LABELS, MAX_DOCS_PER_CONTRACT, MAX_DOCS_PER_OWNER, docTypesFor } from "@/lib/documents";
 import { formatDate } from "@/lib/format";
 
 type Doc = Document & { uploadedBy: { name: string } };
@@ -19,15 +18,17 @@ export function expiryState(d?: Date | null) {
   return days < 0 ? "expired" : days <= 30 ? "soon" : "ok";
 }
 
-export default function DocumentsSection({ ownerType, ownerId, documents, user }: {
-  ownerType: "client" | "company" | "contract";
+export default function DocumentsSection({ ownerType, ownerId, documents, userId, canUpload, canManage }: {
+  ownerType: "client" | "company" | "contract" | "employee";
   ownerId: string;
   documents: Doc[];
-  user: CurrentUser;
+  userId: string;
+  canUpload: boolean;
+  canManage: boolean; // حذف أي مستند
 }) {
   const max = ownerType === "contract" ? MAX_DOCS_PER_CONTRACT : MAX_DOCS_PER_OWNER;
   const full = documents.length >= max;
-  const canDelete = (d: Doc) => user.role !== "EMPLOYEE" || d.uploadedById === user.id;
+  const canDelete = (d: Doc) => canManage || (ownerType !== "employee" && canUpload && d.uploadedById === userId);
 
   return (
     <section className="space-y-3">
@@ -91,7 +92,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
         </table>
       </div>
 
-      {full ? (
+      {!canUpload ? null : full ? (
         <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3">
           تم بلوغ الحد الأقصى ({max} مستندات). يرجى حذف مستند قديم لرفع مستند جديد.
         </p>
@@ -106,7 +107,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, user }
                 <Field label="نوع المستند *">
                   <select name="type" required defaultValue={ownerType === "contract" ? "CONTRACT" : ""} className="input">
                     <option value="" disabled>اختر النوع</option>
-                    {Object.entries(DOC_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    {docTypesFor(ownerType).map((v) => <option key={v} value={v}>{DOC_TYPE_LABELS[v]}</option>)}
                   </select>
                 </Field>
                 <Field label="وصف (اختياري)">

@@ -6,7 +6,7 @@ import { createContract } from "../../contract-actions";
 import ContractFields, { loadContractClients } from "../fields";
 
 export default async function NewContractPage({ searchParams }: { searchParams: Promise<{ clientId?: string; companyId?: string }> }) {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const { clientId, companyId } = await searchParams;
   const clients = await loadContractClients(db);
   return (

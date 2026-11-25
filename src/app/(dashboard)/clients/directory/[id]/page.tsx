@@ -11,7 +11,7 @@ import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import Tabs from "@/components/ui/Tabs";
-import { isManager, requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { getClientAlerts } from "@/lib/client-alerts";
 import { CLIENT_STATUS_LABELS, CLIENT_STATUS_STYLES, saudizationRate, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
@@ -58,8 +58,8 @@ export default async function ClientPage({ params, searchParams }: {
         actions={
           <>
             {wa && <a href={wa} target="_blank" rel="noopener" className="btn-secondary"><MessageCircle size={16} className="text-emerald-600" /> واتساب</a>}
-            <Link href={`/clients/contracts/new?clientId=${id}`} className="btn-secondary"><FileSignature size={16} /> عقد</Link>
-            <Link href={`/requests/all/new?clientId=${id}`} className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>
+            {can(user, "clients", "EDIT") && <Link href={`/clients/contracts/new?clientId=${id}`} className="btn-secondary"><FileSignature size={16} /> عقد</Link>}
+            {can(user, "requests", "EDIT") && <Link href={`/requests/all/new?clientId=${id}`} className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>}
           </>
         }
       />
@@ -74,7 +74,7 @@ export default async function ClientPage({ params, searchParams }: {
         {client.accountManager && <span className="text-sm text-neutral-600">المسؤول: <b>{client.accountManager.name}</b></span>}
         <div className="mr-auto flex gap-2">
           <Link href={`/clients/directory/${id}/report`} className="btn-secondary !py-1.5"><FileBarChart size={15} /> التقرير الشهري</Link>
-          {isManager(user) && (
+          {can(user, "clients", "MANAGE") && (
             <form action={toggleArchiveClient}>
               <input type="hidden" name="id" value={id} />
               <button className="btn-secondary !py-1.5">
@@ -135,11 +135,13 @@ export default async function ClientPage({ params, searchParams }: {
           </dl>
           {client!.notes && <p className="mt-4 text-sm text-neutral-600 whitespace-pre-line border-t border-neutral-100 pt-4">{client!.notes}</p>}
         </div>
-        <Collapsible label="تعديل بيانات العميل">
-          <ActionForm action={updateClient} submitLabel="حفظ التعديلات" resetOnSuccess={false}>
-            <ClientFields client={client!} users={users} />
-          </ActionForm>
-        </Collapsible>
+        {can(user, "clients", "EDIT") && (
+          <Collapsible label="تعديل بيانات العميل">
+            <ActionForm action={updateClient} submitLabel="حفظ التعديلات" resetOnSuccess={false}>
+              <ClientFields client={client!} users={users} />
+            </ActionForm>
+          </Collapsible>
+        )}
         <h2 className="text-lg font-semibold">تنبيهات العميل</h2>
         <ClientAlertsView alerts={alerts} hideClient />
       </div>
@@ -171,9 +173,11 @@ export default async function ClientPage({ params, searchParams }: {
             </tbody>
           </table>
         </div>
-        <Collapsible label="إضافة شركة للعميل">
-          <ActionForm action={createCompany} submitLabel="حفظ الشركة"><CompanyFields clientId={id} /></ActionForm>
-        </Collapsible>
+        {can(user, "clients", "EDIT") && (
+          <Collapsible label="إضافة شركة للعميل">
+            <ActionForm action={createCompany} submitLabel="حفظ الشركة"><CompanyFields clientId={id} /></ActionForm>
+          </Collapsible>
+        )}
       </div>
     );
   }
@@ -182,7 +186,7 @@ export default async function ClientPage({ params, searchParams }: {
     const documents = await db.document.findMany({ where: { clientId: id }, orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } });
     return (
       <div className="space-y-3">
-        <DocumentsSection ownerType="client" ownerId={id} documents={documents} user={user} />
+        <DocumentsSection ownerType="client" ownerId={id} documents={documents} userId={user.id} canUpload={can(user, "clients", "EDIT")} canManage={can(user, "clients", "MANAGE")} />
         {client!.companies.length > 0 && (
           <p className="text-sm text-neutral-600">
             💡 تُحفظ مستندات الشركات (السجل، الرخص، الشهادات) في صفحة كل شركة:{" "}
@@ -199,7 +203,7 @@ export default async function ClientPage({ params, searchParams }: {
     const contracts = await db.contract.findMany({ where: { clientId: id }, include: CONTRACT_INCLUDE, orderBy: { startDate: "desc" } });
     return (
       <div className="space-y-4">
-        <Link href={`/clients/contracts/new?clientId=${id}`} className="btn-primary"><Plus size={16} /> عقد جديد</Link>
+        {can(user, "clients", "EDIT") && <Link href={`/clients/contracts/new?clientId=${id}`} className="btn-primary"><Plus size={16} /> عقد جديد</Link>}
         <ContractsTable contracts={contracts} />
       </div>
     );
@@ -209,9 +213,11 @@ export default async function ClientPage({ params, searchParams }: {
     const items = await db.interaction.findMany({ where: { clientId: id }, include: INTERACTION_INCLUDE, orderBy: { occurredAt: "desc" } });
     return (
       <div className="space-y-4">
-        <Collapsible label="تسجيل تواصل جديد" defaultOpen={items.length === 0}>
-          <InteractionForm clientId={id} companies={client!.companies} users={users} />
-        </Collapsible>
+        {can(user, "clients", "EDIT") && (
+          <Collapsible label="تسجيل تواصل جديد" defaultOpen={items.length === 0}>
+            <InteractionForm clientId={id} companies={client!.companies} users={users} />
+          </Collapsible>
+        )}
         <InteractionList items={items} user={user} />
       </div>
     );

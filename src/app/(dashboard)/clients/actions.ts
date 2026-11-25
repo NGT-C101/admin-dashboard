@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { isManager, requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { type FormState, firstError, optionalDate, optionalInt, optionalText, tenDigits, uniqueError } from "@/lib/forms";
 
@@ -61,7 +61,7 @@ const quickCompanySchema = z
   .refine((d) => !d.companyCr || d.companyName, { message: "يرجى إدخال اسم الشركة مع السجل التجاري" });
 
 export async function createClient(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const raw = Object.fromEntries(formData);
   const parsed = clientSchema.safeParse(raw);
   if (!parsed.success) return { error: firstError(parsed.error) };
@@ -84,7 +84,7 @@ export async function createClient(_prev: FormState, formData: FormData): Promis
 }
 
 export async function updateClient(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const id = String(formData.get("id"));
   const parsed = clientSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
@@ -98,7 +98,7 @@ export async function updateClient(_prev: FormState, formData: FormData): Promis
 }
 
 export async function createCompany(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const parsed = companySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
   let id: string;
@@ -111,7 +111,7 @@ export async function createCompany(_prev: FormState, formData: FormData): Promi
 }
 
 export async function updateCompany(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSection("clients");
+  await requireSection("clients", "EDIT");
   const id = String(formData.get("id"));
   const parsed = companySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
@@ -126,8 +126,7 @@ export async function updateCompany(_prev: FormState, formData: FormData): Promi
 
 // أرشفة العميل (للمدير ومدير القسم): بيختفي من القوايم والتنبيهات من غير ما يتمسح
 export async function toggleArchiveClient(formData: FormData) {
-  const user = await requireSection("clients");
-  if (!isManager(user)) return;
+  const user = await requireSection("clients", "MANAGE");
   const id = String(formData.get("id"));
   const c = await db.client.findUnique({ where: { id } });
   if (!c) return;

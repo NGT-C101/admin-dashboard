@@ -4,7 +4,7 @@ import { Building2, CalendarClock, Check, Mail, MapPin, MessageCircle, Phone, Tr
 import ActionForm from "@/components/ui/ActionForm";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { createInteraction, deleteInteraction, toggleFollowUp } from "@/app/(dashboard)/clients/interaction-actions";
-import type { CurrentUser } from "@/lib/auth";
+import { can, type CurrentUser } from "@/lib/auth";
 import { INTERACTION_TYPE_LABELS, endOfToday } from "@/lib/clients";
 import { formatDateTime } from "@/lib/format";
 
@@ -122,7 +122,7 @@ export function InteractionList({ items, user, showClient }: { items: Interactio
                   </button>
                 </form>
               )}
-              {(user.role !== "EMPLOYEE" || it.createdById === user.id) && (
+              {(can(user, "clients", "MANAGE") || it.createdById === user.id) && (
                 <form action={deleteInteraction}>
                   <input type="hidden" name="id" value={it.id} />
                   <button className="text-rose-600 text-xs flex items-center gap-1 hover:underline"><Trash2 size={13} /> حذف</button>

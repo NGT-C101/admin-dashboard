@@ -47,6 +47,30 @@ async function main() {
     console.log("✔ مراحل المعاملات");
   }
   await syncCatalog();
+  await migratePermissions();
+}
+
+// تحويل المستخدمين القدام لنظام الصلاحيات الجديد (مرة واحدة):
+// مدير القسم ← إدارة كاملة على قسمه، الموظف ← إضافة وتعديل
+// وقسما العملاء والمعاملات كانوا مفتوحين لبعض، فبياخدوا "إضافة وتعديل" على التاني
+async function migratePermissions() {
+  const KEY = "permissions-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  const users = await prisma.user.findMany({ where: { role: { not: "ADMIN" }, department: { not: null } } });
+  for (const u of users) {
+    const perms = new Map<string, "VIEW" | "EDIT" | "MANAGE">();
+    perms.set(u.department!, u.role === "MANAGER" ? "MANAGE" : "EDIT");
+    if (u.department === "CLIENTS") perms.set("REQUESTS", perms.get("REQUESTS") ?? "EDIT");
+    if (u.department === "REQUESTS") perms.set("CLIENTS", perms.get("CLIENTS") ?? "EDIT");
+    for (const [section, level] of perms) {
+      await prisma.permission.upsert({
+        where: { userId_section: { userId: u.id, section: section as never } },
+        update: {}, create: { userId: u.id, section: section as never, level },
+      });
+    }
+  }
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log(`✔ تحويل صلاحيات ${users.length} مستخدم للنظام الجديد`);
 }
 
 // تحميل كتالوج الخدمات مرة واحدة (آمن على سيرفر فيه بيانات):

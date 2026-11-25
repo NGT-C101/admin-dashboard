@@ -4,7 +4,7 @@ import { FileDown, Plus } from "lucide-react";
 import ContractsTable, { CONTRACT_INCLUDE } from "@/components/ContractsTable";
 import PageHeader from "@/components/ui/PageHeader";
 import SearchBox from "@/components/ui/SearchBox";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { CONTRACT_TYPE_LABELS, inDays } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatSAR } from "@/lib/format";
@@ -12,7 +12,7 @@ import { formatSAR } from "@/lib/format";
 type SP = { q?: string; status?: string; type?: string };
 
 export default async function ContractsPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireSection("clients");
+  const user = await requireSection("clients");
   const sp = await searchParams;
   const status = sp.status ?? "active";
   const now = new Date();
@@ -50,7 +50,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
           {/* تحميل ملف: لازم رابط عادي مش تنقّل بين الصفحات */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/api/export/contracts" className="btn-secondary"><FileDown size={16} /> تصدير Excel</a>
-          <Link href="/clients/contracts/new" className="btn-primary"><Plus size={16} /> عقد جديد</Link>
+          {can(user, "clients", "EDIT") && <Link href="/clients/contracts/new" className="btn-primary"><Plus size={16} /> عقد جديد</Link>}
         </>} />
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((s) => {

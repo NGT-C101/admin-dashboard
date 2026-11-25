@@ -9,7 +9,7 @@ import ActionForm from "@/components/ui/ActionForm";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import Tabs from "@/components/ui/Tabs";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { daysText, daysUntil, saudizationRate } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/format";
@@ -45,8 +45,8 @@ export default async function CompanyPage({ params, searchParams }: {
         ]}
         actions={
           <>
-            <Link href={`/clients/contracts/new?clientId=${company.clientId}&companyId=${id}`} className="btn-secondary"><FileSignature size={16} /> عقد</Link>
-            <Link href={`/requests/all/new?companyId=${id}`} className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>
+            {can(user, "clients", "EDIT") && <Link href={`/clients/contracts/new?clientId=${company.clientId}&companyId=${id}`} className="btn-secondary"><FileSignature size={16} /> عقد</Link>}
+            {can(user, "requests", "EDIT") && <Link href={`/requests/all/new?companyId=${id}`} className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>}
           </>
         }
       />
@@ -111,25 +111,25 @@ export default async function CompanyPage({ params, searchParams }: {
           </div>
         ))}
         {c.notes && <div className="card p-5 text-sm text-neutral-600 whitespace-pre-line">{c.notes}</div>}
-        <Collapsible label="تعديل بيانات الشركة">
+        {can(user, "clients", "EDIT") && <Collapsible label="تعديل بيانات الشركة">
           <ActionForm action={updateCompany} submitLabel="حفظ التعديلات" resetOnSuccess={false}>
             <CompanyFields company={c} clients={clients} />
           </ActionForm>
-        </Collapsible>
+        </Collapsible>}
       </div>
     );
   }
 
   async function Documents() {
     const documents = await db.document.findMany({ where: { companyId: id }, orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } });
-    return <DocumentsSection ownerType="company" ownerId={id} documents={documents} user={user} />;
+    return <DocumentsSection ownerType="company" ownerId={id} documents={documents} userId={user.id} canUpload={can(user, "clients", "EDIT")} canManage={can(user, "clients", "MANAGE")} />;
   }
 
   async function Contracts() {
     const contracts = await db.contract.findMany({ where: { companyId: id }, include: CONTRACT_INCLUDE, orderBy: { startDate: "desc" } });
     return (
       <div className="space-y-4">
-        <Link href={`/clients/contracts/new?clientId=${company!.clientId}&companyId=${id}`} className="btn-primary"><Plus size={16} /> عقد جديد</Link>
+        {can(user, "clients", "EDIT") && <Link href={`/clients/contracts/new?clientId=${company!.clientId}&companyId=${id}`} className="btn-primary"><Plus size={16} /> عقد جديد</Link>}
         <ContractsTable contracts={contracts} />
       </div>
     );
@@ -142,9 +142,11 @@ export default async function CompanyPage({ params, searchParams }: {
     ]);
     return (
       <div className="space-y-4">
-        <Collapsible label="تسجيل تواصل جديد" defaultOpen={items.length === 0}>
-          <InteractionForm clientId={company!.clientId} companies={[{ id, name: company!.name }]} users={users} />
-        </Collapsible>
+        {can(user, "clients", "EDIT") && (
+          <Collapsible label="تسجيل تواصل جديد" defaultOpen={items.length === 0}>
+            <InteractionForm clientId={company!.clientId} companies={[{ id, name: company!.name }]} users={users} />
+          </Collapsible>
+        )}
         <InteractionList items={items} user={user} />
       </div>
     );

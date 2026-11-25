@@ -15,7 +15,8 @@ export const SECTIONS: Section[] = [
   {
     slug: "employees", title: "الموظفين", department: "EMPLOYEES", icon: "users",
     subs: [
-      { slug: "profiles", title: "بيانات الموظفين" },
+      { slug: "profiles", title: "سجل الموظفين" },
+      { slug: "org-chart", title: "الهيكل التنظيمي" },
       { slug: "attendance", title: "الحضور والانصراف" },
       { slug: "leaves", title: "الإجازات والأذونات" },
       { slug: "performance", title: "تقييم الأداء" },
@@ -70,7 +71,6 @@ export const SECTIONS: Section[] = [
   },
 ];
 
-export const ROLE_LABELS = { ADMIN: "مدير النظام", MANAGER: "مدير قسم", EMPLOYEE: "موظف" } as const;
 
 export const DEPARTMENT_LABELS: Record<Department, string> = Object.fromEntries(
   SECTIONS.map((s) => [s.department, s.title]),

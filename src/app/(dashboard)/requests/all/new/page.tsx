@@ -9,7 +9,7 @@ import TransactionFields, { loadTxOptions } from "../../fields";
 export default async function NewTransactionPage({
   searchParams,
 }: { searchParams: Promise<{ companyId?: string; clientId?: string }> }) {
-  await requireSection("requests");
+  await requireSection("requests", "EDIT");
   const { companyId, clientId } = await searchParams;
   const options = await loadTxOptions(db, clientId);
 

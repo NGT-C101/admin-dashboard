@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SearchBox from "@/components/ui/SearchBox";
 import TransactionsTable, { TX_INCLUDE } from "@/components/TransactionsTable";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 type SP = { q?: string; stage?: string; entity?: string; service?: string; assignee?: string; status?: string };
@@ -56,7 +56,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       <PageHeader
         title="المعاملات"
         crumbs={[{ label: "المعاملات" }]}
-        actions={<Link href="/requests/all/new" className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>}
+        actions={can(user, "requests", "EDIT") && <Link href="/requests/all/new" className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>}
       />
 
       <SearchBox placeholder="رقم المعاملة، العنوان، الشركة، العميل، السجل، رقم المنصة" defaultValue={sp.q}>

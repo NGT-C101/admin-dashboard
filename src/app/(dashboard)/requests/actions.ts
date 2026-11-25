@@ -21,7 +21,7 @@ const txSchema = z.object({
 });
 
 export async function createTransaction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireSection("requests");
+  const user = await requireSection("requests", "EDIT");
   const parsed = txSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
 
@@ -40,7 +40,7 @@ export async function createTransaction(_prev: FormState, formData: FormData): P
 }
 
 export async function updateTransaction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSection("requests");
+  await requireSection("requests", "EDIT");
   const id = String(formData.get("id"));
   const parsed = txSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
@@ -51,7 +51,7 @@ export async function updateTransaction(_prev: FormState, formData: FormData): P
 
 // تغيير المرحلة و/أو إضافة ملاحظة في سجل المتابعة
 export async function addTransactionEvent(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireSection("requests");
+  const user = await requireSection("requests", "EDIT");
   const id = String(formData.get("id"));
   const stageId = String(formData.get("stageId") ?? "");
   const note = String(formData.get("note") ?? "").trim();

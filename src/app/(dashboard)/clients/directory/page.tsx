@@ -6,7 +6,7 @@ import Badge from "@/components/ui/Badge";
 import Collapsible from "@/components/ui/Collapsible";
 import PageHeader from "@/components/ui/PageHeader";
 import SearchBox from "@/components/ui/SearchBox";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { CLIENT_STATUS_LABELS, CLIENT_STATUS_STYLES, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/format";
@@ -62,7 +62,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           {/* تحميل ملف: لازم رابط عادي مش تنقّل بين الصفحات */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/api/export/clients" className="btn-secondary"><FileDown size={16} /> تصدير Excel</a>
-          <Link href="/clients/import" className="btn-secondary"><FileUp size={16} /> استيراد</Link>
+          {can(user, "clients", "EDIT") && <Link href="/clients/import" className="btn-secondary"><FileUp size={16} /> استيراد</Link>}
         </>
       } />
 
@@ -75,11 +75,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         ))}
       </div>
 
-      <Collapsible label="إضافة عميل جديد">
-        <ActionForm action={createClient} submitLabel="حفظ العميل">
-          <ClientFields users={users} />
-        </ActionForm>
-      </Collapsible>
+      {can(user, "clients", "EDIT") && (
+        <Collapsible label="إضافة عميل جديد">
+          <ActionForm action={createClient} submitLabel="حفظ العميل">
+            <ClientFields users={users} />
+          </ActionForm>
+        </Collapsible>
+      )}
 
       <SearchBox placeholder="الاسم، الهوية، الجوال، المدينة، الشركة، السجل، الرقم الموحد أو الضريبي" defaultValue={sp.q}>
         {sp.status && <input type="hidden" name="status" value={sp.status} />}

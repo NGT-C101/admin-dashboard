@@ -6,14 +6,14 @@ import { Field } from "@/components/ui/Field";
 import PageHeader from "@/components/ui/PageHeader";
 import StageBadge from "@/components/ui/StageBadge";
 import { isOverdue } from "@/components/TransactionsTable";
-import { requireSection } from "@/lib/auth";
+import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatSAR, txNumber } from "@/lib/format";
 import { addTransactionEvent, updateTransaction } from "../../actions";
 import TransactionFields, { loadTxOptions } from "../../fields";
 
 export default async function TransactionPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSection("requests");
+  const user = await requireSection("requests");
   const { id } = await params;
   const tx = await db.transaction.findUnique({
     where: { id },
@@ -70,15 +70,15 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
             {tx.description && <p className="mt-4 text-sm text-neutral-600 whitespace-pre-line border-t border-neutral-100 pt-4">{tx.description}</p>}
           </div>
 
-          <Collapsible label="تعديل بيانات المعاملة">
+          {can(user, "requests", "EDIT") && <Collapsible label="تعديل بيانات المعاملة">
             <ActionForm action={updateTransaction} submitLabel="حفظ التعديلات" resetOnSuccess={false}>
               <TransactionFields tx={tx} options={options} />
             </ActionForm>
-          </Collapsible>
+          </Collapsible>}
         </div>
 
         <div className="space-y-6">
-          <div className="card p-5">
+          {can(user, "requests", "EDIT") && <div className="card p-5">
             <h2 className="font-semibold mb-3">تحديث المعاملة</h2>
             <ActionForm action={addTransactionEvent} submitLabel="حفظ التحديث">
               <input type="hidden" name="id" value={tx.id} />
@@ -91,7 +91,7 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
                 <textarea name="note" rows={3} placeholder="مثال: تم رفع الطلب على المنصة وفي انتظار الرد" className="input" />
               </Field>
             </ActionForm>
-          </div>
+          </div>}
 
           <div className="card p-5">
             <h2 className="font-semibold mb-4">سجل المتابعة</h2>
