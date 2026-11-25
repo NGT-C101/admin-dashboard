@@ -1,4 +1,5 @@
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { KeyRound, LogOut } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { canAccess, requireUser } from "@/lib/auth";
 import { DEPARTMENT_LABELS, ROLE_LABELS, SECTIONS } from "@/lib/nav";
@@ -20,6 +21,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {user.department && ` · ${DEPARTMENT_LABELS[user.department]}`}
             </div>
           </div>
+          <Link href="/account" className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
+            <KeyRound size={16} /> حسابي
+          </Link>
           <form action={logout}>
             <button className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
               <LogOut size={16} /> خروج

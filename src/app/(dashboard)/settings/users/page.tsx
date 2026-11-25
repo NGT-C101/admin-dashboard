@@ -1,7 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DEPARTMENT_LABELS, ROLE_LABELS } from "@/lib/nav";
-import { toggleUserActive } from "./actions";
+import ActionForm from "@/components/ui/ActionForm";
+import { resetUserPassword, toggleUserActive } from "./actions";
 import UserForm from "./UserForm";
 
 export default async function UsersPage() {
@@ -22,6 +23,7 @@ export default async function UsersPage() {
               <th className="text-right font-medium p-3">الدور</th>
               <th className="text-right font-medium p-3">القسم</th>
               <th className="text-right font-medium p-3">الحالة</th>
+              <th className="text-right font-medium p-3">كلمة مرور جديدة</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -36,6 +38,14 @@ export default async function UsersPage() {
                   <span className={`rounded-full px-2 py-0.5 text-xs ${u.active ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>
                     {u.active ? "نشط" : "موقوف"}
                   </span>
+                </td>
+                <td className="p-3">
+                  {u.id !== me.id && (
+                    <ActionForm action={resetUserPassword} submitLabel="حفظ" className="flex items-center gap-2">
+                      <input type="hidden" name="id" value={u.id} />
+                      <input name="password" type="password" minLength={8} required dir="ltr" autoComplete="new-password" className="input w-36" />
+                    </ActionForm>
+                  )}
                 </td>
                 <td className="p-3 text-left">
                   {u.id !== me.id && (

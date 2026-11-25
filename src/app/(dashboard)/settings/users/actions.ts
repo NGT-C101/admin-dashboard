@@ -47,3 +47,13 @@ export async function toggleUserActive(formData: FormData) {
   await db.user.update({ where: { id }, data: { active: !user.active } });
   revalidatePath("/settings/users");
 }
+
+// المدير يحط كلمة مرور جديدة لموظف نسي كلمة المرور
+export async function resetUserPassword(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) return { error: "8 حروف على الأقل" };
+  await db.user.update({ where: { id }, data: { passwordHash: await bcrypt.hash(password, 10) } });
+  return { success: "تم ✅" };
+}
