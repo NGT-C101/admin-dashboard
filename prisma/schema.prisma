@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// أدوار المستخدمين
+enum Role {
+  ADMIN    // مدير النظام: كل الصلاحيات
+  MANAGER  // مدير قسم: يتحكم في قسمه
+  EMPLOYEE // موظف
+}
+
+// أقسام الشركة
+enum Department {
+  EMPLOYEES     // الموظفين
+  CLIENTS       // العملاء
+  REQUESTS      // الطلبات
+  ADMIN_AFFAIRS // الشؤون الإدارية
+  ACCOUNTS      // الحسابات
+  PR            // العلاقات العامة
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         Role        @default(EMPLOYEE)
+  department   Department?
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}

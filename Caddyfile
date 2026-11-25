@@ -1,0 +1,4 @@
+# Caddy بيعمل شهادة HTTPS تلقائياً للدومين
+{$DOMAIN} {
+	reverse_proxy app:3000
+}
