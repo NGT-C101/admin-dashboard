@@ -258,6 +258,11 @@ admin-dashboard/
 - **Login:** photo background replaced by a navy gradient with gold/blue radial light; the illustration (with a blurred gold glow) replaces the duplicated silver logo above «مرحباً بك في منصة NGT»; on mobile it sits small at the top of the login card.
 - **Home banner:** same layout the owner prefers (text + buttons + welcome glass box); the photo is replaced by a navy gradient with a gold glow, and the illustration sits between the text and the welcome box on `xl` screens (≥1280px) and above the text on narrower screens.
 
+### 2.14 Server disk (session 3, 2026-11-26)
+- Owner checked the server: disk 75 GB, **58 GB used (80%)**, but uploads only 4.3 MB and backups 56 MB. `docker system df` showed **Docker build cache = 55 GB (199 entries, 53 GB reclaimable)** accumulated by every `update.sh` (`docker compose up -d --build`); images 2.2 GB, volumes 68 MB. The owner ran `docker builder prune -af` (safe: never touches volumes/DB).
+- `scripts/update.sh` now runs `docker builder prune -af --filter "until=24h" || true` after each update and prints disk usage at the end. **Never** run `docker system prune --volumes` or `docker volume prune` on the server (db-data volume).
+- Storage outlook: data and files are tiny; object storage is not needed yet. Priority instead: **off-server backups** (backups still live on the same server) and, medium term, moving server + DB + files to a Saudi region (PDPL) — then use that provider's object storage for uploads (`lib/storage.ts` is the single place to change).
+
 ### 2.4 Employees / HR (الموظفين)
 - **Employee profile** (EMP-0001): personal, identity (ID/iqama + expiry, passport + expiry), contact & emergency, job (title, department, direct manager, employment type, hire date, probation end, contract end, work location), salary (basic/housing/transport/other, bank, IBAN validated, GOSI flag), status (ACTIVE/ON_LEAVE/SUSPENDED/TERMINATED), termination (date + reason → **login auto-disabled**), reinstate, leave carryover. Profile header band is a navy gradient.
 - Create employee **with a login account + permission matrix in the same form** (admin only); or grant login later from the profile "access" tab.
