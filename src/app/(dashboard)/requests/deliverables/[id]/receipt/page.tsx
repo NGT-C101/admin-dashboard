@@ -6,13 +6,14 @@ import { requireSection } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";
 import { getCompanyProfile } from "@/lib/company";
 import { db } from "@/lib/db";
+import { canSeeTx } from "@/lib/transactions";
 import { CHANNEL_LABELS, deliveryNumber, itemLines } from "@/lib/deliveries";
 import { DOC_TYPE_LABELS } from "@/lib/documents";
 import { formatDate, formatDateTime, txNumber } from "@/lib/format";
 
 // إيصال تسليم المخرجات بصيغة A4 للطباعة والتوقيع
 export default async function DeliveryReceiptPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSection("requests");
+  const user = await requireSection("requests");
   const { id } = await params;
   const [d, p] = await Promise.all([
     db.delivery.findUnique({
@@ -20,7 +21,7 @@ export default async function DeliveryReceiptPage({ params }: { params: Promise<
       include: {
         transaction: {
           select: {
-            id: true, number: true, title: true, platformRef: true,
+            id: true, number: true, title: true, platformRef: true, confidential: true, assigneeId: true,
             serviceType: { select: { name: true } }, govEntity: { select: { name: true } },
             company: { select: { name: true, crNumber: true, unifiedNumber: true, client: { select: { name: true, phone: true } } } },
           },
@@ -31,7 +32,7 @@ export default async function DeliveryReceiptPage({ params }: { params: Promise<
     }),
     getCompanyProfile(),
   ]);
-  if (!d) notFound();
+  if (!d || !canSeeTx(user, d.transaction)) notFound();
   const t = d.transaction;
   const sellerName = p.legalName || BRAND.company;
   const rows = [

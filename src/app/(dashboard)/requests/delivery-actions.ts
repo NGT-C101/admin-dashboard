@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { CHANNEL_LABELS, deliveryNumber } from "@/lib/deliveries";
 import { type FormState, firstError, optionalText } from "@/lib/forms";
 import { parseDateKey, riyadhDateTime } from "@/lib/time";
+import { canSeeTx } from "@/lib/transactions";
 
 const schema = z.object({
   transactionId: z.string().min(1),
@@ -34,8 +35,8 @@ export async function recordDelivery(_prev: FormState, formData: FormData): Prom
   if (!parsed.success) return { error: firstError(parsed.error) };
   const { deliveredAt: at, transactionId, ...data } = parsed.data;
 
-  const tx = await db.transaction.findUnique({ where: { id: transactionId }, select: { id: true, stage: { select: { kind: true } } } });
-  if (!tx) return { error: "المعاملة غير موجودة" };
+  const tx = await db.transaction.findUnique({ where: { id: transactionId }, select: { id: true, confidential: true, assigneeId: true, stage: { select: { kind: true } } } });
+  if (!tx || !canSeeTx(user, tx)) return { error: "المعاملة غير موجودة" };
   // إغلاق المعاملة بأول مرحلة مكتملة (مثل: مكتملة ومسلّمة) عند اختيار ذلك
   const doneStage = formData.get("complete") === "on" && tx.stage.kind !== "DONE"
     ? await db.stage.findFirst({ where: { active: true, kind: "DONE" }, orderBy: { order: "asc" } })
@@ -62,7 +63,7 @@ export async function recordDelivery(_prev: FormState, formData: FormData): Prom
     if (doneStage) await t.transaction.update({ where: { id: transactionId }, data: { stageId: doneStage.id } });
     await t.transactionEvent.create({
       data: {
-        transactionId, userId: user.id, stageId: doneStage?.id ?? null,
+        transactionId, userId: user.id, stageId: doneStage?.id ?? null, type: "DELIVERY",
         note: `تم تسليم المخرجات للعميل (${deliveryNumber(d.number)}) — ${CHANNEL_LABELS[data.channel]} — المستلم: ${data.recipientName}`
           + (data.note ? `\nرسالة للعميل: ${data.note}` : ""),
       },

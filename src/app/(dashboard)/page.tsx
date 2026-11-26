@@ -18,6 +18,7 @@ import { formatDate, formatDateLong, txNumber } from "@/lib/format";
 import { countText } from "@/lib/hr";
 import { pendingForWhere } from "@/lib/leave";
 import { awaitingDeliveryWhere } from "@/lib/deliveries";
+import { awaitingAcceptanceWhere, decidableExtensionsWhere, visibleTxWhere } from "@/lib/transactions";
 import { SECTIONS, findSection } from "@/lib/nav";
 
 // لون مربع الأيقونة ثابت لكل مؤشر (اللون يتبع المؤشر لا ترتيبه)
@@ -52,7 +53,7 @@ export default async function HomePage() {
   const since = monthBounds(months[0]).start;
 
   const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps, staff, hrAlerts, onLeave, me,
-    pendingApprovals, myUpcoming, draftPayroll, recent, doneTx, cancelledTx, createdRows, doneEvents, awaitingDelivery] = await Promise.all([
+    pendingApprovals, myUpcoming, draftPayroll, recent, doneTx, cancelledTx, createdRows, doneEvents, awaitingDelivery, toAccept, toDecide] = await Promise.all([
     db.client.count({ where: { archivedAt: null } }),
     db.company.count({ where: { client: { archivedAt: null } } }),
     db.transaction.count({ where: open }),
@@ -69,6 +70,7 @@ export default async function HomePage() {
       ? db.transaction.findMany({
           where: { ...open, assigneeId: user.id },
           orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { number: "asc" }],
+          // معاملاتي: تظهر حتى لو كانت سرية لأنني المسؤول عنها
           take: 5,
           select: { id: true, number: true, title: true, dueDate: true, company: { select: { name: true } } },
         })
@@ -76,6 +78,7 @@ export default async function HomePage() {
     manageHr ? db.payrollRun.findFirst({ where: { status: "DRAFT" }, orderBy: { month: "desc" }, select: { month: true } }) : null,
     seeRequests
       ? db.transaction.findMany({
+          where: visibleTxWhere(user),
           orderBy: { updatedAt: "desc" },
           take: 5,
           select: {
@@ -91,6 +94,8 @@ export default async function HomePage() {
       ? db.transactionEvent.findMany({ where: { createdAt: { gte: since }, stage: { kind: "DONE" } }, select: { transactionId: true, createdAt: true } })
       : [],
     seeRequests ? db.transaction.count({ where: awaitingDeliveryWhere }) : 0,
+    seeRequests ? db.transaction.count({ where: awaitingAcceptanceWhere(user.id) }) : 0,
+    seeRequests ? db.extensionRequest.count({ where: decidableExtensionsWhere(user) }) : 0,
   ]);
 
   const allStats = [
@@ -111,6 +116,8 @@ export default async function HomePage() {
   // الأمور التي تحتاج إجراء — كل بند يظهر لصاحب الصلاحية وعند وجود عدد فقط
   const actions = [
     seeRequests && overdueTx > 0 && { tone: "rose", title: `${countText(overdueTx, ["معاملة واحدة متأخرة", "معاملتان متأخرتان", "معاملات متأخرة", "معاملة متأخرة"])} عن موعدها`, href: "/requests/all?status=overdue" },
+    seeRequests && toAccept > 0 && { tone: "amber", title: `${countText(toAccept, ["معاملة واحدة مسندة", "معاملتان مسندتان", "معاملات مسندة", "معاملة مسندة"])} إليك بانتظار استلامك بتعهد`, href: "/requests/all?status=accept" },
+    seeRequests && toDecide > 0 && { tone: "sky", title: `${countText(toDecide, ["طلب تأجيل واحد", "طلبا تأجيل", "طلبات تأجيل", "طلب تأجيل"])} بانتظار قرارك`, href: "/requests/all?status=extension" },
     seeRequests && awaitingDelivery > 0 && { tone: "amber", title: `${countText(awaitingDelivery, ["معاملة واحدة", "معاملتان", "معاملات", "معاملة"])} بانتظار تسليم المخرجات للعميل`, href: "/requests/deliverables" },
     pendingApprovals > 0 && { tone: "amber", title: `${countText(pendingApprovals, ["طلب واحد", "طلبان", "طلبات", "طلباً"])} بانتظار موافقتك`, href: "/employees/leaves" },
     draftPayroll && { tone: "amber", title: `مسير رواتب ${draftPayroll.month} بانتظار الاعتماد`, href: "/employees/payroll" },

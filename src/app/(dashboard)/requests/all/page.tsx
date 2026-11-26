@@ -6,15 +6,16 @@ import SearchBox from "@/components/ui/SearchBox";
 import TransactionsTable, { TX_INCLUDE } from "@/components/TransactionsTable";
 import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { PRIORITY_LABELS, awaitingAcceptanceWhere, decidableExtensionsWhere, visibleTxWhere } from "@/lib/transactions";
 
-type SP = { q?: string; stage?: string; entity?: string; service?: string; assignee?: string; status?: string };
+type SP = { q?: string; stage?: string; entity?: string; service?: string; assignee?: string; status?: string; priority?: string };
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const user = await requireSection("requests");
   const sp = await searchParams;
   const status = sp.status ?? "open";
 
-  const and: Prisma.TransactionWhereInput[] = [];
+  const and: Prisma.TransactionWhereInput[] = [visibleTxWhere(user)];
   if (sp.q) {
     const n = Number(sp.q.replace(/\D/g, ""));
     and.push({ OR: [
@@ -34,6 +35,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   if (status === "open") and.push({ stage: { kind: "OPEN" } });
   if (status === "closed") and.push({ stage: { kind: { not: "OPEN" } } });
   if (status === "overdue") and.push({ stage: { kind: "OPEN" }, dueDate: { lt: new Date() } });
+  if (status === "accept") and.push(awaitingAcceptanceWhere(user.id));
+  if (status === "extension") and.push({ extensionRequests: { some: decidableExtensionsWhere(user) } });
+  if (sp.priority === "NORMAL" || sp.priority === "HIGH" || sp.priority === "URGENT") and.push({ priority: sp.priority });
 
   const [transactions, stages, entities, services, users] = await Promise.all([
     db.transaction.findMany({ where: { AND: and }, include: TX_INCLUDE, orderBy: { createdAt: "desc" }, take: 300 }),
@@ -63,6 +67,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         <select name="status" defaultValue={status} className="input w-auto">
           <option value="open">الجارية</option>
           <option value="overdue">المتأخرة</option>
+          <option value="accept">بانتظار استلامي</option>
+          <option value="extension">طلبات تأجيل بانتظار قراري</option>
           <option value="closed">المنتهية / الملغاة</option>
           <option value="all">الكل</option>
         </select>
@@ -77,6 +83,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           ))}
         </select>
         {sel("assignee", "كل الموظفين", users, <option value="me">معاملاتي</option>)}
+        {sel("priority", "كل الأولويات", Object.entries(PRIORITY_LABELS).map(([id, name]) => ({ id, name })))}
       </SearchBox>
 
       <p className="text-sm text-neutral-500">{transactions.length} معاملة</p>

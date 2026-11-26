@@ -4,6 +4,8 @@ import { TX_INCLUDE, isOverdue } from "@/components/TransactionsTable";
 import { requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate, txNumber } from "@/lib/format";
+import Badge from "@/components/ui/Badge";
+import { PRIORITY_LABELS, PRIORITY_STYLES, visibleTxWhere } from "@/lib/transactions";
 
 // لوحة متابعة: كل مرحلة عمود، وفيه المعاملات الجارية
 export default async function TrackingPage({ searchParams }: { searchParams: Promise<{ mine?: string }> }) {
@@ -15,7 +17,7 @@ export default async function TrackingPage({ searchParams }: { searchParams: Pro
     orderBy: { order: "asc" },
     include: {
       transactions: {
-        where: mine ? { assigneeId: user.id } : undefined,
+        where: { ...visibleTxWhere(user), ...(mine && { assigneeId: user.id }) },
         include: TX_INCLUDE,
         orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }],
       },
@@ -45,11 +47,14 @@ export default async function TrackingPage({ searchParams }: { searchParams: Pro
               {s.transactions.map((t) => (
                 <Link key={t.id} href={`/requests/all/${t.id}`}
                   className={`block rounded-lg bg-white p-3 shadow-sm hover:ring-2 hover:ring-brand-600/30 ${isOverdue(t) ? "border-r-4 border-rose-500" : ""}`}>
-                  <div className="text-xs text-neutral-500" dir="ltr">{txNumber(t.number)}</div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs text-neutral-500" dir="ltr">{txNumber(t.number)}</span>
+                    {t.priority !== "NORMAL" && <Badge className={PRIORITY_STYLES[t.priority]}>{PRIORITY_LABELS[t.priority]}</Badge>}
+                  </div>
                   <div className="text-sm font-medium">{t.title}</div>
                   <div className="text-xs text-neutral-500 mt-1">{t.company.name}</div>
                   <div className="flex justify-between text-xs mt-2 text-neutral-500">
-                    <span>{t.assignee?.name ?? "—"}</span>
+                    <span>{t.assignee?.name ?? "—"}{t.assignee && !t.acceptedAt && <span className="block text-amber-700">بانتظار الاستلام</span>}</span>
                     <span className={isOverdue(t) ? "text-rose-600 font-semibold" : ""}>{formatDate(t.dueDate)}</span>
                   </div>
                 </Link>

@@ -39,7 +39,10 @@ export default async function UsersPage() {
                 </td>
                 <td dir="ltr" className="text-right">{u.email}</td>
                 <td><AccessSummary isAdmin={u.role === "ADMIN"} perms={u.permissions} /></td>
-                <td>{u.active ? <span className="text-xs text-emerald-700">نشط</span> : <span className="text-xs text-neutral-500">موقوف</span>}</td>
+                <td>
+                  {u.active ? <span className="text-xs text-emerald-700">نشط</span> : <span className="text-xs text-neutral-500">موقوف</span>}
+                  {u.autoAssign && <div className="text-xs text-sky-700">مدرج في التوزيع</div>}
+                </td>
               </tr>
             ))}
           </tbody>

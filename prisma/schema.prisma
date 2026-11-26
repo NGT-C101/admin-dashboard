@@ -56,6 +56,13 @@ model User {
   followUps            Interaction[]       @relation("FollowUpAssignee")
   createdQuotes        Quote[]
   deliveries           Delivery[]          @relation("DeliveredBy")
+  // التوزيع التلقائي للمعاملات
+  autoAssign           Boolean             @default(false) // مدرج في التوزيع التلقائي
+  assignableServices   ServiceType[]       @relation("AssignableServices") // فارغة = كل الخدمات
+  acceptances          TxAcceptance[]
+  eventTargets         TransactionEvent[]  @relation("EventTarget")
+  extensionRequests    ExtensionRequest[]  @relation("ExtensionRequester")
+  extensionDecisions   ExtensionRequest[]  @relation("ExtensionDecider")
 }
 
 // ======================= العملاء والشركات =======================
@@ -127,14 +134,15 @@ model Company {
 
 // نوع الخدمة (ترخيص صناعي، تأسيس شركة...)
 model ServiceType {
-  id           String        @id @default(cuid())
-  name         String
-  govEntity    GovEntity?    @relation(fields: [govEntityId], references: [id])
-  govEntityId  String? // الجهة اللي الخدمة دي تبعها (فاضي = خدمة عامة)
-  order        Int           @default(0)
-  active       Boolean       @default(true)
-  transactions Transaction[]
-  quoteItems   QuoteItem[]
+  id              String        @id @default(cuid())
+  name            String
+  govEntity       GovEntity?    @relation(fields: [govEntityId], references: [id])
+  govEntityId     String? // الجهة اللي الخدمة دي تبعها (فاضي = خدمة عامة)
+  order           Int           @default(0)
+  active          Boolean       @default(true)
+  transactions    Transaction[]
+  quoteItems      QuoteItem[]
+  autoAssignUsers User[]        @relation("AssignableServices")
 
   @@unique([name, govEntityId])
   @@index([govEntityId])
@@ -171,32 +179,37 @@ model Stage {
 // ======================= المعاملات =======================
 
 model Transaction {
-  id            String             @id @default(cuid())
-  number        Int                @unique @default(autoincrement()) // رقم المعاملة
-  title         String
-  description   String?
-  company       Company            @relation(fields: [companyId], references: [id])
-  companyId     String
-  serviceType   ServiceType?       @relation(fields: [serviceTypeId], references: [id])
-  serviceTypeId String?
-  govEntity     GovEntity?         @relation(fields: [govEntityId], references: [id])
-  govEntityId   String?
-  stage         Stage              @relation(fields: [stageId], references: [id])
-  stageId       String
-  assignee      User?              @relation("Assignee", fields: [assigneeId], references: [id])
-  assigneeId    String?
-  createdBy     User               @relation("Creator", fields: [createdById], references: [id])
-  createdById   String
-  platformRef   String? // رقم الطلب على المنصة الحكومية
-  fee           Decimal?           @db.Decimal(12, 2) // أتعاب المكتب
-  govFees       Decimal?           @db.Decimal(12, 2) // الرسوم الحكومية
-  dueDate       DateTime?
-  events        TransactionEvent[]
-  quote         Quote?
-  documents     Document[]
-  deliveries    Delivery[]
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  id                String             @id @default(cuid())
+  number            Int                @unique @default(autoincrement()) // رقم المعاملة
+  title             String
+  description       String?
+  company           Company            @relation(fields: [companyId], references: [id])
+  companyId         String
+  serviceType       ServiceType?       @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId     String?
+  govEntity         GovEntity?         @relation(fields: [govEntityId], references: [id])
+  govEntityId       String?
+  stage             Stage              @relation(fields: [stageId], references: [id])
+  stageId           String
+  assignee          User?              @relation("Assignee", fields: [assigneeId], references: [id])
+  assigneeId        String?
+  createdBy         User               @relation("Creator", fields: [createdById], references: [id])
+  createdById       String
+  platformRef       String? // رقم الطلب على المنصة الحكومية
+  fee               Decimal?           @db.Decimal(12, 2) // أتعاب المكتب
+  govFees           Decimal?           @db.Decimal(12, 2) // الرسوم الحكومية
+  dueDate           DateTime?
+  priority          TxPriority         @default(NORMAL)
+  confidential      Boolean            @default(false) // سرية: للمسؤول عنها ومدير النظام فقط
+  acceptedAt        DateTime? // استلام المسؤول الحالي بتعهد (يُصفَّر عند إعادة الإسناد)
+  acceptances       TxAcceptance[]
+  extensionRequests ExtensionRequest[]
+  events            TransactionEvent[]
+  quote             Quote?
+  documents         Document[]
+  deliveries        Delivery[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   @@index([companyId])
   @@index([stageId])
@@ -210,6 +223,10 @@ model TransactionEvent {
   transactionId String
   stage         Stage?      @relation(fields: [stageId], references: [id])
   stageId       String? // لو فيه تغيير مرحلة
+  type          TxEventType @default(NOTE)
+  external      Boolean     @default(false) // تعليق خارجي موجّه للعميل
+  targetUser    User?       @relation("EventTarget", fields: [targetUserId], references: [id])
+  targetUserId  String? // الموظف المسند إليه أو الموجّه إليه لفت النظر
   note          String?
   user          User        @relation(fields: [userId], references: [id])
   userId        String
@@ -723,4 +740,62 @@ model Delivery {
 
   @@index([transactionId])
   @@index([deliveredAt])
+}
+
+enum TxPriority {
+  NORMAL // عادية
+  HIGH // مهمة
+  URGENT // عاجلة
+}
+
+enum TxEventType {
+  NOTE // تعليق أو تغيير مرحلة
+  ASSIGN // إسناد
+  ACCEPT // استلام بتعهد
+  EXTENSION // طلب تأجيل أو قرار عليه
+  WARNING // لفت نظر
+  DELIVERY // تسليم المخرجات
+}
+
+// إقرار الموظف باستلام المعاملة ومستنداتها وتعهده بموعد الإنجاز
+model TxAcceptance {
+  id            String      @id @default(cuid())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  jobTitle      String? // صفة الموظف وقت الإقرار
+  committedDue  DateTime // الموعد الذي تعهّد بالإنجاز قبله
+  documents     String? // المستندات والأصول المستلمة من العميل
+  pledgeText    String // نص الإقرار كما وافق عليه
+  createdAt     DateTime    @default(now())
+
+  @@index([transactionId])
+}
+
+enum ExtensionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// طلب تأجيل موعد إنجاز المعاملة
+model ExtensionRequest {
+  id            String          @id @default(cuid())
+  transaction   Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String
+  requestedBy   User            @relation("ExtensionRequester", fields: [requestedById], references: [id])
+  requestedById String
+  currentDue    DateTime?
+  requestedDue  DateTime
+  reason        String
+  status        ExtensionStatus @default(PENDING)
+  decidedBy     User?           @relation("ExtensionDecider", fields: [decidedById], references: [id])
+  decidedById   String?
+  decidedAt     DateTime?
+  decisionNote  String?
+  createdAt     DateTime        @default(now())
+
+  @@index([transactionId])
+  @@index([status])
 }

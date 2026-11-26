@@ -51,6 +51,16 @@ async function main() {
   await seedHolidays();
   await seedPositions();
   await markDeliveryStage();
+  await acceptExistingTransactions();
+}
+
+// مرة واحدة عند تفعيل «الاستلام بتعهد»: المعاملات الموجودة قبله تُعدّ مستلَمة حتى لا يتوقف العمل عليها
+async function acceptExistingTransactions() {
+  const KEY = "tx-acceptance-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  const { count } = await prisma.transaction.updateMany({ where: { assigneeId: { not: null }, acceptedAt: null }, data: { acceptedAt: new Date() } });
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log(`✔ اعتبار المعاملات الحالية مستلَمة (${count})`);
 }
 
 // مرة واحدة: مرحلة «صدرت / معتمدة» تعني أن المخرجات جاهزة للتسليم للعميل

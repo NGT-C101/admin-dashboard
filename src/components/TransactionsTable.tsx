@@ -1,7 +1,10 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import StageBadge from "@/components/ui/StageBadge";
+import { Lock } from "lucide-react";
+import Badge from "@/components/ui/Badge";
 import { formatDate, txNumber } from "@/lib/format";
+import { PRIORITY_LABELS, PRIORITY_STYLES } from "@/lib/transactions";
 
 export const TX_INCLUDE = {
   company: { select: { id: true, name: true, client: { select: { id: true, name: true } } } },
@@ -35,6 +38,8 @@ export default function TransactionsTable({ transactions, showCompany }: { trans
               </td>
               <td>
                 <Link href={`/requests/all/${t.id}`} className="hover:underline">{t.title}</Link>
+                {t.confidential && <Lock size={12} className="mr-1 inline text-gold-600" aria-label="سرية" />}
+                {t.priority !== "NORMAL" && <> <Badge className={PRIORITY_STYLES[t.priority]}>{PRIORITY_LABELS[t.priority]}</Badge></>}
                 {t.serviceType && <div className="text-xs text-neutral-500">{t.serviceType.name}</div>}
               </td>
               {showCompany && (
@@ -45,7 +50,10 @@ export default function TransactionsTable({ transactions, showCompany }: { trans
               )}
               <td className="text-neutral-600">{t.govEntity?.name ?? "—"}</td>
               <td><StageBadge name={t.stage.name} kind={t.stage.kind} /></td>
-              <td>{t.assignee?.name ?? <span className="text-neutral-400">غير محدد</span>}</td>
+              <td>
+                {t.assignee?.name ?? <span className="text-neutral-400">غير محدد</span>}
+                {t.assignee && !t.acceptedAt && t.stage.kind === "OPEN" && <div className="text-xs text-amber-700">بانتظار الاستلام</div>}
+              </td>
               <td className={`whitespace-nowrap ${isOverdue(t) ? "text-rose-600 font-semibold" : ""}`}>
                 {formatDate(t.dueDate)}{isOverdue(t) && " ⚠️"}
               </td>

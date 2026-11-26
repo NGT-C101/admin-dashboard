@@ -70,3 +70,19 @@ export async function resetUserPassword(_prev: FormState, formData: FormData): P
   });
   return { success: "تم تعيين كلمة المرور المؤقتة ✅ — سيُطلب من المستخدم تغييرها عند الدخول" };
 }
+
+// إعدادات التوزيع التلقائي للمعاملات: الإدراج + الخدمات التي يتولاها (فارغة = كل الخدمات)
+export async function saveAutoAssign(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const autoAssign = formData.get("autoAssign") === "on";
+  const serviceIds = formData.getAll("serviceIds").map(String).filter(Boolean);
+  const valid = serviceIds.length ? await db.serviceType.findMany({ where: { id: { in: serviceIds } }, select: { id: true } }) : [];
+  await db.user.update({
+    where: { id },
+    data: { autoAssign, assignableServices: { set: valid.map((s) => ({ id: s.id })) } },
+  });
+  revalidatePath(`/settings/users/${id}`);
+  revalidatePath("/settings/users");
+  return { success: autoAssign ? "تم إدراج الموظف في التوزيع التلقائي" : "تم استبعاد الموظف من التوزيع التلقائي" };
+}

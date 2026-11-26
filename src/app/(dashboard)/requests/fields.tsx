@@ -3,6 +3,7 @@ import type { Transaction } from "@prisma/client";
 import ServicePicker from "@/components/ServicePicker";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { dateInputValue } from "@/lib/format";
+import { PRIORITY_LABELS } from "@/lib/transactions";
 
 type Opt = { id: string; name: string };
 export type TxFormOptions = {
@@ -12,8 +13,9 @@ export type TxFormOptions = {
   users: Opt[];
 };
 
-export default function TransactionFields({ tx, options, companyId }: {
+export default function TransactionFields({ tx, options, companyId, canEditDue = true }: {
   tx?: Transaction; options: TxFormOptions; companyId?: string;
+  canEditDue?: boolean; // بعد الإنشاء يتغيّر الموعد بطلب تأجيل، إلا لصاحب الإدارة الكاملة
 }) {
   // الشركات متجمّعة تحت اسم العميل
   const byClient = new Map<string, Opt[]>();
@@ -43,10 +45,18 @@ export default function TransactionFields({ tx, options, companyId }: {
         defaultEntityId={tx?.govEntityId}
         defaultServiceId={tx?.serviceTypeId}
       />
-      <Field label="الموظف المسؤول">
-        <select name="assigneeId" defaultValue={tx?.assigneeId ?? ""} className="input">
-          <option value="">غير محدد</option>
-          {options.users.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+      {!tx && (
+        <Field label="الموظف المسؤول">
+          <select name="assigneeId" defaultValue="auto" className="input">
+            <option value="auto">توزيع تلقائي (الأقل انشغالاً)</option>
+            <option value="">بدون مسؤول الآن</option>
+            {options.users.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </Field>
+      )}
+      <Field label="الأولوية">
+        <select name="priority" defaultValue={tx?.priority ?? "NORMAL"} className="input">
+          {Object.entries(PRIORITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </Field>
       <Field label="رقم الطلب على المنصة">
@@ -58,12 +68,18 @@ export default function TransactionFields({ tx, options, companyId }: {
       <Field label="الرسوم الحكومية (ريال)">
         <input name="govFees" inputMode="decimal" dir="ltr" defaultValue={tx?.govFees?.toString() ?? ""} className="input" />
       </Field>
-      <Field label="الموعد المستهدف للإنجاز">
-        <DateField name="dueDate" defaultValue={dateInputValue(tx?.dueDate)} />
-      </Field>
+      {canEditDue && (
+        <Field label={tx ? "الموعد المستهدف للإنجاز" : "الموعد المستهدف (اختياري — يحدده المسؤول عند الاستلام)"}>
+          <DateField name="dueDate" defaultValue={dateInputValue(tx?.dueDate)} />
+        </Field>
+      )}
       <Field label="التفاصيل" wide>
         <textarea name="description" rows={3} defaultValue={tx?.description ?? ""} className="input" />
       </Field>
+      <label className="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3">
+        <input type="checkbox" name="confidential" defaultChecked={tx?.confidential} className="size-4 accent-brand-600" />
+        معاملة سرية (لا يطّلع عليها إلا الموظف المسؤول عنها ومدير النظام)
+      </label>
     </FieldGrid>
   );
 }

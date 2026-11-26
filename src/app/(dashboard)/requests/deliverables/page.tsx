@@ -13,6 +13,7 @@ import {
 } from "@/lib/deliveries";
 import { formatDate, formatDateTime, txNumber } from "@/lib/format";
 import { currentMonthKey, monthBounds } from "@/lib/time";
+import { visibleTxWhere } from "@/lib/transactions";
 
 type SP = { tab?: string; q?: string; mine?: string };
 const LATE_DAYS = 3; // بعد هذه المدة من جاهزية المخرجات يُعدّ التسليم متأخراً
@@ -27,6 +28,7 @@ export default async function DeliverablesPage({ searchParams }: { searchParams:
 
   const txWhere: Prisma.TransactionWhereInput = {
     ...awaitingDeliveryWhere,
+    AND: [visibleTxWhere(user)],
     ...(mine && { assigneeId: user.id }),
     ...(q && { OR: [
       { title: { contains: q, mode: "insensitive" } },
@@ -36,6 +38,7 @@ export default async function DeliverablesPage({ searchParams }: { searchParams:
     ] }),
   };
   const dlWhere: Prisma.DeliveryWhereInput = {
+    transaction: visibleTxWhere(user),
     ...(mine && { deliveredById: user.id }),
     ...(q && { OR: [
       { recipientName: { contains: q, mode: "insensitive" } },

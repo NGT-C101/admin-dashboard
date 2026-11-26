@@ -10,6 +10,7 @@ import { BRAND } from "@/lib/brand";
 import { getClientAlerts } from "@/lib/client-alerts";
 import { CONTRACT_STATE_LABELS, CONTRACT_TYPE_LABELS, INTERACTION_TYPE_LABELS, contractState, daysText, daysUntil, saudizationRate } from "@/lib/clients";
 import { db } from "@/lib/db";
+import { visibleTxWhere } from "@/lib/transactions";
 import { DOC_TYPE_LABELS } from "@/lib/documents";
 import { formatDate, txNumber } from "@/lib/format";
 
@@ -31,7 +32,7 @@ export default async function ClientReport({ params, searchParams }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ month?: string }>;
 }) {
-  await requireSection("clients");
+  const user = await requireSection("clients");
   const { id } = await params;
   const sp = await searchParams;
   const month = /^\d{4}-\d{2}$/.test(sp.month ?? "") ? sp.month! : currentMonth();
@@ -44,10 +45,11 @@ export default async function ClientReport({ params, searchParams }: {
   const [txs, created, completedEvents, interactions, contracts, alerts] = await Promise.all([
     // المعاملات اللي حصل فيها أي حاجة الشهر ده أو لسه جارية
     db.transaction.findMany({
-      where: { ...txWhere, OR: [{ stage: { kind: "OPEN" } }, { events: { some: { createdAt: { gte: start, lt: end } } } }] },
+      where: { ...txWhere, AND: [visibleTxWhere(user), { OR: [{ stage: { kind: "OPEN" } }, { events: { some: { createdAt: { gte: start, lt: end } } } }] }] },
       include: {
         company: { select: { name: true } }, stage: true, govEntity: { select: { name: true } }, serviceType: { select: { name: true } },
-        events: { where: { createdAt: { gte: start, lt: end }, note: { not: null } }, orderBy: { createdAt: "desc" }, take: 1, select: { note: true } },
+        // للعميل: التعليقات الخارجية فقط (التعليقات الداخلية لفريق العمل)
+        events: { where: { createdAt: { gte: start, lt: end }, note: { not: null }, external: true }, orderBy: { createdAt: "desc" }, take: 1, select: { note: true } },
       },
       orderBy: { number: "asc" },
     }),

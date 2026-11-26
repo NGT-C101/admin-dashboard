@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireSection } from "@/lib/auth";
 import { getCompanyProfile } from "@/lib/company";
 import { db } from "@/lib/db";
+import { pickAssignee } from "@/lib/transactions";
 import { type FormState, firstError, optionalMoney, optionalText } from "@/lib/forms";
 import { isEditable, lineTotal, quoteNumber, quoteTotals } from "@/lib/quotes";
 import { DAY_MS, riyadhToday } from "@/lib/time";
@@ -134,6 +135,7 @@ export async function convertQuoteToTransaction(_prev: FormState, fd: FormData):
   if (!firstStage) return { error: "لا توجد مراحل معرّفة — يرجى إضافة المراحل من الإعدادات أولاً" };
 
   const service = q.items.find((i) => i.serviceType)?.serviceType ?? null;
+  const assignee = await pickAssignee(db, service?.id ?? null); // التوزيع التلقائي
   const tx = await db.transaction.create({
     data: {
       title: q.title,
@@ -145,7 +147,13 @@ export async function convertQuoteToTransaction(_prev: FormState, fd: FormData):
       govFees: q.govFees,
       stageId: firstStage.id,
       createdById: user.id,
-      events: { create: { stageId: firstStage.id, note: `تم إنشاء المعاملة من عرض السعر ${quoteNumber(q.number)}`, userId: user.id } },
+      assigneeId: assignee?.id ?? null,
+      events: {
+        create: [
+          { stageId: firstStage.id, note: `تم إنشاء المعاملة من عرض السعر ${quoteNumber(q.number)}`, userId: user.id },
+          ...(assignee ? [{ type: "ASSIGN" as const, userId: user.id, targetUserId: assignee.id, createdAt: new Date(Date.now() + 1000), note: `أُسندت تلقائياً إلى ${assignee.name} (الأقل انشغالاً)` }] : []),
+        ],
+      },
     },
   });
   await db.quote.update({ where: { id }, data: { transactionId: tx.id, companyId } });

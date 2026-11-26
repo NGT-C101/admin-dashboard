@@ -12,6 +12,7 @@ import Tabs from "@/components/ui/Tabs";
 import { can, requireSection } from "@/lib/auth";
 import { daysText, daysUntil, saudizationRate } from "@/lib/clients";
 import { db } from "@/lib/db";
+import { visibleTxWhere } from "@/lib/transactions";
 import { formatDate } from "@/lib/format";
 import { updateCompany } from "../../actions";
 import { CompanyFields } from "../../fields";
@@ -153,7 +154,7 @@ export default async function CompanyPage({ params, searchParams }: {
   }
 
   async function Transactions() {
-    const transactions = await db.transaction.findMany({ where: { companyId: id }, include: TX_INCLUDE, orderBy: { createdAt: "desc" } });
+    const transactions = await db.transaction.findMany({ where: { companyId: id, ...visibleTxWhere(user) }, include: TX_INCLUDE, orderBy: { createdAt: "desc" } });
     return <TransactionsTable transactions={transactions} />;
   }
 }

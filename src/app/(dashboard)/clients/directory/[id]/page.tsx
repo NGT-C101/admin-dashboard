@@ -15,6 +15,7 @@ import { can, requireSection } from "@/lib/auth";
 import { getClientAlerts } from "@/lib/client-alerts";
 import { CLIENT_STATUS_LABELS, CLIENT_STATUS_STYLES, saudizationRate, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
+import { visibleTxWhere } from "@/lib/transactions";
 import { CHANNEL_LABELS, CHANNEL_STYLES, deliveryNumber, itemLines } from "@/lib/deliveries";
 import { formatDate, formatDateTime, formatSAR, txNumber } from "@/lib/format";
 import { createCompany, toggleArchiveClient, updateClient } from "../../actions";
@@ -227,9 +228,9 @@ export default async function ClientPage({ params, searchParams }: {
 
   async function Transactions() {
     const [transactions, deliveries] = await Promise.all([
-      db.transaction.findMany({ where: txWhere, include: TX_INCLUDE, orderBy: { createdAt: "desc" } }),
+      db.transaction.findMany({ where: { ...txWhere, ...visibleTxWhere(user) }, include: TX_INCLUDE, orderBy: { createdAt: "desc" } }),
       db.delivery.findMany({
-        where: { transaction: txWhere },
+        where: { transaction: { ...txWhere, ...visibleTxWhere(user) } },
         include: { transaction: { select: { id: true, number: true, title: true } }, _count: { select: { documents: true } } },
         orderBy: { deliveredAt: "desc" },
       }),
