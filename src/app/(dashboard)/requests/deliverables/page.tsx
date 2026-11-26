@@ -38,7 +38,7 @@ export default async function DeliverablesPage({ searchParams }: { searchParams:
     ] }),
   };
   const dlWhere: Prisma.DeliveryWhereInput = {
-    transaction: visibleTxWhere(user),
+    ...(!user.isAdmin && { transaction: visibleTxWhere(user) }),
     ...(mine && { deliveredById: user.id }),
     ...(q && { OR: [
       { recipientName: { contains: q, mode: "insensitive" } },
