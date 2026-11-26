@@ -1,17 +1,19 @@
 # PROJECT HANDOFF — NGT Admin Dashboard (منصة NGT للاستشارات الإدارية)
 
-> Repository: `NGT-C101/admin-dashboard` (private, GitHub) · Branch: `main`
+> Repository: `NGT-C101/admin-dashboard` (GitHub — currently **public**; owner advised to make it private) · Branch: `main`
 > Owner company: **شركة نصار جروب التجارية للاستشارات الإدارية** (Nassar Group Trading — NGT), Saudi Arabia
 > Product: internal Arabic (RTL) management platform for a Saudi administrative-consulting firm
 > (government-platform transactions, company formation, licenses, HR, etc.)
 > Handoff written: 2026-11-26 · Last code commit before this document: `ca1c1bb`
+> **Updated: 2026-11-26** — new navy/gold visual identity, Riyadh skyline login & home, custom domain `platform.ngt.sa` live (see §5, §9, §11).
 
 ---
 
 ## 0. TL;DR for the next developer
 
 - **Stack:** Next.js 15 (App Router, Server Components + Server Actions) · React 19 · TypeScript · Tailwind CSS v4 · PostgreSQL 16 · Prisma 6 · Zod 4 · jose (JWT sessions) · bcryptjs · ExcelJS · lucide-react.
-- **Runs in production** on one Hetzner VPS via Docker Compose (`db` Postgres + `app` Next.js standalone + `caddy` auto-HTTPS).
+- **Runs in production** at **https://platform.ngt.sa** on one Hetzner VPS via Docker Compose (`db` Postgres + `app` Next.js standalone + `caddy` auto-HTTPS).
+- **Visual identity:** dark navy shell + gold accents + NGT red primary buttons; light cards on dark background; Riyadh skyline photo on login and home banner (§5).
 - **UI language:** formal Modern Standard Arabic (فصحى), RTL, Gregorian dates, Saudi time zone (`Asia/Riyadh`), SAR currency, Latin digits.
 - **Done:** auth & granular permissions, Clients (full CRM), Transactions (معاملات), Employees/HR (profiles, leadership positions, org chart, leaves, attendance, payroll, performance), self-service ("خدماتي"), settings, branding, Excel import/export, printable reports.
 - **Not built yet (placeholder pages):** Accounts/Finance (الحسابات), Administrative Affairs (الشؤون الإدارية), Public Relations (العلاقات العامة), Quotes & Deliverables inside Transactions.
@@ -63,12 +65,13 @@ admin-dashboard/
 │  └─ catalog.ts              # service catalog per government entity (from company profile PDF)
 ├─ public/
 │  ├─ brand/logo-silver.png   # logo for dark backgrounds (sidebar, login panel)
-│  ├─ brand/logo-red.png      # logo for light backgrounds (reports, payslips, mobile login)
+│  ├─ brand/logo-red.png      # logo for light backgrounds (reports, payslips, login card)
+│  ├─ brand/riyadh-skyline.webp # Riyadh skyline photo (login background, home banner) — supplied by owner, cropped to remove a third-party sign
 │  └─ robots.txt              # Disallow: /  (internal system)
 └─ src/
    ├─ middleware.ts           # auth gate; excludes _next, icons, /brand/, robots.txt, /api/health
    ├─ app/
-   │  ├─ layout.tsx           # <html lang="ar" dir="rtl">, Cairo font, metadata from BRAND, robots noindex
+   │  ├─ layout.tsx           # <html lang="ar" dir="rtl">, IBM Plex Sans Arabic + Noto Kufi Arabic fonts, metadata from BRAND, robots noindex
    │  ├─ globals.css          # Tailwind v4 @theme (brand palette), component classes, print rules
    │  ├─ icon.png / apple-icon.png  # favicon / touch icon (generated from red logo)
    │  ├─ login/               # page.tsx (split brand panel + form), actions.ts (login/logout)
@@ -87,7 +90,7 @@ admin-dashboard/
    │     ├─ employees/                # HR (management, profiles, org-chart, attendance, leaves, performance, payroll)
    │     └─ settings/                 # users (accounts & permissions), lists (stages, services, entities)
    ├─ components/             # shared UI (see §5)
-   │  └─ ui/                  # primitives: ActionForm, Field, PageHeader, Tabs, Badge, Collapsible, SearchBox, StageBadge, DateField
+   │  └─ ui/                  # primitives: ActionForm, Field, PageHeader, Tabs, Badge, Collapsible, SearchBox, StageBadge, DateField, Skyline (SVG)
    └─ lib/                    # domain logic & helpers (see below)
 ```
 
@@ -172,7 +175,7 @@ Attendance widget · annual leave balance · leave/permission request form · my
 - **القوائم والمراحل:** stages (order, kind, active), government entities, services grouped by entity (move between entities, deactivate).
 
 ### 2.7 Branding
-Name "منصة NGT للاستشارات الإدارية", slogan "نطور شركات الغد", company "شركة نصار جروب التجارية"; logos extracted from the company profile PDF (silver & red); brand palette from the profile (see §5).
+Name "منصة NGT للاستشارات الإدارية", slogan "نطور شركات الغد", company "شركة نصار جروب التجارية"; logos extracted from the company profile PDF (silver & red); `BRAND.skyline` = skyline photo. Visual identity (navy/gold) chosen by the owner from reference mockups (see §5).
 
 ---
 
@@ -269,9 +272,11 @@ Optional: `INSECURE_COOKIES=1` (HTTP testing), `STANDALONE=0` (local `next start
 ## 5. UI/UX design system & conventions
 
 - **Language:** formal MSA everywhere in UI (no Egyptian colloquial). Error style: "يرجى …", "يجب …", "لا توجد …", "مسجّل مسبقاً". Arabic number agreement via `daysText` / `countText` (يوم واحد، يومان، 3 أيام، 15 يوماً). When "و" precedes a digit, a space is inserted (rendering issue).
-- **Direction & locale:** RTL (`dir="rtl"`), font **Cairo** (next/font Google), Latin digits, Gregorian calendar, `Asia/Riyadh` time zone, SAR via `formatSAR`. Numbers/IDs/phones/IBAN rendered with `dir="ltr"`.
-- **Brand palette** (`globals.css @theme`): `brand-50…950` with key tones `#B10302` (600 red), `#7D0000` (800 maroon), `#5E0000` (900), `#2B0507` (950 sidebar), page background `#EFEFEF`, neutrals = Tailwind `neutral`. Semantic colors: emerald (ok/present/approved), amber (soon/late/pending), rose (expired/absent/rejected), sky (info/leave), violet (holiday).
-- **Component classes:** `.input`, `.btn-primary`, `.btn-secondary`, `.card`, `.table`, `.link`.
+- **Direction & locale:** RTL (`dir="rtl"`), fonts **IBM Plex Sans Arabic** (`font-sans`, UI/tables) and **Noto Kufi Arabic** (`font-display`, h1/h2 and big numbers) via next/font Google, Latin digits, Gregorian calendar, `Asia/Riyadh` time zone, SAR via `formatSAR`. Numbers/IDs/phones/IBAN rendered with `dir="ltr"`.
+- **Palette** (`globals.css @theme`): `navy-50…950` (shell; `#070F24` darkest), `gold-100…700` (active/accent; `#D4A548` = 500), `brand-*` NGT red/maroon (`#B10302` = 600; primary button gradient), `chart-1` `#3559B5` / `chart-2` `#B07A12` (validated for contrast & color-blindness), `ivory`, `ink`. Semantic colors: emerald (ok/approved), amber (soon/pending), rose (expired/rejected), sky (info/leave), violet (holiday).
+- **Dark shell mechanism:** the dashboard wrapper has class `.app-shell` (screen only — print stays white). Inside it the `--color-neutral-*` variables are **inverted** (light text on navy) and are **restored to light values** inside light containers (`.card`, `.input`, `.btn-secondary`, `[class~=bg-white]`, form fields). `text-brand-700/800` and `.link` switch to gold (`--link`) outside cards. So existing pages built with `.card` + neutral utilities work unchanged; new content placed directly on the background should use light text (`text-white`, `text-navy-100`) or `.card-dark`.
+- **Component classes:** `.input`, `.btn-primary` (red gradient), `.btn-secondary`, `.btn-gold`, `.card` (white), `.card-dark` (navy glass), `.table`, `.link`, `.stat-value`, `.text-gold-gradient`.
+- **Home dashboard** (`(dashboard)/page.tsx`): skyline banner + slogan + welcome, attendance widget, stat tiles (permission-filtered, colored icon tiles), recent transactions, `MonthlyChart` (new vs completed transactions per month, last 12 months, RTL time axis, hover titles + table view), completion-rate donut (done / (done + open)), my upcoming transactions, "تحتاج إجراء" list, section tiles. All figures come from real data.
 - **Primitives:** `ActionForm` (useActionState; submits via `startTransition` so fields are **not cleared on validation errors**; resets on success unless `resetOnSuccess={false}`), `Field`/`FieldGrid`, `PageHeader` (breadcrumbs + actions), `Tabs` (URL `?tab=`), `Badge`, `Collapsible`, `SearchBox` (GET `?q=`), `StageBadge`, **`DateField`** (day select + Gregorian month names + typed year (accepts Arabic digits) → hidden `YYYY-MM-DD`; `withTime` → `YYYY-MM-DDTHH:MM`; custom validity blocks incomplete/invalid dates; resets on form reset) and `MonthField`. **No native `type="date"/"month"/"datetime-local"` inputs are used.**
 - **Patterns:** list page → search/filters → table or cards; detail page with header card + tabs; edit forms inside `Collapsible`; printable pages use `print:hidden` and an A4 `<article>` with logo; Excel exports via plain `<a href="/api/export/...">` (eslint-disable for no-html-link).
 - Mobile: responsive grids, sidebar drawer; verified no horizontal scroll at 390px on key pages.
@@ -281,7 +286,7 @@ Optional: `INSECURE_COOKIES=1` (HTTP testing), `STANDALONE=0` (local `next start
 ## 6. Completed vs pending
 
 ### Completed (all pushed to `main`)
-Phases: foundation → clients & transactions → server deployment → password page → branding → services by entity → documents → clients CRM batch 1 & 2 → formal Arabic → HR batch 1 (profiles + permission system) → HR batch 2 (leaves + attendance) → leadership positions + Gregorian date fields → HR batch 3 (payroll + performance).
+Phases: foundation → clients & transactions → server deployment → password page → branding → services by entity → documents → clients CRM batch 1 & 2 → formal Arabic → HR batch 1 (profiles + permission system) → HR batch 2 (leaves + attendance) → leadership positions + Gregorian date fields → HR batch 3 (payroll + performance) → **navy/gold visual identity + new home dashboard + skyline photo** → **custom domain `platform.ngt.sa`**.
 
 ### Pending (not started)
 - **Accounts / Finance (الحسابات):** invoices (ZATCA-compliant VAT invoice with QR), collections/payments, expenses, financial reports — placeholders only.
@@ -342,9 +347,10 @@ Phases: foundation → clients & transactions → server deployment → password
 
 ## 9. Exact current status
 
-- **Code:** `main` at `ca1c1bb` (+ this document). Builds cleanly (`next build`), `tsc --noEmit` clean, eslint: 0 errors, 2 warnings.
-- **Production server:** Hetzner Cloud **CPX22** (2 vCPU / 4 GB), Ubuntu 24.04, Nuremberg, IP and URL: ask the owner (an `<ip-with-dashes>.sslip.io` hostname is used; no custom domain yet). Deploy key (read-only) on the GitHub repo; SSH key-only access from the owner's Mac; ufw (22/80/443); 2 GB swap; daily backup cron at 03:00 to `/root/backups`.
-- **Deployed version:** the owner confirmed updating through the **Clients CRM batch 1** and earlier releases. Updates for later commits (formal Arabic, HR batches 1–3, positions, date fields) were pushed with instructions but **deployment of the latest commit is not confirmed** — run `bash scripts/update.sh` on the server.
+- **Code:** `main` at `76cd1a5` (+ this document update). Builds cleanly (`next build`), `tsc --noEmit` clean, eslint: 0 errors, 5 warnings (unused directives/vars, harmless).
+- **Production server:** Hetzner Cloud **CPX22** (2 vCPU / 4 GB), Ubuntu 24.04 (kernel 6.8.0-151, security updates applied 2026-11-26), Nuremberg, IPv4 = what `platform.ngt.sa` resolves to (owner keeps it; not stored in this public repo). URL **https://platform.ngt.sa** (server `.env` `DOMAIN=platform.ngt.sa`; the old `sslip.io` hostname no longer works). Deploy key (read-only) on the GitHub repo; SSH key-only access from the owner's Mac; ufw (22/80/443); 2 GB swap; daily backup cron at 03:00 to `/root/backups`.
+- **Deployed version:** `76cd1a5` (navy/gold identity + skyline photo) — owner ran `update.sh` and confirmed the site works on the new domain (2026-11-26).
+- **Domain / DNS:** `ngt.sa` registered at **dnet** (SaudiNIC registrar), expires 2027-06-10, name servers `pns01.t2.sa` / `pns02.t2.sa` (dnet DNS). Record: `A platform.ngt.sa → <server IPv4>` (TTL 3600). Hostinger mail records (MX/SPF/DKIM/verification TXT) that the owner did not create were **removed** — the company currently has **no email on the domain**. Owner was advised to change the dnet password and ask dnet support who added them.
 - **Data:** production contains only what the owner entered; all screenshots/tests were done on a local dev database with fictional data.
 - **Update procedure (owner):**
   ```bash
@@ -364,7 +370,10 @@ Phases: foundation → clients & transactions → server deployment → password
 4. **Finish Transactions:** quotes (create → send/print → accept → auto-create transaction) and deliverables (upload outputs, mark delivered, notify client).
 5. **Administrative Affairs & PR** modules (§6).
 6. **Platform hardening:** login rate limiting, session revocation on password change, notification channel (email/WhatsApp) for approvals & expiries, audit log, assign transactions to employees without logins (or require logins), automated tests (Playwright E2E for critical flows), move Prisma config to `prisma.config.ts`, drop legacy `User.department` / `MANAGER` after verification.
-7. **Custom domain** for the platform (update `DOMAIN` in server `.env`, point DNS A record to the server, `docker compose up -d`).
+7. ~~Custom domain~~ — done (`platform.ngt.sa`).
+8. **Hosting in Saudi Arabia (PDPL):** owner is interested in Google Cloud. Google Cloud's Dammam region (`me-central2`) is CST-licensed; KSA customers must purchase through **CNTXT** with invoiced billing. Migration = same Docker Compose on a VM + `pg_dump`/restore + uploads copy + repoint the DNS A record.
+9. **Google services** (owner request, not yet specified): company email via Google Workspace on `ngt.sa` (needs MX/SPF/DKIM records at dnet), and optionally "Sign in with Google".
+10. **Not implemented from the owner's reference mockups:** global search bar, notifications bell, "remember me", Google login, self-registration — need real features before adding UI.
 
 ---
 
