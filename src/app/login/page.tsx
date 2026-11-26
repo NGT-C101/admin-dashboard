@@ -19,10 +19,8 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-navy-950 text-white">
-      {/* المشهد الخلفي: أفق الرياض ليلاً */}
-      <Image src={BRAND.skyline} alt="" fill priority sizes="100vw" className="object-cover object-bottom" />
-      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/60 via-navy-950/20 to-navy-950/85" />
-      <div className="absolute inset-0 bg-gradient-to-l from-navy-950/80 via-transparent to-transparent" />
+      {/* الخلفية: ليل كحلي بإضاءة ذهبية خلف معالم المملكة */}
+      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(900px_600px_at_30%_45%,rgba(212,165,72,0.16),transparent_65%),radial-gradient(700px_500px_at_90%_10%,rgba(53,89,181,0.22),transparent_60%),linear-gradient(180deg,var(--color-navy-900),var(--color-navy-950))]" />
 
       <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-4 py-10 lg:grid-cols-[440px_1fr] lg:px-10">
         {/* بطاقة الدخول الزجاجية */}
@@ -31,6 +29,7 @@ export default function LoginPage() {
           className="w-full max-w-md justify-self-center rounded-3xl border border-white/70 bg-white/92 p-8 text-ink shadow-2xl shadow-black/40 ring-1 ring-gold-400/40 backdrop-blur-xl sm:p-10 lg:justify-self-start"
         >
           <div className="flex flex-col items-center gap-2 text-center">
+            <Image src={BRAND.landmarks} alt="" width={1080} height={705} priority className="-mt-2 mb-1 h-auto w-56 lg:hidden" />
             <Image src={BRAND.logoOnLight} alt={BRAND.short} width={180} height={100} priority className="h-auto w-36" />
             <p className="text-sm font-semibold text-navy-800">{BRAND.tagline}</p>
             <p className="font-display text-lg font-bold text-gold-600 lg:hidden">{BRAND.slogan}</p>
@@ -81,7 +80,10 @@ export default function LoginPage() {
 
         {/* رسالة الترحيب */}
         <section className="hidden flex-col items-center gap-6 text-center lg:flex">
-          <Image src={BRAND.logoOnDark} alt="" width={240} height={133} className="h-auto w-44 drop-shadow-2xl" />
+          <div className="relative w-full max-w-xl">
+            <div aria-hidden="true" className="absolute inset-x-10 bottom-0 top-1/4 rounded-full bg-gold-400/20 blur-3xl" />
+            <Image src={BRAND.landmarks} alt="معالم المملكة العربية السعودية" width={1080} height={705} priority sizes="576px" className="relative h-auto w-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]" />
+          </div>
           <div className="space-y-2">
             <p className="font-display text-4xl font-bold">مرحباً بك في</p>
             <p className="font-display text-7xl font-extrabold leading-snug text-gold-gradient drop-shadow">منصة NGT</p>

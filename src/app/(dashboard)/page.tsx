@@ -173,8 +173,11 @@ export default async function HomePage() {
     <div className="space-y-6">
       {/* البانر الرئيسي */}
       <section className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/40">
-        <Image src={BRAND.skyline} alt="" fill priority sizes="(min-width: 1024px) 75vw, 100vw" className="object-cover object-[center_70%]" />
-        <div className="absolute inset-0 bg-gradient-to-l from-navy-950/95 via-navy-950/60 to-navy-950/10" />
+        {/* خلفية كحلية متدرجة بإضاءة ذهبية، ومعالم المملكة بين النص وبطاقة الترحيب */}
+        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(520px_300px_at_42%_75%,rgba(212,165,72,0.22),transparent_70%),linear-gradient(to_left,var(--color-navy-800),var(--color-navy-900)_55%,var(--color-navy-950))]" />
+        <div aria-hidden="true" className="pointer-events-none relative mx-auto -mb-6 h-44 w-full max-w-sm sm:h-52 xl:absolute xl:inset-y-3 xl:left-[16%] xl:mb-0 xl:h-auto xl:w-[38%] xl:max-w-none">
+          <Image src={BRAND.landmarks} alt="" fill priority sizes="(min-width: 1280px) 40vw, 384px" className="object-contain object-bottom drop-shadow-[0_16px_30px_rgba(0,0,0,0.5)]" />
+        </div>
         <div className="relative flex min-h-60 flex-wrap items-end justify-between gap-6 p-6 sm:p-8">
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gold-300">{formatDateLong(new Date())}</p>
