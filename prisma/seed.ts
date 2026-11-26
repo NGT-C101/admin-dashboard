@@ -53,6 +53,19 @@ async function main() {
   await markDeliveryStage();
   await acceptExistingTransactions();
   await seedLetterTemplates();
+  await seedAssetCategories();
+}
+
+// مرة واحدة: تصنيفات الأصول الأساسية (قابلة للتعديل من الأصول والعُهد ← التصنيفات)
+async function seedAssetCategories() {
+  const KEY = "assets-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  const names = ["أجهزة حاسب", "جوالات وأجهزة لوحية", "طابعات ومعدات مكتبية", "أثاث", "سيارات", "أخرى"];
+  for (const [order, name] of names.entries()) {
+    await prisma.assetCategory.upsert({ where: { name }, update: {}, create: { name, order } });
+  }
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log("✔ تصنيفات الأصول");
 }
 
 // مرة واحدة: قوالب خطابات أساسية (قابلة للتعديل أو الإيقاف من صفحة الصادر والوارد)

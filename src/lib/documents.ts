@@ -3,7 +3,7 @@ import type { DocType } from "@prisma/client";
 export const MAX_DOCS_PER_OWNER = 10;
 export const MAX_DOCS_PER_CONTRACT = 5;
 export const MAX_DOCS_PER_TRANSACTION = 10;
-export type DocOwnerType = "client" | "company" | "contract" | "employee" | "transaction" | "letter";
+export type DocOwnerType = "client" | "company" | "contract" | "employee" | "transaction" | "letter" | "asset";
 export function maxDocsFor(owner: DocOwnerType) {
   return owner === "contract" ? MAX_DOCS_PER_CONTRACT : owner === "transaction" ? MAX_DOCS_PER_TRANSACTION : MAX_DOCS_PER_OWNER;
 }
@@ -20,6 +20,7 @@ export function docTypesFor(owner: DocOwnerType): DocType[] {
   if (owner === "employee") return EMPLOYEE_TYPES;
   if (owner === "transaction") return TRANSACTION_TYPES;
   if (owner === "letter") return ["LETTER", "CONTRACT", "CERTIFICATE", "OTHER"];
+  if (owner === "asset") return ["PAYMENT_RECEIPT", "CERTIFICATE", "CONTRACT", "OTHER"];
   return (Object.keys(DOC_TYPE_LABELS) as DocType[]).filter((t) => !EMPLOYEE_ONLY.includes(t) && !TRANSACTION_ONLY.includes(t));
 }
 
@@ -42,7 +43,8 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
 };
 
 // المستند تبع مين (عميل، شركة، عقد، موظف، معاملة)
-export function documentOwner(doc: { clientId: string | null; companyId: string | null; contractId: string | null; employeeId: string | null; transactionId: string | null; letterId: string | null }) {
+export function documentOwner(doc: { clientId: string | null; companyId: string | null; contractId: string | null; employeeId: string | null; transactionId: string | null; letterId: string | null; assetId: string | null }) {
+  if (doc.assetId) return { type: "asset" as const, id: doc.assetId };
   if (doc.letterId) return { type: "letter" as const, id: doc.letterId };
   if (doc.transactionId) return { type: "transaction" as const, id: doc.transactionId };
   if (doc.employeeId) return { type: "employee" as const, id: doc.employeeId };

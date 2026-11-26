@@ -19,6 +19,7 @@ const OWNER_STYLES = {
   employee: "bg-teal-50 text-teal-700 ring-teal-200",
   transaction: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   letter: "bg-neutral-100 text-neutral-700 ring-neutral-200",
+  asset: "bg-rose-50 text-rose-700 ring-rose-200",
 } as const;
 
 export default async function ArchivePage({ searchParams }: { searchParams: Promise<ArchiveFilters> }) {
@@ -55,7 +56,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
         actions={<a href={exportHref} className="btn-secondary"><FileSpreadsheet size={16} /> تصدير Excel</a>}
       />
       <p className="text-sm text-navy-100">
-        كل المستندات المرفوعة في المنصة في مكان واحد: مستندات العملاء والشركات والعقود والموظفين، ومخرجات المعاملات، ومرفقات الخطابات.
+        كل المستندات المرفوعة في المنصة في مكان واحد: مستندات العملاء والشركات والعقود والموظفين، ومخرجات المعاملات، ومرفقات الخطابات والأصول.
         يظهر لك فقط ما تسمح صلاحياتك بفتحه.
       </p>
 

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { can, requireAdmin, requireSection } from "@/lib/auth";
+import { OPEN_CUSTODY, assetNumber } from "@/lib/assets";
 import { db } from "@/lib/db";
 import { type FormState, firstError, optionalDate, optionalMoney, optionalText, tenDigits, uniqueError } from "@/lib/forms";
 import { isValidSaudiIban, normalizeIban } from "@/lib/hr";
@@ -159,6 +160,11 @@ export async function terminateEmployee(_prev: FormState, formData: FormData): P
   const id = String(formData.get("id"));
   const parsed = terminateSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
+  // إخلاء الطرف: لا تُنهى الخدمة والموظف ما زال يحمل عُهداً
+  const open = await db.custody.findMany({ where: { employeeId: id, ...OPEN_CUSTODY }, include: { asset: { select: { name: true, number: true } } } });
+  if (open.length) {
+    return { error: `لا يمكن إنهاء الخدمة قبل استلام العُهد التي لدى الموظف: ${open.map((c) => `${c.asset.name} (${assetNumber(c.asset.number)})`).join("، ")}. سجّل إعادتها من الشؤون الإدارية ← الأصول والعُهد.` };
+  }
   const emp = await db.employee.update({ where: { id }, data: { ...parsed.data, status: "TERMINATED" } });
   if (emp.userId) await db.user.update({ where: { id: emp.userId }, data: { active: false } });
   revalidatePath(`/employees/profiles/${id}`);

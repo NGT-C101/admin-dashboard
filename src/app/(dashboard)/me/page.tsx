@@ -16,16 +16,18 @@ import { LEAVE_TYPE_LABELS } from "@/lib/leave";
 import { currentMonthKey, dateKey, monthLabel, riyadhToday } from "@/lib/time";
 import { formatSAR } from "@/lib/format";
 import Link from "next/link";
+import CustodyList, { CUSTODY_INCLUDE } from "@/components/CustodyList";
 
 export default async function MyServicesPage() {
   const user = await requireUser();
   if (!user.employeeId) redirect("/");
   const e = await db.employee.findUnique({ where: { id: user.employeeId } });
   if (!e) redirect("/");
-  const [requests, slips, reviews] = await Promise.all([
+  const [requests, slips, reviews, custodies] = await Promise.all([
     db.leaveRequest.findMany({ where: { employeeId: e.id }, include: REQUEST_INCLUDE, orderBy: { createdAt: "desc" }, take: 30 }),
     db.payslip.findMany({ where: { employeeId: e.id, run: { status: { not: "DRAFT" } } }, include: { run: { select: { month: true } } }, orderBy: { run: { month: "desc" } }, take: 12 }),
     db.performanceReview.findMany({ where: { employeeId: e.id, status: { not: "DRAFT" } }, include: { reviewer: { select: { name: true } } }, orderBy: { periodStart: "desc" } }),
+    db.custody.findMany({ where: { employeeId: e.id }, include: CUSTODY_INCLUDE, orderBy: { assignedAt: "desc" } }),
   ]);
   const toAck = reviews.filter((r) => r.status === "SUBMITTED");
 
@@ -45,6 +47,7 @@ export default async function MyServicesPage() {
           </div>
         </section>
       ))}
+      {custodies.some((c) => c.status === "PENDING") && <CustodyList custodies={custodies.filter((c) => c.status === "PENDING")} employeeName={e.fullName} selfService />}
       <LeaveBalanceCard employee={e} />
       <section className="card p-5">
         <h2 className="font-semibold mb-4">طلب جديد</h2>
@@ -78,6 +81,12 @@ export default async function MyServicesPage() {
               </Link>
             ))}
           </div>
+        </section>
+      )}
+      {custodies.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">عُهدي</h2>
+          <CustodyList custodies={custodies} employeeName={e.fullName} />
         </section>
       )}
       <section className="space-y-3">

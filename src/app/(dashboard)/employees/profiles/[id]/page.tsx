@@ -17,6 +17,8 @@ import Tabs from "@/components/ui/Tabs";
 import { can, requireSection } from "@/lib/auth";
 import { daysText, daysUntil, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
+import { OPEN_CUSTODY } from "@/lib/assets";
+import CustodyList, { CUSTODY_INCLUDE } from "@/components/CustodyList";
 import { dateInputValue, formatDate, formatSAR } from "@/lib/format";
 import {
   EMPLOYEE_STATUS_LABELS, EMPLOYEE_STATUS_STYLES, EMPLOYMENT_TYPE_LABELS, GENDER_LABELS, TERMINATION_REASONS,
@@ -75,12 +77,15 @@ export default async function EmployeePage({ params, searchParams }: {
     },
   });
   if (!e) notFound();
+  const seeAssets = can(user, "admin-affairs");
+  const openCustody = await db.custody.count({ where: { employeeId: e.id, ...OPEN_CUSTODY } });
 
   const tabs = [
     { key: "overview", label: "البيانات الشخصية" },
     { key: "job", label: "البيانات الوظيفية" },
     ...(canEdit ? [{ key: "leave", label: "الإجازات والحضور" }, { key: "performance", label: "الأداء" }] : []),
     ...(canManage ? [{ key: "salary", label: "الراتب ومستحقات الخدمة" }, { key: "documents", label: "المستندات", count: e._count.documents }] : []),
+    ...(canEdit || seeAssets ? [{ key: "custody", label: "العُهد", count: openCustody }] : []),
     ...(user.isAdmin ? [{ key: "access", label: "حساب الدخول والصلاحيات" }] : []),
   ];
   const tab = tabs.some((t) => t.key === sp.tab) ? sp.tab! : "overview";
@@ -189,6 +194,7 @@ export default async function EmployeePage({ params, searchParams }: {
       {tab === "salary" && canManage && <SalaryTab />}
       {tab === "documents" && canManage && <DocumentsTab />}
       {tab === "access" && user.isAdmin && <AccessTab />}
+      {tab === "custody" && (canEdit || seeAssets) && <CustodyTab />}
     </div>
   );
 
@@ -402,6 +408,18 @@ export default async function EmployeePage({ params, searchParams }: {
   async function DocumentsTab() {
     const documents = await db.document.findMany({ where: { employeeId: id }, orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } });
     return <DocumentsSection ownerType="employee" ownerId={id} documents={documents} userId={user.id} canUpload={canManage} canManage={canManage} />;
+  }
+
+  async function CustodyTab() {
+    const custodies = await db.custody.findMany({ where: { employeeId: e!.id }, include: CUSTODY_INCLUDE, orderBy: { assignedAt: "desc" } });
+    return (
+      <div className="space-y-3">
+        {e!.status !== "TERMINATED" && openCustody > 0 && (
+          <p className="card p-3 text-sm text-amber-800">لدى الموظف {openCustody} عهدة غير مُعادة، ولا يمكن إنهاء خدمته قبل استلامها.</p>
+        )}
+        <CustodyList custodies={custodies} employeeName={e!.fullName} linkAssets={seeAssets} />
+      </div>
+    );
   }
 
   function AccessTab() {

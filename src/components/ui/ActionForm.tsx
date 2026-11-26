@@ -11,9 +11,10 @@ type Props = {
   resetOnSuccess?: boolean;
   className?: string;
   onSuccess?: () => void;
+  confirm?: string; // رسالة تأكيد قبل الإجراءات الحساسة (إعادة، إلغاء، حذف…)
 };
 
-export default function ActionForm({ action, children, submitLabel, resetOnSuccess = true, className, onSuccess }: Props) {
+export default function ActionForm({ action, children, submitLabel, resetOnSuccess = true, className, onSuccess, confirm }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const ref = useRef<HTMLFormElement>(null);
 
@@ -32,15 +33,18 @@ export default function ActionForm({ action, children, submitLabel, resetOnSucce
       // بنبعت الفورم بنفسنا عشان React ميفضّيش الحقول لو فيه خطأ
       onSubmit={(e) => {
         e.preventDefault();
+        if (confirm && !window.confirm(confirm)) return;
         const data = new FormData(e.currentTarget);
         startTransition(() => formAction(data));
       }}
     >
       {children}
-      {state?.error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-2">{state.error}</p>}
-      {state?.success && <p className="text-sm text-brand-700 bg-brand-50 rounded-lg p-2">{state.success}</p>}
+      <div aria-live="polite">
+        {state?.error && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg p-2">{state.error}</p>}
+        {state?.success && <p className="text-sm text-brand-700 bg-brand-50 rounded-lg p-2">{state.success}</p>}
+      </div>
       <button disabled={pending} className="btn-primary">
-        {pending ? "جاري الحفظ..." : submitLabel}
+        {pending ? "جارٍ الحفظ…" : submitLabel}
       </button>
     </form>
   );
