@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  ChevronDown, ClipboardList, FolderOpen, Handshake, Award, Inbox, LayoutDashboard, ListChecks, UserCircle,
+  Building2, ChevronDown, ClipboardList, FolderOpen, Handshake, Award, Inbox, LayoutDashboard, ListChecks, UserCircle,
   Megaphone, Menu, Settings, Users, Wallet, X,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
@@ -112,6 +112,9 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
               <p className="px-3 text-xs text-navy-300">الإعدادات</p>
               <Link href="/settings/users" className={linkCls(pathname === "/settings/users")}>
                 <Settings size={18} /> المستخدمون والصلاحيات
+              </Link>
+              <Link href="/settings/company" className={linkCls(pathname === "/settings/company")}>
+                <Building2 size={18} /> بيانات المنشأة
               </Link>
               <Link href="/settings/lists" className={linkCls(pathname === "/settings/lists")}>
                 <ListChecks size={18} /> القوائم والمراحل

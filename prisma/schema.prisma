@@ -54,6 +54,7 @@ model User {
   createdContracts     Contract[]
   interactions         Interaction[]       @relation("InteractionCreator")
   followUps            Interaction[]       @relation("FollowUpAssignee")
+  createdQuotes        Quote[]
 }
 
 // ======================= العملاء والشركات =======================
@@ -85,6 +86,7 @@ model Client {
   documents        Document[]
   contracts        Contract[]
   interactions     Interaction[]
+  quotes           Quote[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 }
@@ -113,6 +115,7 @@ model Company {
   documents       Document[]
   contracts       Contract[]
   interactions    Interaction[]
+  quotes          Quote[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -130,6 +133,7 @@ model ServiceType {
   order        Int           @default(0)
   active       Boolean       @default(true)
   transactions Transaction[]
+  quoteItems   QuoteItem[]
 
   @@unique([name, govEntityId])
   @@index([govEntityId])
@@ -186,6 +190,7 @@ model Transaction {
   govFees       Decimal?           @db.Decimal(12, 2) // الرسوم الحكومية
   dueDate       DateTime?
   events        TransactionEvent[]
+  quote         Quote?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
@@ -617,4 +622,62 @@ model PerformanceReview {
   updatedAt       DateTime     @updatedAt
 
   @@unique([employeeId, period])
+}
+
+// ================= عروض الأسعار =================
+
+enum QuoteStatus {
+  DRAFT // مسودة
+  SENT // أُرسل للعميل
+  ACCEPTED // قبله العميل
+  REJECTED // رفضه العميل
+  CANCELLED // ملغى
+}
+
+model Quote {
+  id            String       @id @default(cuid())
+  number        Int          @unique @default(autoincrement()) // QT-0001
+  client        Client       @relation(fields: [clientId], references: [id])
+  clientId      String
+  company       Company?     @relation(fields: [companyId], references: [id])
+  companyId     String?
+  title         String
+  issueDate     DateTime     @db.Date
+  validUntil    DateTime     @db.Date // انتهاء صلاحية العرض
+  status        QuoteStatus  @default(DRAFT)
+  vatRate       Decimal      @default(15) @db.Decimal(5, 2)
+  subtotal      Decimal      @db.Decimal(12, 2) // قبل الضريبة
+  vatAmount     Decimal      @db.Decimal(12, 2)
+  total         Decimal      @db.Decimal(12, 2)
+  govFees       Decimal?     @db.Decimal(12, 2) // الرسوم الحكومية المتوقعة (خارج العرض والفاتورة، بدون ضريبة)
+  paymentTerms  String? // طريقة الدفع: دفعة واحدة / أقساط / شهري...
+  notes         String? // ملاحظات وشروط تظهر للعميل
+  rejectReason  String?
+  sentAt        DateTime?
+  decidedAt     DateTime? // تاريخ القبول أو الرفض
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  transactionId String?      @unique // المعاملة الناتجة بعد القبول
+  items         QuoteItem[]
+  createdBy     User         @relation(fields: [createdById], references: [id])
+  createdById   String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model QuoteItem {
+  id            String       @id @default(cuid())
+  quote         Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quoteId       String
+  order         Int          @default(0)
+  description   String
+  serviceType   ServiceType? @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId String?
+  quantity      Decimal      @default(1) @db.Decimal(10, 2)
+  unitPrice     Decimal      @db.Decimal(12, 2)
+  lineTotal     Decimal      @db.Decimal(12, 2)
+
+  @@index([quoteId])
 }

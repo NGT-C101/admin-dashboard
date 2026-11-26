@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Archive, ArchiveRestore, FileBarChart, FileSignature, MessageCircle, Plus, Star } from "lucide-react";
+import { Archive, ArchiveRestore, FileBarChart, FileSignature, FileText, MessageCircle, Plus, Star } from "lucide-react";
 import ClientAlertsView from "@/components/ClientAlertsView";
 import ContractsTable, { CONTRACT_INCLUDE } from "@/components/ContractsTable";
 import DocumentsSection from "@/components/DocumentsSection";
@@ -59,6 +59,7 @@ export default async function ClientPage({ params, searchParams }: {
           <>
             {wa && <a href={wa} target="_blank" rel="noopener" className="btn-secondary"><MessageCircle size={16} className="text-emerald-600" /> واتساب</a>}
             {can(user, "clients", "EDIT") && <Link href={`/clients/contracts/new?clientId=${id}`} className="btn-secondary"><FileSignature size={16} /> عقد</Link>}
+            {can(user, "requests", "EDIT") && <Link href={`/requests/quotes/new?clientId=${id}`} className="btn-secondary"><FileText size={16} /> عرض سعر</Link>}
             {can(user, "requests", "EDIT") && <Link href={`/requests/all/new?clientId=${id}`} className="btn-primary"><Plus size={16} /> معاملة جديدة</Link>}
           </>
         }
