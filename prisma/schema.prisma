@@ -63,6 +63,11 @@ model User {
   eventTargets         TransactionEvent[]  @relation("EventTarget")
   extensionRequests    ExtensionRequest[]  @relation("ExtensionRequester")
   extensionDecisions   ExtensionRequest[]  @relation("ExtensionDecider")
+  lettersCreated       Letter[]            @relation("LetterCreator")
+  lettersReviewed      Letter[]            @relation("LetterReviewer")
+  lettersApproved      Letter[]            @relation("LetterApprover")
+  lettersAssigned      Letter[]            @relation("LetterAssignee")
+  letterEvents         LetterEvent[]
 }
 
 // ======================= العملاء والشركات =======================
@@ -97,6 +102,7 @@ model Client {
   quotes           Quote[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  letters          Letter[]
 }
 
 // شركة يملكها العميل
@@ -274,6 +280,8 @@ model Document {
   employeeId    String?
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
   transactionId String? // مخرجات المعاملة
+  letter        Letter?      @relation(fields: [letterId], references: [id])
+  letterId      String? // مرفقات خطاب صادر أو صورة خطاب وارد
   deliveries    Delivery[]   @relation("DeliveryDocuments")
   type          DocType
   title         String? // وصف إضافي (مثلاً: رخصة الدفاع المدني)
@@ -291,6 +299,7 @@ model Document {
   @@index([contractId])
   @@index([employeeId])
   @@index([transactionId])
+  @@index([letterId])
 }
 
 // ======================= العقود =======================
@@ -798,4 +807,80 @@ model ExtensionRequest {
 
   @@index([transactionId])
   @@index([status])
+}
+
+enum LetterDirection {
+  OUTGOING // صادر
+  INCOMING // وارد
+}
+
+enum LetterStatus {
+  DRAFT // مسودة
+  IN_REVIEW // بانتظار المراجعة
+  REVIEWED // تمت المراجعة، بانتظار الاعتماد
+  RETURNED // أُعيد للتعديل
+  APPROVED // معتمد (صادر) — له رقم صادر ورمز تحقق
+  RECEIVED // مسجَّل (وارد)
+  CANCELLED // ملغى
+}
+
+// الصادر والوارد
+model Letter {
+  id           String          @id @default(cuid())
+  direction    LetterDirection
+  year         Int? // سنة الترقيم
+  seq          Int? // الرقم داخل السنة (الصادر عند الاعتماد، الوارد عند التسجيل)
+  status       LetterStatus
+  subject      String
+  body         String? // نص الخطاب الصادر، أو ملخص الوارد
+  party        String // الصادر: الجهة الموجّه إليها — الوارد: الجهة المرسلة
+  partyRef     String? // رقم خطاب الجهة المرسلة (الوارد) أو رقم مرجعي
+  letterDate   DateTime?       @db.Date // تاريخ الخطاب: الصادر = تاريخ الاعتماد، الوارد = التاريخ المدوّن عليه
+  receivedAt   DateTime?       @db.Date // تاريخ استلام الوارد
+  hideLogo     Boolean         @default(false)
+  client       Client?         @relation(fields: [clientId], references: [id])
+  clientId     String?
+  createdBy    User            @relation("LetterCreator", fields: [createdById], references: [id])
+  createdById  String
+  reviewedBy   User?           @relation("LetterReviewer", fields: [reviewedById], references: [id])
+  reviewedById String?
+  reviewedAt   DateTime?
+  approvedBy   User?           @relation("LetterApprover", fields: [approvedById], references: [id])
+  approvedById String?
+  approvedAt   DateTime?
+  assignee     User?           @relation("LetterAssignee", fields: [assigneeId], references: [id])
+  assigneeId   String? // الوارد: الموظف المحال إليه
+  actionDone   Boolean         @default(false) // الوارد: تم الإجراء
+  verifyToken  String?         @unique // رمز صفحة التحقق العامة (QR)
+  documents    Document[]
+  events       LetterEvent[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([direction, year, seq])
+  @@index([status])
+  @@index([clientId])
+}
+
+// سجل الخطاب (إنشاء، إرسال للمراجعة، تصديق، إعادة، اعتماد، إحالة، إلغاء)
+model LetterEvent {
+  id        String   @id @default(cuid())
+  letter    Letter   @relation(fields: [letterId], references: [id], onDelete: Cascade)
+  letterId  String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  note      String
+  createdAt DateTime @default(now())
+
+  @@index([letterId])
+}
+
+// قوالب الخطابات الجاهزة
+model LetterTemplate {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  subject String?
+  body    String
+  active  Boolean @default(true)
+  order   Int     @default(0)
 }

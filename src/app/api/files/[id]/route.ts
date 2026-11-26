@@ -15,6 +15,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const allowed = doc.employeeId
     ? can(user, "employees", "MANAGE") || user.employeeId === doc.employeeId
     : doc.transaction ? can(user, "requests", "VIEW") && canSeeTx(user, doc.transaction)
+    : doc.letterId ? can(user, "admin-affairs", "VIEW")
     : can(user, "clients", "VIEW");
   if (!allowed) return new Response("غير مسموح", { status: 403 });
 

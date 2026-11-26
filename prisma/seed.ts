@@ -52,6 +52,34 @@ async function main() {
   await seedPositions();
   await markDeliveryStage();
   await acceptExistingTransactions();
+  await seedLetterTemplates();
+}
+
+// مرة واحدة: قوالب خطابات أساسية (قابلة للتعديل أو الإيقاف من صفحة الصادر والوارد)
+async function seedLetterTemplates() {
+  const KEY = "letters-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  const open = "السلام عليكم ورحمة الله وبركاته، وبعد:";
+  const close = "وتقبلوا خالص التحية والتقدير،";
+  const templates = [
+    {
+      name: "خطاب عام", subject: null,
+      body: `${open}\n\n[نص الخطاب]\n\n${close}`,
+    },
+    {
+      name: "خطاب تفويض مراجعة جهة حكومية", subject: "تفويض بالمراجعة",
+      body: `${open}\n\nنفيدكم بأننا قد فوّضنا السيد/ [اسم المفوَّض] بموجب هوية رقم [رقم الهوية]، أحد منسوبي منشأتنا، بمراجعتكم لإنهاء إجراءات [نوع الإجراء] الخاصة بـ [اسم المنشأة العميلة] ذات السجل التجاري رقم [رقم السجل]، والتوقيع واستلام ما يلزم نيابةً عنا.\n\nآملين التكرم بتسهيل مهمته.\n\n${close}`,
+    },
+    {
+      name: "خطاب تعريف بموظف", subject: "تعريف",
+      body: `${open}\n\nتشهد [اسم المنشأة] بأن السيد/ [اسم الموظف]، [الجنسية]، بموجب هوية رقم [رقم الهوية]، يعمل لدينا بوظيفة [المسمى الوظيفي] منذ تاريخ [تاريخ الالتحاق] وحتى تاريخه، وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على المنشأة.\n\n${close}`,
+    },
+  ];
+  for (const [order, t] of templates.entries()) {
+    await prisma.letterTemplate.upsert({ where: { name: t.name }, update: {}, create: { ...t, order } });
+  }
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log("✔ قوالب الخطابات");
 }
 
 // مرة واحدة عند تفعيل «الاستلام بتعهد»: المعاملات الموجودة قبله تُعدّ مستلَمة حتى لا يتوقف العمل عليها

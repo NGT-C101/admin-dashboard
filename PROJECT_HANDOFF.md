@@ -16,10 +16,10 @@
 - **Visual identity:** dark **navy** shell + **gold** accents + NGT **red** primary buttons; light (white) cards on the dark background; real Riyadh skyline photo on the login page and the home banner (§5).
 - **UI language:** formal Modern Standard Arabic (فصحى), RTL, Gregorian dates, Saudi time zone (`Asia/Riyadh`), SAR currency, Latin digits.
 - **Done:** auth & granular permissions · Clients (full CRM) · Transactions (list, tracking board, **quotes/عروض الأسعار**, **deliverables/تسليم المخرجات**) · Employees/HR (profiles, leadership positions, org chart, leaves, attendance, payroll, performance) · self-service ("خدماتي") · settings (users, lists, **company profile/بيانات المنشأة**) · branding · Excel import/export · printable reports.
-- **Not built yet (placeholder "قيد التطوير" pages):** **Administrative Affairs** (الشؤون الإدارية) · **Public Relations** (العلاقات العامة) · **Accounts** (الحسابات).
+- **Not built yet (placeholder "قيد التطوير" pages):** **Administrative Affairs** except الصادر والوارد (built) (الشؤون الإدارية) · **Public Relations** (العلاقات العامة) · **Accounts** (الحسابات).
 - **Owner decision (2026-11-26):** **Accounts is postponed until every other module is finished.** When it is built, the platform itself must issue ZATCA Phase-2 e-invoices (native Fatoora integration — not via Daftra).
 - **Competitor analysis «تحليل منصة جهات»** (Jehat platform: 20 tutorial videos + presentation + user guide + 4 recent screen recordings) is a private artifact in the owner's claude.ai account: https://claude.ai/artifact/5hxxKfeh22KNajVxmY1TwE — its §«كيف ندمجها في خطتنا» **is the agreed roadmap** (see §6 Pending).
-- **Next task:** **Administrative Affairs → الصادر والوارد** (correspondence with templates, review → approval cycle, outgoing numbering, QR verification page) — idea 4 of the Jehat analysis. Confirm details with the owner first.
+- **Next task:** rest of **Administrative Affairs**: الأرشيف والمستندات (search across all documents), الأصول والعُهد (assets & custody with handover/return), المشتريات والموردين. Confirm details with the owner first. (الصادر والوارد is done — §2.8.)
 - The owner is **non-technical**, uses a Mac, and communicates in **Egyptian Arabic**; explain steps in simple Arabic, give one copy-paste command per code block, and tell them exactly what to run on the server after each push.
 - **Pushing to GitHub in this cloud environment requires an explicit approval message from the owner for each push** (the owner sends: «موافق، ارفع التعديلات الجديدة على GitHub»). Never put server IPs, secrets or personal data in the repo (it is public; the push classifier blocks it).
 
@@ -73,7 +73,7 @@ admin-dashboard/
 │  ├─ brand/riyadh-skyline.webp # Riyadh night skyline photo (750×335, 25 KB) — login background + home banner
 │  └─ robots.txt              # Disallow: /  (internal system)
 └─ src/
-   ├─ middleware.ts           # auth gate; excludes _next, icons, /brand/, robots.txt, /api/health
+   ├─ middleware.ts           # auth gate; excludes _next, icons, /brand/, robots.txt, /api/health, **/verify/** (public letter verification)
    ├─ app/
    │  ├─ layout.tsx           # <html lang="ar" dir="rtl">, IBM Plex Sans Arabic (--font-plex) + Noto Kufi Arabic (--font-kufi), metadata from BRAND, robots noindex
    │  ├─ globals.css          # Tailwind v4 @theme (navy/gold/brand/chart palette), dark-shell variable inversion, component classes, print rules
@@ -125,6 +125,7 @@ admin-dashboard/
 | `clients.ts` | client/contract/interaction labels & styles, `contractState`, `saudizationRate`, `whatsappLink`, `daysUntil`, `inDays`, `endOfToday`, **`daysText` (Arabic number agreement for days)** |
 | `client-alerts.ts` | `getClientAlerts(scope)` — follow-ups, expiring documents & CRs (60d), ending contracts (30d) |
 | `documents.ts` | doc type labels, limits (10 per client/company/employee/**transaction**, 5 per contract) via `maxDocsFor`, `docTypesFor(owner)` (transaction-only types CERTIFICATE/LETTER/PAYMENT_RECEIPT), `documentOwner` |
+| `letters.ts` | `letterNumber` (ص-YYYY-0001 / و-YYYY-0001), status labels/styles, `canReview` (author's direct manager or ADMIN_AFFAIRS MANAGE), `canApprove` (ADMIN_AFFAIRS MANAGE/admin), `canEditLetter`, `myQueueWhere`, `nextSeq`, `verifyUrl` (from request host), `qrSvg` (npm `qrcode`) |
 | `transactions.ts` | priority labels/styles, **`visibleTxWhere(user)` / `canSeeTx`** (confidential = assignee + admin only — apply to EVERY new transaction query), `awaitingAcceptance(Where)`, `canAssign`, `isManagerOf` (direct manager via Employee.managerId, or REQUESTS MANAGE; never self), `decidableExtensionsWhere`, **`pickAssignee`** (auto-distribution), `pledgeText`, `externalCommentWhatsapp` |
 | `deliveries.ts` | `deliveryNumber` (DL-0001), channel labels/styles, `awaitingDeliveryWhere` (stage.readyForDelivery), `itemLines`, `deliveryWhatsapp` (wa.me link with prefilled MSA message) |
 | `storage.ts` | file save/read/delete in `UPLOAD_DIR` (default `./uploads`), magic-byte type detection (PDF/JPG/PNG/WEBP), 10 MB max, random hex keys |
@@ -207,6 +208,17 @@ admin-dashboard/
   - **Printable receipt (إيصال تسليم مخرجات)** `/requests/deliverables/[id]/receipt`: A4 with watermark, seller/client blocks, transaction, items table (electronic copy vs original/paper, expiry), notes, acknowledgement sentence, signature lines for recipient and deliverer + stamp.
   - Shown on: transaction page (sections «المخرجات» + «سجل التسليم» + form), client page → المعاملات tab («سجل تسليم المخرجات»), home «تحتاج إجراء» (count awaiting delivery).
 
+### 2.8 Administrative Affairs → الصادر والوارد `/admin-affairs/correspondence` (session 3, owner decisions 2026-11-26; tested locally, not yet pushed)
+- **Outgoing letters:** written from a template (fills subject + body; placeholders in [ ]) or free text; recipient party, optional reference, optional client link, "print without logo" option, attachments (Document owner `letter`).
+- **Cycle (owner: review then approve):** DRAFT → «إرسال للمراجعة» → IN_REVIEW → **review (تصديق)** by the author's **direct manager** (Employee.managerId) or ADMIN_AFFAIRS MANAGE → REVIEWED → **approval (اعتماد)** by ADMIN_AFFAIRS MANAGE or admin → APPROVED. Either step can «إعادة للتعديل» (note required) → RETURNED (author edits and resubmits). Nobody reviews/approves their own letter **except admins** (so a single-admin company is not blocked).
+- **Numbering (owner: yearly):** outgoing **ص-YYYY-0001** assigned **only at approval** (drafts consume no numbers); incoming **و-YYYY-0001** at registration; `@@unique([direction, year, seq])` + retry on collision. Displayed in natural RTL with `<bdi>` (no `dir=ltr`).
+- **Print** `/admin-affairs/correspondence/[id]/print`: A4 letterhead (red logo + legal name unless hidden), number, **Hijri (Umm al-Qura) + Gregorian date** (owner choice; `formatHijri`, `formatDateFull` in format.ts — needs full ICU, which Node 22 official images have), attachments count, «السادة / … المحترمين», subject, body, approver name + job title, footer with company profile data, **QR code**. Unapproved letters print with a «مسودة» watermark and no number/QR.
+- **Public verification page** `/verify/[token]` (no login; 32-hex random token; noindex): shows **only letter metadata** (owner choice): valid/cancelled, number, dates, subject, recipient, approver, issuer — never the body. Cancelling an approved letter (ADMIN_AFFAIRS MANAGE, reason required) makes the page say «هذا الخطاب ملغى».
+- **Incoming:** register sender, their number, their date, received date, subject, summary, optional client, optional referral to an employee; upload the scanned letter on its page; referral/re-referral with note; «تم الإجراء» by the assignee or MANAGE.
+- **List page:** KPIs (my review/approval queue, approved outgoing this year, incoming this month, my drafts/returned), tabs الصادر / الوارد / بانتظار إجرائي / قوالب الخطابات (MANAGE: add/edit/deactivate), search + status + year filters. Home «تحتاج إجراء»: letters awaiting my review/approval, incoming referred to me.
+- Default templates seeded once (AppMeta `letters-v1`): خطاب عام، خطاب تفويض مراجعة جهة حكومية، خطاب تعريف بموظف.
+- Permissions: section ADMIN_AFFAIRS (`admin-affairs`): VIEW read; EDIT write/submit/register incoming/upload; MANAGE approve, review any, cancel approved/incoming, templates.
+
 ### 2.4 Employees / HR (الموظفين)
 - **Employee profile** (EMP-0001): personal, identity (ID/iqama + expiry, passport + expiry), contact & emergency, job (title, department, direct manager, employment type, hire date, probation end, contract end, work location), salary (basic/housing/transport/other, bank, IBAN validated, GOSI flag), status (ACTIVE/ON_LEAVE/SUSPENDED/TERMINATED), termination (date + reason → **login auto-disabled**), reinstate, leave carryover. Profile header band is a navy gradient.
 - Create employee **with a login account + permission matrix in the same form** (admin only); or grant login later from the profile "access" tab.
@@ -261,6 +273,8 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 | `TxPriority` | NORMAL, HIGH, URGENT |
 | `TxEventType` | NOTE, ASSIGN, ACCEPT, EXTENSION, WARNING, DELIVERY |
 | `ExtensionStatus` | PENDING, APPROVED, REJECTED |
+| `LetterDirection` | OUTGOING, INCOMING |
+| `LetterStatus` | DRAFT, IN_REVIEW, REVIEWED, RETURNED, APPROVED, RECEIVED, CANCELLED |
 | `DocType` (added) | CERTIFICATE, LETTER, PAYMENT_RECEIPT (transaction outputs only) |
 
 ### 3.2 Models & relationships (key fields)
@@ -288,6 +302,7 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 - **Delivery** (number autoincrement unique, DL-0001) → transaction (cascade), deliveredBy (User "DeliveredBy"), documents[] (implicit m2m `_DeliveryDocuments`); deliveredAt, channel, recipientName, recipientIdNo?, recipientPhone?, items? (lines), note?.
 - **Document.transactionId?** (outputs of a transaction, SET NULL) · **Stage.readyForDelivery** Boolean default false.
 - **Transaction** + `priority`, `confidential`, `acceptedAt?`, acceptances[], extensionRequests[] · **TransactionEvent** + `type`, `external`, `targetUser?` ("EventTarget") · **User** + `autoAssign`, `assignableServices` (m2m `_AssignableServices` with ServiceType).
+- **Letter** → client?, createdBy/reviewedBy?/approvedBy?/assignee? (Users), documents[] (Document.letterId), events[]; direction, year?, seq? (unique per direction+year), status, subject, body?, party, partyRef?, letterDate? / receivedAt? (`@db.Date`), hideLogo, actionDone, verifyToken? (unique). **LetterEvent** (history notes). **LetterTemplate** (unique name, subject?, body, active, order).
 - **TxAcceptance** → transaction (cascade), user; jobTitle?, committedDue, documents?, pledgeText.
 - **ExtensionRequest** → transaction (cascade), requestedBy, decidedBy?; currentDue?, requestedDue, reason, status, decidedAt?, decisionNote?.
 - **AppMeta** (key/value) — config & one-time-migration flags.
@@ -300,6 +315,7 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 | `holidays-v1` | fixed Gregorian holidays seeded |
 | `positions-v1` | default leadership positions seeded |
 | `deliveries-v1` | «صدرت / معتمدة» stage flagged `readyForDelivery` (once) |
+| `letters-v1` | default letter templates seeded (once) |
 | `tx-acceptance-v1` | existing assigned transactions marked accepted (once, when the mandatory pledge was introduced) |
 | `work-schedule` | JSON `{start, end, grace}` |
 | `payroll-settings` | JSON `{gosiSaudiRate, gosiNonSaudiRate, gosiCap, deductAbsence, deductLate}` |
@@ -308,7 +324,7 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 > Pattern: new one-time data changes go into `prisma/seed.ts` guarded by a new AppMeta key; seed runs at every container start and must stay idempotent and **non-destructive**.
 
 ### 3.4 Migrations (in order)
-`init` → `clients_transactions` → `services_by_entity` → `documents` → `clients_crm` → `client_archive` → `employees_permissions` → `leaves_attendance` → `positions` → `payroll_performance` → `20261126031520_quotes` (enum QuoteStatus, tables Quote & QuoteItem, FKs; additive only) → `20261126162847_deliveries` (enum DeliveryChannel, 3 DocType values, Document.transactionId, Stage.readyForDelivery, tables Delivery & _DeliveryDocuments; additive only) → `*_transaction_actions` (enums TxPriority/TxEventType/ExtensionStatus, Transaction/TransactionEvent/User columns, tables TxAcceptance, ExtensionRequest, _AssignableServices; additive only). None drop data (one early migration dropped/re-created a unique index on ServiceType name).
+`init` → `clients_transactions` → `services_by_entity` → `documents` → `clients_crm` → `client_archive` → `employees_permissions` → `leaves_attendance` → `positions` → `payroll_performance` → `20261126031520_quotes` (enum QuoteStatus, tables Quote & QuoteItem, FKs; additive only) → `20261126162847_deliveries` (enum DeliveryChannel, 3 DocType values, Document.transactionId, Stage.readyForDelivery, tables Delivery & _DeliveryDocuments; additive only) → `*_transaction_actions` (enums TxPriority/TxEventType/ExtensionStatus, Transaction/TransactionEvent/User columns, tables TxAcceptance, ExtensionRequest, _AssignableServices; additive only) → `*_correspondence` (enums LetterDirection/LetterStatus, tables Letter, LetterEvent, LetterTemplate, Document.letterId; additive only). None drop data (one early migration dropped/re-created a unique index on ServiceType name).
 
 ### 3.5 Configuration / environment
 - Server `.env` (generated by `install.sh`, chmod 600, never committed): `DOMAIN` (= `platform.ngt.sa`), `POSTGRES_USER`, `POSTGRES_PASSWORD`, `SESSION_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
@@ -357,13 +373,13 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 ## 6. Completed vs pending
 
 ### Completed
-Phases (all on `main`): foundation → clients & transactions → server deployment → password page → branding → services by entity → documents → clients CRM batch 1 & 2 → formal Arabic → HR batch 1 (profiles + permission system) → HR batch 2 (leaves + attendance) → leadership positions + Gregorian date fields → HR batch 3 (payroll + performance) → **[2026-11-26]** navy/gold visual identity + new home dashboard + real skyline photo → custom domain `platform.ngt.sa` + server security updates/reboot → handoff update → **quotes (عروض الأسعار) + company profile (بيانات المنشأة)** → quote watermark → «الرقم الموحد» label on printed quotes → full handoff (`e2368f4`) → **[session 3] deliverables** (`09fad63`, pushed + deployed) → **transaction actions** (local, not pushed yet).
+Phases (all on `main`): foundation → clients & transactions → server deployment → password page → branding → services by entity → documents → clients CRM batch 1 & 2 → formal Arabic → HR batch 1 (profiles + permission system) → HR batch 2 (leaves + attendance) → leadership positions + Gregorian date fields → HR batch 3 (payroll + performance) → **[2026-11-26]** navy/gold visual identity + new home dashboard + real skyline photo → custom domain `platform.ngt.sa` + server security updates/reboot → handoff update → **quotes (عروض الأسعار) + company profile (بيانات المنشأة)** → quote watermark → «الرقم الموحد» label on printed quotes → full handoff (`e2368f4`) → **[session 3] deliverables** (`09fad63`, pushed + deployed) → **transaction actions** (`d505353`, pushed) → **الصادر والوارد** (local, not pushed yet).
 
 Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي identity (superseded) · `e3c7b61` navy/gold identity + new home · `76cd1a5` skyline photo · `e55d743` handoff update · `e893d9b` quotes + company profile (+ SearchBox icon fix) · `0b36088` quote watermark · `9c3cbbe` «الرقم الموحد» label · `e2368f4` handoff (all pushed).
 
 ### Pending (not started), in the agreed order (from the Jehat analysis artifact, §0)
 1. ~~Transaction actions upgrade~~ **done in session 3**. Not done from that idea list: printable pledge receipt for the client, bulk transfer of an employee's transactions, «مراجعة معاملات موظف» view, notifications (in-app bell) for assignment/extension/warning.
-2. **Administrative Affairs (الشؤون الإدارية):** starts with correspondence in/out (الصادر والوارد) with templates, NGT letterhead + hide-logo option, **review → approval cycle**, outgoing number, Hijri + Gregorian date, **QR code to a public verification page**; then archive & documents search, assets & custody (الأصول والعُهد), procurement & suppliers.
+2. **Administrative Affairs (الشؤون الإدارية):** ~~correspondence~~ **done (§2.8)**; remaining: archive & documents search, assets & custody, procurement & suppliers. Original plan: starts with correspondence in/out (الصادر والوارد) with templates, NGT letterhead + hide-logo option, **review → approval cycle**, outgoing number, Hijri + Gregorian date, **QR code to a public verification page**; then archive & documents search, assets & custody (الأصول والعُهد), procurement & suppliers.
 3. **Public Relations (العلاقات العامة):** events & conferences, partnerships & external bodies, campaigns & media content, customer satisfaction surveys.
 4. **Client portal** (big separate phase): client logs in, sees transactions/status/external comments, uploads requested documents, approves quotes, receives outputs. Also: authorized representatives (المفوضون) per client/company, camera capture of documents, appointments calendar with reminders.
 5. **Cross-cutting:** global search (header search bar like the owner's mockup), notification center/bell (in-app; later email/WhatsApp), audit log, login hardening.
@@ -408,6 +424,7 @@ Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي iden
 25. Deliveries: WhatsApp button only opens a prefilled chat — files are attached manually (no public links). `Tabs` links drop the search/"mine" filters when switching tabs on the deliverables page. No confirmation dialog on «حذف السجل».
 26. Session-3 local testing used a second local DB (`admin_dashboard2`) because `prisma migrate reset` is blocked by Prisma's AI-consent guard; that is local-only and irrelevant to production.
 27. Transaction actions: no notification bell yet — assignees/managers find pending items via home «تحتاج إجراء» and list filters. Success messages of accept/extension/assign disappear after the page refreshes (same as item 1). The «توزيع تلقائي» default applies only on the create form and quote conversion (not on CSV/other imports — none exist yet).
+28. Correspondence: letter body is plain text (line breaks kept; no bold/tables). No letters tab on the client page yet (letters link to the client only). The verify page is public by design and shows the issuer phone from the company profile.
 
 ---
 
@@ -442,6 +459,7 @@ Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي iden
 
 ## 9. Exact current status (end of 2026-11-26)
 
+- **Session 3, part 3:** الصادر والوارد built on top of `d505353` (new dependency `qrcode` + `@types/qrcode`); tsc clean, eslint 0 errors / 5 old warnings, build OK; Playwright E2E passed: template → draft → submit → self-review impossible → line-manager review → non-MANAGE cannot approve → admin approval → ص-2026-0001 + QR → public verify page (no login) valid → return-for-edit requires note → cancel approved → verify shows cancelled → incoming و-2026-0001 with referral → «تم الإجراء»; letter PDF = 1 A4 page; no horizontal scroll at 390 px. **Not pushed yet.**
 - **Session 3, part 2:** transaction actions built on top of `09fad63`; `tsc` clean, eslint 0 errors / 5 old warnings, `next build` OK; Playwright E2E with 4 roles (admin; Khaled = EDIT + line manager; Sara = EDIT, reports to Khaled, auto-assign; Fahad = EDIT, auto-assign) passed: auto-assign to least busy, stage locked before acceptance, pledge accepted + record, external comment + WhatsApp link, extension requested → self-approval impossible → manager approved → due date updated, warning, transfer resets acceptance, confidential tx hidden from Fahad (list, board, URL 404) and visible to Sara, service-restricted distribution, no horizontal scroll at 390 px. **Not pushed yet** — needs the owner's approval message.
 - **Session 3 (2026-11-26):** deliverables built on top of `e2368f4`; `tsc` clean, eslint 0 errors / 5 old warnings, `next build` OK, Playwright E2E passed (upload output → validation → record delivery with auto-close → WhatsApp text → receipt PDF 1 page → log → client tab → home item → stage flag toggle; no horizontal scroll at 390 px). Pushed as `09fad63` after the owner's approval (repo attached with push access on the second request) and deployed by the owner. After deploy, `update.sh` applies migration `20261126162847_deliveries` and seed step `deliveries-v1` automatically.
 - **Code (end of session 2):** local `main` at **`9c3cbbe`** («عرض السعر: تسمية «الرقم الموحد» …») — **1 commit ahead of `origin/main` (`0b36088`) and NOT pushed** (waiting for the owner's push approval; if lost, re-apply: on the quote print page label the company-profile `crNumber` and the buyer company's `unifiedNumber` as «الرقم الموحد», and fall back to «السجل التجاري» for a company `crNumber`). Plus this document (uncommitted until the next commit). Builds cleanly, `tsc` clean, eslint 0 errors / 5 warnings.

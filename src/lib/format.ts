@@ -22,6 +22,15 @@ const dateLong = new Intl.DateTimeFormat(LOCALE, { weekday: "long", year: "numer
 export function formatDateLong(d: Date) {
   return dateLong.format(d);
 }
+// التاريخ الهجري (أم القرى) للخطابات الرسمية: 16 جمادى الآخرة 1448 هـ
+const hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", { year: "numeric", month: "long", day: "numeric", timeZone: TZ });
+export function formatHijri(d: Date) {
+  return hijri.format(d);
+}
+const gregLong = new Intl.DateTimeFormat(LOCALE, { year: "numeric", month: "long", day: "numeric", timeZone: TZ });
+export function formatDateFull(d: Date) {
+  return gregLong.format(d);
+}
 export function formatDateTime(d: Date) {
   return dateTime.format(d);
 }
