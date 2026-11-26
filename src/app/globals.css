@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* هوية «السدو الرقمي»: عنابي NGT + رمل وطين نجدي + فضي الشعار */
+/* هوية NGT: كحلي ليلي + ذهبي + أحمر الشعار */
 @theme {
   --font-sans: var(--font-plex), system-ui, sans-serif; /* خط الواجهة والجداول */
   --font-display: var(--font-kufi), var(--font-plex), sans-serif; /* خط العناوين والأرقام الكبيرة */
@@ -14,29 +14,38 @@
   --color-brand-500: #c42222;
   --color-brand-600: #b10302; /* الأحمر: الإجراء الأساسي */
   --color-brand-700: #960201;
-  --color-brand-800: #7d0000; /* العنابي: العناوين والروابط */
-  --color-brand-900: #5e0000; /* العنابي الغامق */
-  --color-brand-950: #2b0507; /* عنابي الليل: القائمة الجانبية */
+  --color-brand-800: #7d0000; /* العنابي */
+  --color-brand-900: #5e0000;
+  --color-brand-950: #2b0507;
 
-  /* ألوان مكمّلة */
-  --color-sand: #d8c3a5; /* رمل: الزخرفة والتمييز على الخلفيات الغامقة */
-  --color-clay: #8a5a3b; /* طين نجدي: لمسات ثانوية ونصوص دافئة */
-  --color-silver: #bfc1c6; /* فضي الشعار */
-  --color-ivory: #f7f3ee; /* خلفية الصفحات */
-  --color-ink: #1f1a17; /* النصوص */
+  /* الكحلي الليلي: خلفية المنصة */
+  --color-navy-50: #eef2fa;
+  --color-navy-100: #d9e1f2;
+  --color-navy-200: #b4c2e3;
+  --color-navy-300: #8396c4;
+  --color-navy-400: #5a6fa3;
+  --color-navy-500: #3d5288;
+  --color-navy-600: #2a3f73;
+  --color-navy-700: #1b2e5c;
+  --color-navy-800: #122247;
+  --color-navy-900: #0b1733;
+  --color-navy-950: #070f24;
 
-  /* درجات رمادية دافئة بدل الرمادي البارد — بتطبّق على كل المنصة تلقائياً */
-  --color-neutral-50: #faf7f3;
-  --color-neutral-100: #f3ede6;
-  --color-neutral-200: #e6dcd0;
-  --color-neutral-300: #d9ccbe;
-  --color-neutral-400: #a99a8c;
-  --color-neutral-500: #73655a;
-  --color-neutral-600: #5a4e45;
-  --color-neutral-700: #3d342e;
-  --color-neutral-800: #2a231f;
-  --color-neutral-900: #1f1a17;
-  --color-neutral-950: #14100e;
+  /* الذهبي: التمييز والعناصر النشطة */
+  --color-gold-100: #fbf1d9;
+  --color-gold-200: #f6e2b0;
+  --color-gold-300: #f0d08a;
+  --color-gold-400: #e5bb63;
+  --color-gold-500: #d4a548;
+  --color-gold-600: #b8862f;
+  --color-gold-700: #8f6620;
+
+  /* ألوان الرسوم البيانية (مختبرة للوضوح وعمى الألوان) */
+  --color-chart-1: #3559b5;
+  --color-chart-2: #b07a12;
+
+  --color-ivory: #f7f3ee;
+  --color-ink: #1f1a17;
 }
 
 body {
@@ -49,25 +58,86 @@ body {
     font-family: var(--font-display);
   }
   h1 {
-    color: var(--color-brand-950);
+    color: var(--heading, var(--color-navy-900));
+  }
+}
+
+/* ========== الإطار الداكن للمنصة من الداخل (على الشاشة فقط، الطباعة تبقى بيضاء) ========== */
+@media screen {
+  .app-shell {
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(212, 165, 72, 0.10), transparent 60%),
+      radial-gradient(900px 600px at 0% 100%, rgba(53, 89, 181, 0.18), transparent 60%),
+      linear-gradient(180deg, var(--color-navy-900), var(--color-navy-950));
+    color: #e8ecf5;
+    --heading: #ffffff;
+    --link: var(--color-gold-300);
+    /* درجات الرمادي تنقلب تلقائياً على الخلفية الداكنة */
+    --color-neutral-50: #13224a;
+    --color-neutral-100: #1a2b57;
+    --color-neutral-200: #263a6b;
+    --color-neutral-300: #34497d;
+    --color-neutral-400: #8592b5;
+    --color-neutral-500: #a1acc8;
+    --color-neutral-600: #b9c2da;
+    --color-neutral-700: #d0d7ea;
+    --color-neutral-800: #e3e8f4;
+    --color-neutral-900: #eff2f9;
+    --color-neutral-950: #f8f9fc;
+  }
+  /* النصوص العنابية تتحول للذهبي على الخلفية الداكنة وترجع عنابية داخل البطاقات */
+  .app-shell :is(.text-brand-700, .text-brand-800) {
+    color: var(--link);
+  }
+  .app-shell .border-brand-600 {
+    border-color: var(--color-gold-500);
+  }
+  /* العناصر الفاتحة (البطاقات والحقول) ترجع لألوانها الأصلية */
+  .app-shell :is(.card, .input, .btn-secondary, [class~="bg-white"], input, select, textarea, dialog) {
+    color: var(--color-ink);
+    --heading: var(--color-navy-900);
+    --link: var(--color-brand-800);
+    --color-neutral-50: #f8f6f2;
+    --color-neutral-100: #f1ede7;
+    --color-neutral-200: #e4ddd3;
+    --color-neutral-300: #d3cabe;
+    --color-neutral-400: #a49a8f;
+    --color-neutral-500: #71675e;
+    --color-neutral-600: #584f47;
+    --color-neutral-700: #3c3530;
+    --color-neutral-800: #29231f;
+    --color-neutral-900: #1f1a17;
+    --color-neutral-950: #14100e;
   }
 }
 
 @layer components {
   .input {
-    @apply w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-600 focus:ring-3 focus:ring-brand-600/15;
+    @apply w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-gold-500 focus:ring-3 focus:ring-gold-500/25;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-900/30 disabled:opacity-60;
+    background-image: linear-gradient(135deg, #d0122b, #8e0a12 60%, #4a0a14);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
   }
   .card {
-    @apply rounded-2xl border border-neutral-200 bg-white;
+    @apply rounded-2xl border border-white/60 bg-white shadow-xl shadow-navy-950/20;
+  }
+  /* بطاقة زجاجية داكنة */
+  .card-dark {
+    @apply rounded-2xl border border-white/10 bg-navy-800/60 shadow-xl shadow-navy-950/40 backdrop-blur-md;
   }
 }
 
 @layer components {
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-brand-950 hover:bg-neutral-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 hover:bg-neutral-50;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-navy-950 shadow-lg shadow-gold-700/30;
+    background-image: linear-gradient(135deg, var(--color-gold-300), var(--color-gold-500) 55%, var(--color-gold-600));
   }
   .table {
     @apply w-full text-sm;
@@ -79,7 +149,15 @@ body {
     @apply border-t border-neutral-100 p-3;
   }
   .link {
-    @apply font-semibold text-brand-800 hover:underline;
+    @apply font-semibold hover:underline;
+    color: var(--link, var(--color-brand-800));
+  }
+  /* نص ذهبي متدرّج للعناوين البارزة */
+  .text-gold-gradient {
+    background-image: linear-gradient(180deg, var(--color-gold-200), var(--color-gold-500) 60%, var(--color-gold-600));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   /* رقم كبير في المربعات الإحصائية */
   .stat-value {

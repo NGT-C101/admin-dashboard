@@ -20,12 +20,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const teamLead = reports > 0 && !canAccess(user, SECTIONS.find((s) => s.slug === "employees")!);
 
   return (
-    <div className="min-h-screen print:bg-white">
+    <div className="app-shell min-h-screen print:bg-white">
       <Sidebar sections={sections} isAdmin={user.isAdmin} hasEmployee={!!user.employeeId} pendingApprovals={pendingApprovals} teamLead={teamLead} />
       <div className="lg:mr-64 print:mr-0">
-        <header className="print:hidden h-16 bg-white/80 backdrop-blur border-b border-neutral-200 flex items-center justify-end gap-2 px-4 lg:px-8">
+        <header className="print:hidden h-16 bg-navy-950/40 backdrop-blur border-b border-white/10 flex items-center justify-end gap-2 px-4 lg:px-8">
           <div className="flex items-center gap-2.5 ml-2">
-            <span className="size-10 rounded-full bg-brand-800 text-white text-sm font-bold flex items-center justify-center" aria-hidden="true">
+            <span className="size-10 rounded-full bg-navy-700 ring-2 ring-gold-500 text-gold-200 text-sm font-bold flex items-center justify-center" aria-hidden="true">
               {initials(user.name)}
             </span>
             <div>

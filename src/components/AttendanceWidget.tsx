@@ -16,7 +16,7 @@ export default async function AttendanceWidget({ employeeId }: { employeeId: str
   const late = r?.checkIn ? lateMinutes(r.checkIn, s) : 0;
   return (
     <div className="card p-5 flex flex-wrap items-center gap-5">
-      <div className="size-12 rounded-2xl bg-brand-950 text-sand flex items-center justify-center" aria-hidden="true"><Clock size={24} /></div>
+      <div className="size-12 rounded-2xl bg-navy-800 text-gold-300 flex items-center justify-center" aria-hidden="true"><Clock size={24} /></div>
       <div className="flex-1 min-w-48">
         <div className="font-semibold">حضوري اليوم — {formatDate(today)}</div>
         <div className="text-sm text-neutral-600">
@@ -43,7 +43,7 @@ export default async function AttendanceWidget({ employeeId }: { employeeId: str
       {!r?.checkIn ? (
         <form action={checkIn}><button className="btn-primary !px-6 min-h-12 text-base"><LogIn size={18} /> تسجيل الحضور</button></form>
       ) : !r.checkOut ? (
-        <form action={checkOut}><button className="inline-flex items-center gap-2 rounded-xl bg-brand-950 px-6 min-h-12 text-base font-semibold text-white hover:bg-brand-900"><LogOut size={18} /> تسجيل الانصراف</button></form>
+        <form action={checkOut}><button className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-6 min-h-12 text-base font-semibold text-white hover:bg-navy-700"><LogOut size={18} /> تسجيل الانصراف</button></form>
       ) : (
         <span className="inline-flex items-center gap-1.5 text-sm text-emerald-800 font-semibold"><CheckCircle2 size={18} /> تم تسجيل الحضور والانصراف</span>
       )}

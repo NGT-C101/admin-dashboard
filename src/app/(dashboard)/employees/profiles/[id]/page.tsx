@@ -94,7 +94,7 @@ export default async function EmployeePage({ params, searchParams }: {
 
       {/* بطاقة الموظف */}
       <div className="card overflow-hidden">
-        <div className="h-20 bg-gradient-to-l from-brand-950 via-brand-900 to-brand-800" />
+        <div className="h-20 bg-gradient-to-l from-navy-950 via-navy-800 to-navy-600" />
         <div className="px-6 pb-5 -mt-10 flex flex-wrap items-end gap-5">
           <div className="rounded-full ring-4 ring-white"><EmployeeAvatar name={e.fullName} size="lg" /></div>
           <div className="flex-1 min-w-56 pt-12">

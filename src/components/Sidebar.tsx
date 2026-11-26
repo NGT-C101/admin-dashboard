@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import type { Section } from "@/lib/nav";
-import SaduBand from "@/components/ui/SaduBand";
+import Skyline from "@/components/ui/Skyline";
 
 const ICONS = {
   users: Users, handshake: Handshake, clipboard: ClipboardList,
@@ -27,14 +27,14 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
 
   const linkCls = (active: boolean) =>
     `flex items-center gap-3 rounded-xl px-3 min-h-11 text-[15px] transition ${
-      active ? "bg-sand/15 text-white font-semibold shadow-[inset_-3px_0_0_var(--color-brand-600)]" : "text-[#d9d2cb] hover:bg-white/8 hover:text-white"
+      active ? "bg-gradient-to-l from-gold-300 via-gold-500 to-gold-600 text-navy-950 font-bold shadow-lg shadow-gold-700/30" : "text-navy-100 hover:bg-white/8 hover:text-white"
     }`;
 
   return (
     <>
       <button
         onClick={() => setMobileOpen(true)}
-        className="print:hidden lg:hidden fixed top-3 right-3 z-30 rounded-lg bg-brand-950 p-2 text-white"
+        className="print:hidden lg:hidden fixed top-3 right-3 z-30 rounded-xl border border-gold-500/40 bg-navy-900 p-2 text-gold-300"
         aria-label="فتح القائمة"
       >
         <Menu size={20} />
@@ -42,21 +42,21 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
       {mobileOpen && <div className="lg:hidden fixed inset-0 z-30 bg-black/40" onClick={() => setMobileOpen(false)} />}
 
       <aside
-        className={`print:hidden fixed inset-y-0 right-0 z-40 w-64 bg-brand-950 flex flex-col transition-transform lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 right-0 z-40 w-64 bg-navy-950/95 backdrop-blur border-l border-white/10 flex flex-col transition-transform lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between px-4 h-20">
           <Link href="/" className="flex items-center gap-3">
             <Image src={BRAND.logoOnDark} alt={BRAND.short} width={72} height={40} priority className="h-9 w-auto" />
-            <span className="text-xs leading-tight text-sand">{BRAND.tagline}</span>
+            <span className="text-xs leading-tight text-navy-200">{BRAND.tagline}</span>
           </Link>
           <button onClick={() => setMobileOpen(false)} className="lg:hidden text-neutral-400" aria-label="إغلاق">
             <X size={20} />
           </button>
         </div>
 
-        <SaduBand tone="bright" size={14} />
+        <div className="mx-4 h-px bg-gradient-to-l from-transparent via-gold-500/60 to-transparent" />
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1" onClick={(e) => (e.target as HTMLElement).closest("a") && setMobileOpen(false)}>
           <Link href="/" className={linkCls(pathname === "/")}>
@@ -92,7 +92,7 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
                   <ChevronDown size={16} className={`transition ${expanded ? "rotate-180" : ""}`} />
                 </button>
                 {expanded && (
-                  <div className="mr-6 mt-1 space-y-1 border-r border-sand/20 pr-2">
+                  <div className="mr-6 mt-1 space-y-1 border-r border-gold-500/25 pr-2">
                     {s.subs.map((sub) => {
                       const href = `/${s.slug}/${sub.slug}`;
                       return (
@@ -109,7 +109,7 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
 
           {isAdmin && (
             <div className="pt-3 mt-3 border-t border-white/10 space-y-1">
-              <p className="px-3 text-xs text-sand/80">الإعدادات</p>
+              <p className="px-3 text-xs text-navy-300">الإعدادات</p>
               <Link href="/settings/users" className={linkCls(pathname === "/settings/users")}>
                 <Settings size={18} /> المستخدمون والصلاحيات
               </Link>
@@ -120,7 +120,10 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
           )}
         </nav>
 
-        <p className="px-4 py-3 text-center text-xs text-sand/80 border-t border-white/10">{BRAND.slogan}</p>
+        <div className="relative h-24 shrink-0 overflow-hidden border-t border-white/10">
+          <Skyline sky={false} className="absolute inset-x-0 bottom-0 h-full w-full opacity-60" />
+          <p className="relative pt-3 text-center font-display text-sm font-bold text-gold-gradient">{BRAND.slogan}</p>
+        </div>
       </aside>
     </>
   );

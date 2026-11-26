@@ -1,81 +1,106 @@
 "use client";
 
 import Image from "next/image";
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useState } from "react";
+import { Eye, EyeOff, Handshake, Lock, LogIn, Rocket, ShieldCheck, TrendingUp, User } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import SaduBand from "@/components/ui/SaduBand";
+import Skyline from "@/components/ui/Skyline";
 import { login } from "./actions";
 
-// نقشة السدو الكبيرة خلف لوحة الهوية
-function SaduBackdrop() {
-  return (
-    <svg width="100%" height="100%" aria-hidden="true" className="absolute inset-0 opacity-20">
-      <defs>
-        <pattern id="sadu-login" width="96" height="64" patternUnits="userSpaceOnUse">
-          <polygon points="48,4 92,32 48,60 4,32" fill="none" stroke="#D8C3A5" strokeWidth="1.5" />
-          <polygon points="48,18 70,32 48,46 26,32" fill="#7D0000" />
-          <polygon points="48,26 57,32 48,38 39,32" fill="#D8C3A5" />
-          <polygon points="0,0 10,0 0,6" fill="#D8C3A5" />
-          <polygon points="96,0 86,0 96,6" fill="#D8C3A5" />
-          <polygon points="0,64 10,64 0,58" fill="#D8C3A5" />
-          <polygon points="96,64 86,64 96,58" fill="#D8C3A5" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#sadu-login)" />
-    </svg>
-  );
-}
+const FEATURES = [
+  { icon: Handshake, label: "شريكك الدائم" },
+  { icon: TrendingUp, label: "تسهيل أعمالك" },
+  { icon: ShieldCheck, label: "الالتزام بالأنظمة" },
+  { icon: Rocket, label: "نمو أكبر" },
+];
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined);
+  const [show, setShow] = useState(false);
 
   return (
-    <main className="min-h-screen grid lg:grid-cols-[minmax(0,640px)_1fr]">
-      {/* لوحة الهوية (بتختفي على الموبايل) */}
-      <section className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-brand-950 p-16 text-ivory">
-        <SaduBackdrop />
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-950/20 to-brand-950/95 to-70%" />
-        <Image src={BRAND.logoOnDark} alt={BRAND.short} width={320} height={177} priority className="relative w-52 h-auto" />
-        <div className="relative space-y-4">
-          <p className="font-display text-6xl font-extrabold leading-snug">{BRAND.slogan}</p>
-          <p className="max-w-md text-lg leading-loose text-[#e9dfd3]">
-            منصة العمل الداخلية لمعاملات العملاء والعقود وشؤون الموظفين والحسابات، في مكان واحد.
-          </p>
-          <p className="text-sm text-sand">{BRAND.company} {BRAND.tagline}</p>
-        </div>
-      </section>
+    <main className="relative min-h-screen overflow-hidden bg-navy-950 text-white">
+      {/* المشهد الخلفي: أفق الرياض ليلاً */}
+      <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-[#1b2457] to-[#5b3a6e]" />
+      <Skyline sky={false} className="absolute inset-x-0 bottom-0 h-[62%] w-full" />
+      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/70 via-navy-950/30 to-navy-950/90" />
+      <div className="absolute inset-0 bg-gradient-to-l from-navy-950/80 via-transparent to-transparent" />
 
-      <section className="flex items-center justify-center p-6 lg:p-16">
+      <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-4 py-10 lg:grid-cols-[440px_1fr] lg:px-10">
+        {/* بطاقة الدخول الزجاجية */}
         <form
           onSubmit={(e) => { e.preventDefault(); const d = new FormData(e.currentTarget); startTransition(() => action(d)); }}
-          className="w-full max-w-md space-y-6"
+          className="w-full max-w-md justify-self-center rounded-3xl border border-white/70 bg-white/92 p-8 text-ink shadow-2xl shadow-black/40 ring-1 ring-gold-400/40 backdrop-blur-xl sm:p-10 lg:justify-self-start"
         >
-          <div className="space-y-2">
-            <Image src={BRAND.logoOnLight} alt={BRAND.short} width={140} height={78} priority className="w-32 h-auto mb-6 lg:hidden" />
-            <h1 className="text-3xl font-extrabold">تسجيل الدخول</h1>
-            <p className="text-neutral-600">يرجى إدخال بيانات حسابك للمتابعة.</p>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <Image src={BRAND.logoOnLight} alt={BRAND.short} width={180} height={100} priority className="h-auto w-36" />
+            <p className="text-sm font-semibold text-navy-800">{BRAND.tagline}</p>
+            <p className="font-display text-lg font-bold text-gold-600 lg:hidden">{BRAND.slogan}</p>
           </div>
 
-          <label className="block space-y-2">
-            <span className="text-sm font-semibold text-neutral-700">البريد الإلكتروني</span>
-            <input name="email" type="email" required dir="ltr" autoComplete="email" className="input min-h-12 text-right" />
-          </label>
-          <label className="block space-y-2">
-            <span className="text-sm font-semibold text-neutral-700">كلمة المرور</span>
-            <input name="password" type="password" required dir="ltr" autoComplete="current-password" className="input min-h-12 text-right" />
-          </label>
+          <div className="mt-6 text-center">
+            <h1 className="text-3xl font-extrabold">تسجيل الدخول</h1>
+            <div className="mx-auto mt-3 h-0.5 w-40 bg-gradient-to-l from-transparent via-gold-500 to-transparent" />
+            <p className="mt-3 text-sm text-neutral-600">أهلاً بك مجدداً، يرجى إدخال بيانات حسابك.</p>
+          </div>
 
-          {state?.error && <p className="text-sm text-rose-700 bg-rose-50 rounded-xl p-3">{state.error}</p>}
+          <div className="mt-7 space-y-4">
+            <label className="block">
+              <span className="sr-only">البريد الإلكتروني</span>
+              <span className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 shadow-sm focus-within:border-gold-500 focus-within:ring-3 focus-within:ring-gold-500/25">
+                <User size={18} className="shrink-0 text-navy-700" aria-hidden="true" />
+                <input name="email" type="email" required dir="ltr" autoComplete="email" placeholder="البريد الإلكتروني"
+                  className="min-h-13 w-full bg-transparent text-right text-[15px] outline-none placeholder:text-neutral-500" />
+              </span>
+            </label>
+            <label className="block">
+              <span className="sr-only">كلمة المرور</span>
+              <span className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 shadow-sm focus-within:border-gold-500 focus-within:ring-3 focus-within:ring-gold-500/25">
+                <Lock size={18} className="shrink-0 text-navy-700" aria-hidden="true" />
+                <input name="password" type={show ? "text" : "password"} required dir="ltr" autoComplete="current-password" placeholder="كلمة المرور"
+                  className="min-h-13 w-full bg-transparent text-right text-[15px] outline-none placeholder:text-neutral-500" />
+                <button type="button" onClick={() => setShow(!show)} aria-label={show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100">
+                  {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </span>
+            </label>
+          </div>
 
-          <button disabled={pending} className="btn-primary w-full min-h-12 text-base">
-            {pending ? "جارٍ الدخول..." : "دخول"}
+          {state?.error && <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{state.error}</p>}
+
+          <button disabled={pending} className="btn-primary mt-6 min-h-13 w-full rounded-2xl text-base">
+            <LogIn size={18} /> {pending ? "جارٍ الدخول..." : "دخول"}
           </button>
-          <p className="text-sm leading-relaxed text-neutral-600">
+
+          <p className="mt-5 text-center text-xs leading-relaxed text-neutral-600">
             نسيت كلمة المرور؟ يرجى التواصل مع مدير النظام لتعيين كلمة مرور مؤقتة.
           </p>
-          <SaduBand tone="light" size={10} className="mt-4" />
+          <p className="mt-4 flex items-center justify-center gap-1.5 border-t border-neutral-200 pt-4 text-xs font-semibold text-navy-800">
+            <ShieldCheck size={15} className="text-gold-600" aria-hidden="true" /> بياناتك آمنة ومحمية
+          </p>
         </form>
-      </section>
+
+        {/* رسالة الترحيب */}
+        <section className="hidden flex-col items-center gap-6 text-center lg:flex">
+          <Image src={BRAND.logoOnDark} alt="" width={240} height={133} className="h-auto w-44 drop-shadow-2xl" />
+          <div className="space-y-2">
+            <p className="font-display text-4xl font-bold">مرحباً بك في</p>
+            <p className="font-display text-7xl font-extrabold leading-snug text-gold-gradient drop-shadow">منصة NGT</p>
+            <p className="font-display text-3xl font-bold">{BRAND.slogan}</p>
+            <div className="mx-auto mt-4 h-0.5 w-48 bg-gradient-to-l from-transparent via-gold-400 to-transparent" />
+          </div>
+          <ul className="mt-6 grid grid-cols-4 gap-3">
+            {FEATURES.map(({ icon: Icon, label }) => (
+              <li key={label} className="flex w-28 flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-2 py-4 backdrop-blur-md">
+                <Icon size={30} className="text-gold-400" aria-hidden="true" />
+                <span className="text-sm font-semibold">{label}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-sm text-navy-100">{BRAND.company} {BRAND.tagline}</p>
+        </section>
+      </div>
     </main>
   );
 }
