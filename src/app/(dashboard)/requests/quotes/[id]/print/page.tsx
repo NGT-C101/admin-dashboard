@@ -39,7 +39,11 @@ export default async function QuotePrintPage({ params }: { params: Promise<{ id:
           لم تُدخل بيانات المنشأة بعد (الاسم القانوني والرقم الضريبي). أدخلها من الإعدادات ← بيانات المنشأة.
         </p>
       )}
-      <article className="mx-auto max-w-3xl bg-white p-8 text-[14px] text-ink shadow-sm print:p-0 print:shadow-none">
+      <article className="relative isolate mx-auto max-w-3xl overflow-hidden bg-white p-8 text-[14px] text-ink shadow-sm print:overflow-visible print:p-0 print:shadow-none">
+        {/* علامة مائية: شعار NGT باهت خلف المحتوى (يتكرر على كل صفحة عند الطباعة) */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center print:fixed">
+          <Image src={BRAND.logoOnLight} alt="" width={640} height={354} className="h-auto w-[70%] -rotate-12 opacity-[0.06]" />
+        </div>
         <header className="flex items-start justify-between gap-6 border-b-4 border-navy-800 pb-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-extrabold text-navy-900">عرض سعر</h1>
