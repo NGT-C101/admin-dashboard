@@ -3,8 +3,7 @@
 // خانة تاريخ ميلادي: يوم + شهر (بالأسماء الميلادية) + سنة تُكتب يدوياً
 // بترسل القيمة بصيغة YYYY-MM-DD في حقل مخفي بالاسم المطلوب
 import { useEffect, useRef, useState } from "react";
-
-export const GREGORIAN_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+import { GREGORIAN_MONTHS } from "@/lib/time";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 function split(v?: string) {

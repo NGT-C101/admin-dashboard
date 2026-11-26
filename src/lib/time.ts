@@ -42,3 +42,7 @@ export function minutesText(min: number) {
   const h = Math.floor(min / 60), m = min % 60;
   return [h ? `${h} س` : "", m ? `${m} د` : ""].filter(Boolean).join(" ") || "0 د";
 }
+
+export const GREGORIAN_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+// "2026-11" → "نوفمبر 2026"
+export const monthLabel = (m: string) => `${GREGORIAN_MONTHS[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`;

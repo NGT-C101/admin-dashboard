@@ -1,5 +1,5 @@
 // تصدير القوايم لـ Excel (لأصحاب صلاحية قسم العملاء)
-import { canAccess, getCurrentUser } from "@/lib/auth";
+import { can, canAccess, getCurrentUser } from "@/lib/auth";
 import { CLIENT_STATUS_LABELS, CONTRACT_STATE_LABELS, CONTRACT_TYPE_LABELS, contractState, saudizationRate } from "@/lib/clients";
 import { db } from "@/lib/db";
 import { ExcelJS, addSheet, xlsxResponse } from "@/lib/excel";
@@ -13,8 +13,9 @@ const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 export async function GET(req: Request, { params }: { params: Promise<{ kind: string }> }) {
   const user = await getCurrentUser();
   const { kind } = await params;
-  const section = kind === "attendance" ? "employees" : "clients";
+  const section = kind === "attendance" || kind === "payroll" ? "employees" : "clients";
   if (!user || !canAccess(user, findSection(section)!)) return new Response("غير مسموح", { status: 403 });
+  if (kind === "payroll" && !can(user, "employees", "MANAGE")) return new Response("غير مسموح", { status: 403 });
   const wb = new ExcelJS.Workbook();
   wb.creator = "NGT";
   const today = new Date().toISOString().slice(0, 10);
@@ -66,6 +67,26 @@ export async function GET(req: Request, { params }: { params: Promise<{ kind: st
       autoRenew: c.autoRenew ? "نعم" : "", state: CONTRACT_STATE_LABELS[contractState(c)], terms: c.terms,
     })));
     return xlsxResponse(wb, `عقود-NGT-${today}.xlsx`);
+  }
+
+  // ملف التحويل البنكي للرواتب
+  if (kind === "payroll") {
+    const run = await db.payrollRun.findUnique({
+      where: { id: new URL(req.url).searchParams.get("run") ?? "" },
+      include: { slips: { include: { employee: { select: { number: true, fullName: true, nationalId: true } } }, orderBy: { employee: { fullName: "asc" } } } },
+    });
+    if (!run) return new Response("غير موجود", { status: 404 });
+    addSheet(wb, "التحويل البنكي", [
+      { header: "م", key: "i", width: 6 }, { header: "الرقم الوظيفي", key: "no", width: 12 }, { header: "اسم الموظف", key: "name", width: 28 },
+      { header: "رقم الهوية / الإقامة", key: "nid", width: 16 }, { header: "البنك", key: "bank", width: 18 }, { header: "الآيبان", key: "iban", width: 30 },
+      { header: "صافي الراتب", key: "net", money: true, width: 14 }, { header: "الأساسي", key: "basic", money: true, width: 12 },
+      { header: "السكن", key: "housing", money: true, width: 12 }, { header: "بدلات أخرى", key: "allow", money: true, width: 12 }, { header: "الاستقطاعات", key: "ded", money: true, width: 12 },
+    ], run.slips.map((s, i) => ({
+      i: i + 1, no: `EMP-${String(s.employee.number).padStart(4, "0")}`, name: s.employee.fullName, nid: s.employee.nationalId,
+      bank: s.bankName, iban: s.iban, net: Number(s.net), basic: Number(s.basic), housing: Number(s.housing),
+      allow: Number(s.transport) + Number(s.otherAllowances) + Number(s.overtime) + Number(s.bonus), ded: Number(s.totalDeductions),
+    })));
+    return xlsxResponse(wb, `رواتب-NGT-${run.month}.xlsx`);
   }
 
   if (kind === "attendance") {

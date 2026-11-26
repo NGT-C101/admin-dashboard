@@ -8,6 +8,7 @@ import { can, type CurrentUser } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { LEAVE_TYPE_LABELS, REQUEST_STATUS_LABELS, REQUEST_STATUS_STYLES, canDecide, leaveNo } from "@/lib/leave";
 import { minutesText } from "@/lib/time";
+import { daysText } from "@/lib/clients";
 
 export const REQUEST_INCLUDE = {
   employee: { select: { id: true, fullName: true, manager: { select: { userId: true } } } },
@@ -36,7 +37,7 @@ export default function RequestsTable({ rows, user, showEmployee = true }: { row
                 <div className="text-sm text-neutral-700">
                   {r.kind === "PERMISSION"
                     ? <>{formatDate(r.startDate)} · من {r.startTime} إلى {r.endTime} ({minutesText(r.minutes ?? 0)})</>
-                    : <>{formatDate(r.startDate)} ← {formatDate(r.endDate)} · <b>{r.days}</b> يوم عمل</>}
+                    : <>{formatDate(r.startDate)} ← {formatDate(r.endDate)} · <b>{daysText(r.days)}</b> عمل</>}
                 </div>
                 {r.reason && <p className="text-sm text-neutral-600">{r.reason}</p>}
                 {r.decidedBy && (

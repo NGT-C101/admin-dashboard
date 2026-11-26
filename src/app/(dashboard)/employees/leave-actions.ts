@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { type FormState, firstError, optionalText } from "@/lib/forms";
 import { annualBalance, canDecide, holidaySet, workingDays } from "@/lib/leave";
 import { hmToMinutes, parseDateKey } from "@/lib/time";
+import { daysText } from "@/lib/clients";
 
 const LEAVE_TYPES = ["ANNUAL", "SICK", "UNPAID", "MARRIAGE", "BEREAVEMENT", "PATERNITY", "MATERNITY", "HAJJ", "EXAM", "OTHER"] as const;
 const dateStr = (msg: string) => z.string().regex(/^\d{4}-\d{2}-\d{2}$/, msg).transform(parseDateKey);
@@ -70,11 +71,11 @@ export async function submitRequest(_prev: FormState, formData: FormData): Promi
   if (l.data.type === "ANNUAL") {
     const b = await annualBalance(emp);
     const available = b.remaining - b.pending;
-    if (days > available) return { error: `الأيام المطلوبة (${days}) تتجاوز الرصيد المتاح (${available})` };
+    if (days > available) return { error: `الأيام المطلوبة (${daysText(days)}) تتجاوز الرصيد المتاح (${daysText(available)})` };
   }
   await db.leaveRequest.create({ data: { employeeId, kind: "LEAVE", ...l.data, days, createdById: user.id } });
   revalidateAll(employeeId);
-  return { success: `تم تقديم طلب الإجازة (${days} يوم عمل) ✅` };
+  return { success: `تم تقديم طلب الإجازة (${daysText(days)} عمل) ✅` };
 }
 
 export async function cancelRequest(formData: FormData) {
@@ -99,7 +100,7 @@ export async function decideRequest(_prev: FormState, formData: FormData): Promi
   const approve = formData.get("decision") === "approve";
   if (approve && req.kind === "LEAVE" && req.type === "ANNUAL") {
     const b = await annualBalance(req.employee);
-    if (req.days > b.remaining) return { error: `لا يكفي الرصيد: المتبقي ${b.remaining} يوم` };
+    if (req.days > b.remaining) return { error: `لا يكفي الرصيد: المتبقي ${daysText(b.remaining)}` };
   }
   await db.leaveRequest.update({
     where: { id: req.id },

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  ChevronDown, ClipboardList, FolderOpen, Handshake, Inbox, LayoutDashboard, ListChecks, UserCircle,
+  ChevronDown, ClipboardList, FolderOpen, Handshake, Award, Inbox, LayoutDashboard, ListChecks, UserCircle,
   Megaphone, Menu, Settings, Users, Wallet, X,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
@@ -16,8 +16,9 @@ const ICONS = {
   folder: FolderOpen, wallet: Wallet, megaphone: Megaphone,
 };
 
-export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprovals = 0 }: {
+export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprovals = 0, teamLead = false }: {
   sections: Section[]; isAdmin: boolean; hasEmployee: boolean; pendingApprovals?: number;
+  teamLead?: boolean; // مدير مباشر بدون صلاحية على قسم الموظفين
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,6 +62,11 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
           {hasEmployee && (
             <Link href="/me" className={linkCls(pathname === "/me")}>
               <UserCircle size={18} /> خدماتي
+            </Link>
+          )}
+          {teamLead && (
+            <Link href="/employees/performance" className={linkCls(pathname.startsWith("/employees/performance"))}>
+              <Award size={18} /> تقييم أداء فريقي
             </Link>
           )}
           {pendingApprovals > 0 && (

@@ -11,14 +11,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // صفحة "حسابي" لازم تفضل متاحة لو المستخدم مطلوب منه يغيّر كلمة المرور
   const user = await requireUser({ allowPasswordChange: true });
   const sections = SECTIONS.filter((s) => canAccess(user, s));
-  const [employee, pendingApprovals] = await Promise.all([
+  const [employee, pendingApprovals, reports] = await Promise.all([
     user.employeeId ? db.employee.findUnique({ where: { id: user.employeeId }, select: { jobTitle: true } }) : null,
     db.leaveRequest.count({ where: pendingForWhere(user) }),
+    user.employeeId ? db.employee.count({ where: { managerId: user.employeeId, status: { not: "TERMINATED" } } }) : 0,
   ]);
+  const teamLead = reports > 0 && !canAccess(user, SECTIONS.find((s) => s.slug === "employees")!);
 
   return (
     <div className="min-h-screen print:bg-white">
-      <Sidebar sections={sections} isAdmin={user.isAdmin} hasEmployee={!!user.employeeId} pendingApprovals={pendingApprovals} />
+      <Sidebar sections={sections} isAdmin={user.isAdmin} hasEmployee={!!user.employeeId} pendingApprovals={pendingApprovals} teamLead={teamLead} />
       <div className="lg:mr-64 print:mr-0">
         <header className="print:hidden h-16 bg-white border-b border-neutral-200 flex items-center justify-end gap-4 px-4 lg:px-8">
           <div className="text-left">

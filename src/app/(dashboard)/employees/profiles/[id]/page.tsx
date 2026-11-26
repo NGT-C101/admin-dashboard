@@ -29,6 +29,7 @@ import LeaveBalanceCard from "@/components/LeaveBalanceCard";
 import MonthAttendance from "@/components/MonthAttendance";
 import RequestsTable, { REQUEST_INCLUDE } from "@/components/RequestsTable";
 import { currentMonthKey } from "@/lib/time";
+import { REVIEW_STATUS_LABELS, currentPeriod, periodLabel, rating } from "@/lib/performance";
 import { updateAccess } from "@/app/(dashboard)/settings/users/actions";
 import { grantLogin, reinstateEmployee, setEmployeeStatus, terminateEmployee, updateEmployee, updateSalary } from "../../actions";
 import { ContactFields, IdentityFields, JobFields, PersonalFields, SalaryFields } from "../../fields";
@@ -78,7 +79,7 @@ export default async function EmployeePage({ params, searchParams }: {
   const tabs = [
     { key: "overview", label: "البيانات الشخصية" },
     { key: "job", label: "البيانات الوظيفية" },
-    ...(canEdit ? [{ key: "leave", label: "الإجازات والحضور" }] : []),
+    ...(canEdit ? [{ key: "leave", label: "الإجازات والحضور" }, { key: "performance", label: "الأداء" }] : []),
     ...(canManage ? [{ key: "salary", label: "الراتب ومستحقات الخدمة" }, { key: "documents", label: "المستندات", count: e._count.documents }] : []),
     ...(user.isAdmin ? [{ key: "access", label: "حساب الدخول والصلاحيات" }] : []),
   ];
@@ -184,6 +185,7 @@ export default async function EmployeePage({ params, searchParams }: {
 
       {tab === "job" && <JobTab />}
       {tab === "leave" && canEdit && <LeaveTab />}
+      {tab === "performance" && canEdit && <PerformanceTab />}
       {tab === "salary" && canManage && <SalaryTab />}
       {tab === "documents" && canManage && <DocumentsTab />}
       {tab === "access" && user.isAdmin && <AccessTab />}
@@ -370,6 +372,28 @@ export default async function EmployeePage({ params, searchParams }: {
         <div className="space-y-3">
           <h3 className="font-semibold">طلبات الإجازة والاستئذان</h3>
           <RequestsTable rows={requests} user={user} showEmployee={false} />
+        </div>
+      </div>
+    );
+  }
+
+  async function PerformanceTab() {
+    const reviews = await db.performanceReview.findMany({ where: { employeeId: id }, orderBy: { periodStart: "desc" } });
+    return (
+      <div className="space-y-3">
+        <Link href={`/employees/performance/review?employee=${id}&period=${currentPeriod()}`} className="btn-primary w-fit">تقييم {periodLabel(currentPeriod())}</Link>
+        <div className="card divide-y divide-neutral-100">
+          {reviews.map((r) => {
+            const rt = rating(r.overall);
+            return (
+              <Link key={r.id} href={`/employees/performance/review?employee=${id}&period=${r.period}`} className="flex items-center gap-3 p-3 hover:bg-neutral-50">
+                <span className="flex-1 font-medium">{periodLabel(r.period)}</span>
+                <span className="text-xs text-neutral-500">{REVIEW_STATUS_LABELS[r.status]}</span>
+                {r.status !== "DRAFT" && <><b>{r.overall.toFixed(2)}</b><span className={`rounded-full px-2.5 py-0.5 text-xs ${rt.cls}`}>{rt.label}</span></>}
+              </Link>
+            );
+          })}
+          {reviews.length === 0 && <p className="p-4 text-sm text-neutral-500">لا توجد تقييمات سابقة</p>}
         </div>
       </div>
     );
