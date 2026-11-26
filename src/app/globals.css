@@ -46,43 +46,6 @@
 
   --color-ivory: #f7f3ee;
   --color-ink: #1f1a17;
-
-  /* ================= نظام التصميم NGT (ds) — الجيل الثاني =================
-     اتجاه «مؤسسي فاخر»: حبر كحلي عميق، أسطح متدرجة بدقة، ذهب شمباني للتمييز فقط،
-     وأحمر NGT للإجراء الأساسي. يُستخدم عبر مكونات src/components/ds ولا يغيّر أي صفحة قديمة. */
-  --font-heading: var(--font-readex), var(--font-plex), system-ui, sans-serif; /* عناوين عربية حديثة */
-
-  /* الأسطح (من الأعمق إلى الأعلى) */
-  --color-ds-canvas: #060c1e;
-  --color-ds-surface: #0b1430;
-  --color-ds-raised: #101b3d;
-  --color-ds-hover: #15224a;
-  /* الحدود */
-  --color-ds-line: rgb(255 255 255 / 0.07);
-  --color-ds-line-strong: rgb(255 255 255 / 0.13);
-  /* النصوص: ثلاث درجات فقط */
-  --color-ds-text: #f2f4fa;
-  --color-ds-muted: #a3aecb;
-  --color-ds-faint: #6c7aa1;
-  /* التمييز: ذهب شمباني — لما ينتظر قرارك والعنصر النشط فقط */
-  --color-ds-accent: #cfa95e;
-  --color-ds-accent-soft: rgb(207 169 94 / 0.14);
-  /* الإجراء الأساسي: أحمر NGT */
-  --color-ds-primary: #b3141b;
-  --color-ds-primary-hover: #c71d25;
-  /* الحالات (منخفضة التشبع لتناسب الخلفية الداكنة) */
-  --color-ds-success: #4cc79a;
-  --color-ds-warning: #e3b155;
-  --color-ds-danger: #f07a85;
-  --color-ds-info: #74a7f5;
-  --color-ds-neutral: #7d89ab;
-
-  /* الزوايا: ثلاث درجات حسب الدور */
-  --radius-ds-control: 10px;
-  --radius-ds-panel: 16px;
-  /* الظلال: سطح مرفوع بحافة ضوء علوية خفيفة */
-  --shadow-ds-panel: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -18px rgb(0 0 0 / 0.7);
-  --shadow-ds-button: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 1px 2px rgb(0 0 0 / 0.4);
 }
 
 body {
