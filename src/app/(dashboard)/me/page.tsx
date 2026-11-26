@@ -17,17 +17,20 @@ import { currentMonthKey, dateKey, monthLabel, riyadhToday } from "@/lib/time";
 import { formatSAR } from "@/lib/format";
 import Link from "next/link";
 import CustodyList, { CUSTODY_INCLUDE } from "@/components/CustodyList";
+import Badge from "@/components/ui/Badge";
+import { PURCHASE_STATUS_LABELS, PURCHASE_STATUS_STYLES, purchaseNumber } from "@/lib/purchases";
 
 export default async function MyServicesPage() {
   const user = await requireUser();
   if (!user.employeeId) redirect("/");
   const e = await db.employee.findUnique({ where: { id: user.employeeId } });
   if (!e) redirect("/");
-  const [requests, slips, reviews, custodies] = await Promise.all([
+  const [requests, slips, reviews, custodies, purchases] = await Promise.all([
     db.leaveRequest.findMany({ where: { employeeId: e.id }, include: REQUEST_INCLUDE, orderBy: { createdAt: "desc" }, take: 30 }),
     db.payslip.findMany({ where: { employeeId: e.id, run: { status: { not: "DRAFT" } } }, include: { run: { select: { month: true } } }, orderBy: { run: { month: "desc" } }, take: 12 }),
     db.performanceReview.findMany({ where: { employeeId: e.id, status: { not: "DRAFT" } }, include: { reviewer: { select: { name: true } } }, orderBy: { periodStart: "desc" } }),
     db.custody.findMany({ where: { employeeId: e.id }, include: CUSTODY_INCLUDE, orderBy: { assignedAt: "desc" } }),
+    db.purchaseRequest.findMany({ where: { requestedById: user.id }, orderBy: { number: "desc" }, take: 10, select: { id: true, number: true, title: true, status: true, createdAt: true } }),
   ]);
   const toAck = reviews.filter((r) => r.status === "SUBMITTED");
 
@@ -83,6 +86,22 @@ export default async function MyServicesPage() {
           </div>
         </section>
       )}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">طلبات الشراء</h2>
+          <Link href="/admin-affairs/procurement/new" className="btn-secondary">طلب شراء جديد</Link>
+        </div>
+        {purchases.length > 0 && (
+          <div className="card divide-y divide-neutral-100">
+            {purchases.map((p) => (
+              <Link key={p.id} href={`/admin-affairs/procurement/${p.id}`} className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-neutral-50">
+                <span><span dir="ltr" className="tabular-nums">{purchaseNumber(p.number)}</span> — {p.title}</span>
+                <Badge className={PURCHASE_STATUS_STYLES[p.status]}>{PURCHASE_STATUS_LABELS[p.status]}</Badge>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
       {custodies.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">عُهدي</h2>

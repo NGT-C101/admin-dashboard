@@ -8,7 +8,7 @@ import { DAY_MS, riyadhToday } from "@/lib/time";
 import { visibleTxWhere } from "@/lib/transactions";
 
 export const OWNER_LABELS = {
-  client: "عميل", company: "شركة", contract: "عقد", employee: "موظف", transaction: "معاملة", letter: "خطاب", asset: "أصل",
+  client: "عميل", company: "شركة", contract: "عقد", employee: "موظف", transaction: "معاملة", letter: "خطاب", asset: "أصل", purchase: "مشتريات",
 } as const;
 export type OwnerKind = keyof typeof OWNER_LABELS;
 export const EXPIRY_SOON_DAYS = 60;
@@ -27,7 +27,7 @@ function visibleWhere(user: CurrentUser): Prisma.DocumentWhereInput[] {
   if (can(user, "requests")) {
     or.push(user.isAdmin ? { transactionId: { not: null } } : { transactionId: { not: null }, transaction: { is: visibleTxWhere(user) } });
   }
-  if (can(user, "admin-affairs")) or.push({ letterId: { not: null } }, { assetId: { not: null } });
+  if (can(user, "admin-affairs")) or.push({ letterId: { not: null } }, { assetId: { not: null } }, { purchaseId: { not: null } });
   return or;
 }
 
@@ -39,6 +39,7 @@ const OWNER_WHERE: Record<OwnerKind, Prisma.DocumentWhereInput> = {
   transaction: { transactionId: { not: null } },
   letter: { letterId: { not: null } },
   asset: { assetId: { not: null } },
+  purchase: { purchaseId: { not: null } },
 };
 
 export function archiveWhere(user: CurrentUser, f: ArchiveFilters): Prisma.DocumentWhereInput {
@@ -91,11 +92,13 @@ export const ARCHIVE_INCLUDE = {
   transaction: { select: { id: true, number: true, title: true, company: { select: { name: true } } } },
   letter: { select: { id: true, direction: true, year: true, seq: true, subject: true } },
   asset: { select: { id: true, number: true, name: true } },
+  purchase: { select: { id: true, number: true, title: true } },
 } satisfies Prisma.DocumentInclude;
 export type ArchiveDoc = Prisma.DocumentGetPayload<{ include: typeof ARCHIVE_INCLUDE }>;
 
 // صاحب المستند: النوع، الاسم، الرابط، وسطر توضيحي
 export function ownerOf(d: ArchiveDoc): { kind: OwnerKind; name: string; href: string; sub?: string } {
+  if (d.purchase) return { kind: "purchase", name: d.purchase.title, href: `/admin-affairs/procurement/${d.purchase.id}`, sub: `PUR-${String(d.purchase.number).padStart(4, "0")}` };
   if (d.asset) return { kind: "asset", name: d.asset.name, href: `/admin-affairs/assets/${d.asset.id}`, sub: `AST-${String(d.asset.number).padStart(4, "0")}` };
   if (d.letter) {
     const n = letterNumber(d.letter);

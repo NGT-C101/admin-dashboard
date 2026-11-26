@@ -20,6 +20,7 @@ const OWNER_STYLES = {
   transaction: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   letter: "bg-neutral-100 text-neutral-700 ring-neutral-200",
   asset: "bg-rose-50 text-rose-700 ring-rose-200",
+  purchase: "bg-indigo-50 text-indigo-700 ring-indigo-200",
 } as const;
 
 export default async function ArchivePage({ searchParams }: { searchParams: Promise<ArchiveFilters> }) {

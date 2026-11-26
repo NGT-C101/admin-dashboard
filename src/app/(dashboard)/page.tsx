@@ -19,6 +19,7 @@ import { countText } from "@/lib/hr";
 import { pendingForWhere } from "@/lib/leave";
 import { awaitingDeliveryWhere } from "@/lib/deliveries";
 import { myQueueWhere } from "@/lib/letters";
+import { purchaseQueueWhere } from "@/lib/purchases";
 import { awaitingAcceptanceWhere, decidableExtensionsWhere, visibleTxWhere } from "@/lib/transactions";
 import { SECTIONS, findSection } from "@/lib/nav";
 
@@ -54,7 +55,7 @@ export default async function HomePage() {
   const since = monthBounds(months[0]).start;
 
   const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps, staff, hrAlerts, onLeave, me,
-    pendingApprovals, myUpcoming, draftPayroll, recent, doneTx, cancelledTx, createdRows, doneEvents, awaitingDelivery, toAccept, toDecide, lettersQueue, lettersAssigned, myCustodyAck] = await Promise.all([
+    pendingApprovals, myUpcoming, draftPayroll, recent, doneTx, cancelledTx, createdRows, doneEvents, awaitingDelivery, toAccept, toDecide, lettersQueue, lettersAssigned, myCustodyAck, purchaseQueue] = await Promise.all([
     db.client.count({ where: { archivedAt: null } }),
     db.company.count({ where: { client: { archivedAt: null } } }),
     db.transaction.count({ where: open }),
@@ -100,6 +101,7 @@ export default async function HomePage() {
     can(user, "admin-affairs") ? db.letter.count({ where: myQueueWhere(user) }) : 0,
     can(user, "admin-affairs") ? db.letter.count({ where: { direction: "INCOMING", status: "RECEIVED", assigneeId: user.id, actionDone: false } }) : 0,
     user.employeeId ? db.custody.count({ where: { employeeId: user.employeeId, status: "PENDING" } }) : 0,
+    db.purchaseRequest.count({ where: purchaseQueueWhere(user) }),
   ]);
 
   const allStats = [
@@ -122,6 +124,7 @@ export default async function HomePage() {
     seeRequests && overdueTx > 0 && { tone: "rose", title: `${countText(overdueTx, ["معاملة واحدة متأخرة", "معاملتان متأخرتان", "معاملات متأخرة", "معاملة متأخرة"])} عن موعدها`, href: "/requests/all?status=overdue" },
     seeRequests && toAccept > 0 && { tone: "amber", title: `${countText(toAccept, ["معاملة واحدة مسندة", "معاملتان مسندتان", "معاملات مسندة", "معاملة مسندة"])} إليك بانتظار استلامك بتعهد`, href: "/requests/all?status=accept" },
     seeRequests && toDecide > 0 && { tone: "sky", title: `${countText(toDecide, ["طلب تأجيل واحد", "طلبا تأجيل", "طلبات تأجيل", "طلب تأجيل"])} بانتظار قرارك`, href: "/requests/all?status=extension" },
+    purchaseQueue > 0 && { tone: "amber", title: `${countText(purchaseQueue, ["طلب شراء واحد", "طلبا شراء", "طلبات شراء", "طلب شراء"])} بانتظار إجرائك`, href: can(user, "admin-affairs") ? "/admin-affairs/procurement?tab=queue" : "/admin-affairs/procurement/mine" },
     myCustodyAck > 0 && { tone: "amber", title: `${countText(myCustodyAck, ["عهدة واحدة", "عهدتان", "عُهد", "عهدة"])} بانتظار إقرارك بالاستلام`, href: "/me" },
     lettersQueue > 0 && { tone: "amber", title: `${countText(lettersQueue, ["خطاب واحد", "خطابان", "خطابات", "خطاباً"])} بانتظار مراجعتك أو اعتمادك`, href: "/admin-affairs/correspondence?tab=queue" },
     lettersAssigned > 0 && { tone: "sky", title: `${countText(lettersAssigned, ["خطاب وارد واحد محال", "خطابان واردان محالان", "خطابات واردة محالة", "خطاباً وارداً محالاً"])} إليك`, href: "/admin-affairs/correspondence?tab=in&status=assigned" },

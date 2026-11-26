@@ -9,7 +9,7 @@ import { type FormState, firstError, optionalDate, optionalText } from "@/lib/fo
 import { canSeeTx } from "@/lib/transactions";
 import { MAX_FILE_BYTES, deleteStoredFile, detectType, saveFile } from "@/lib/storage";
 
-const OWNER_TYPES = ["client", "company", "contract", "employee", "transaction", "letter", "asset"] as const;
+const OWNER_TYPES = ["client", "company", "contract", "employee", "transaction", "letter", "asset", "purchase"] as const;
 type OwnerType = (typeof OWNER_TYPES)[number];
 
 const schema = z.object({
@@ -31,12 +31,13 @@ const ownerPath = (t: OwnerType, id: string) =>
   : t === "transaction" ? `/requests/all/${id}`
   : t === "letter" ? `/admin-affairs/correspondence/${id}`
   : t === "asset" ? `/admin-affairs/assets/${id}`
+  : t === "purchase" ? `/admin-affairs/procurement/${id}`
   : `/employees/profiles/${id}`;
 
 // مستندات الموظفين حساسة: محتاجة "إدارة كاملة" على قسم الموظفين
 // مخرجات المعاملات تتبع قسم المعاملات
 const sectionOf = (t: OwnerType) =>
-  t === "employee" ? "employees" : t === "transaction" ? "requests" : t === "letter" || t === "asset" ? "admin-affairs" : "clients";
+  t === "employee" ? "employees" : t === "transaction" ? "requests" : t === "letter" || t === "asset" || t === "purchase" ? "admin-affairs" : "clients";
 const levelFor = (t: OwnerType, action: "upload" | "delete") =>
   t === "employee" ? "MANAGE" : action === "upload" ? "EDIT" : "MANAGE";
 
@@ -59,6 +60,7 @@ export async function uploadDocument(_prev: FormState, formData: FormData): Prom
     : ownerType === "transaction" ? await db.transaction.findUnique({ where: { id: ownerId } })
     : ownerType === "letter" ? await db.letter.findUnique({ where: { id: ownerId } })
     : ownerType === "asset" ? await db.asset.findUnique({ where: { id: ownerId } })
+    : ownerType === "purchase" ? await db.purchaseRequest.findUnique({ where: { id: ownerId } })
     : await db.employee.findUnique({ where: { id: ownerId } });
   if (!owner || ("confidential" in owner && !canSeeTx(user, owner))) return { error: "غير موجود" };
   const max = maxDocsFor(ownerType);
