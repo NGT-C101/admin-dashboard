@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
+/* هوية «السدو الرقمي»: عنابي NGT + رمل وطين نجدي + فضي الشعار */
 @theme {
-  --font-sans: var(--font-cairo), system-ui, sans-serif;
+  --font-sans: var(--font-plex), system-ui, sans-serif; /* خط الواجهة والجداول */
+  --font-display: var(--font-kufi), var(--font-plex), sans-serif; /* خط العناوين والأرقام الكبيرة */
 
   /* ألوان هوية NGT (مأخوذة من البروفايل) */
   --color-brand-50: #fdf3f3;
@@ -10,45 +12,78 @@
   --color-brand-300: #ec9b9b;
   --color-brand-400: #dc5757;
   --color-brand-500: #c42222;
-  --color-brand-600: #b10302; /* الأحمر */
+  --color-brand-600: #b10302; /* الأحمر: الإجراء الأساسي */
   --color-brand-700: #960201;
-  --color-brand-800: #7d0000; /* العنابي */
+  --color-brand-800: #7d0000; /* العنابي: العناوين والروابط */
   --color-brand-900: #5e0000; /* العنابي الغامق */
-  --color-brand-950: #2b0507; /* خلفية القائمة الجانبية */
+  --color-brand-950: #2b0507; /* عنابي الليل: القائمة الجانبية */
+
+  /* ألوان مكمّلة */
+  --color-sand: #d8c3a5; /* رمل: الزخرفة والتمييز على الخلفيات الغامقة */
+  --color-clay: #8a5a3b; /* طين نجدي: لمسات ثانوية ونصوص دافئة */
+  --color-silver: #bfc1c6; /* فضي الشعار */
+  --color-ivory: #f7f3ee; /* خلفية الصفحات */
+  --color-ink: #1f1a17; /* النصوص */
+
+  /* درجات رمادية دافئة بدل الرمادي البارد — بتطبّق على كل المنصة تلقائياً */
+  --color-neutral-50: #faf7f3;
+  --color-neutral-100: #f3ede6;
+  --color-neutral-200: #e6dcd0;
+  --color-neutral-300: #d9ccbe;
+  --color-neutral-400: #a99a8c;
+  --color-neutral-500: #73655a;
+  --color-neutral-600: #5a4e45;
+  --color-neutral-700: #3d342e;
+  --color-neutral-800: #2a231f;
+  --color-neutral-900: #1f1a17;
+  --color-neutral-950: #14100e;
 }
 
 body {
-  background: #efefef; /* الرمادي الفاتح بتاع الهوية */
-  color: #1f1f1f;
+  background: var(--color-ivory);
+  color: var(--color-ink);
+}
+
+@layer base {
+  h1, h2 {
+    font-family: var(--font-display);
+  }
+  h1 {
+    color: var(--color-brand-950);
+  }
 }
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20;
+    @apply w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand-600 focus:ring-3 focus:ring-brand-600/15;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60;
   }
   .card {
-    @apply rounded-xl border border-neutral-200 bg-white shadow-sm;
+    @apply rounded-2xl border border-neutral-200 bg-white;
   }
 }
 
 @layer components {
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-brand-950 hover:bg-neutral-50;
   }
   .table {
     @apply w-full text-sm;
   }
   .table th {
-    @apply bg-neutral-50 p-3 text-right font-medium text-neutral-600 whitespace-nowrap;
+    @apply bg-neutral-50 p-3 text-right font-semibold text-neutral-600 whitespace-nowrap;
   }
   .table td {
     @apply border-t border-neutral-100 p-3;
   }
   .link {
-    @apply font-medium text-brand-700 hover:underline;
+    @apply font-semibold text-brand-800 hover:underline;
+  }
+  /* رقم كبير في المربعات الإحصائية */
+  .stat-value {
+    @apply font-display text-3xl sm:text-4xl font-extrabold leading-tight tabular-nums;
   }
 }
 

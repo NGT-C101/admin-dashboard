@@ -17,6 +17,11 @@ export function formatSAR(v: Num) {
 export function formatDate(d?: Date | null) {
   return d ? date.format(d) : "—";
 }
+// تاريخ كامل باليوم: الخميس، 26 نوفمبر 2026
+const dateLong = new Intl.DateTimeFormat(LOCALE, { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TZ });
+export function formatDateLong(d: Date) {
+  return dateLong.format(d);
+}
 export function formatDateTime(d: Date) {
   return dateTime.format(d);
 }

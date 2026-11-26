@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import type { Section } from "@/lib/nav";
+import SaduBand from "@/components/ui/SaduBand";
 
 const ICONS = {
   users: Users, handshake: Handshake, clipboard: ClipboardList,
@@ -25,8 +26,8 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
   const [open, setOpen] = useState<string | null>(pathname.split("/")[1] || null);
 
   const linkCls = (active: boolean) =>
-    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
-      active ? "bg-brand-600 text-white shadow-sm" : "text-neutral-300 hover:bg-white/10 hover:text-white"
+    `flex items-center gap-3 rounded-xl px-3 min-h-11 text-[15px] transition ${
+      active ? "bg-sand/15 text-white font-semibold shadow-[inset_-3px_0_0_var(--color-brand-600)]" : "text-[#d9d2cb] hover:bg-white/8 hover:text-white"
     }`;
 
   return (
@@ -41,19 +42,21 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
       {mobileOpen && <div className="lg:hidden fixed inset-0 z-30 bg-black/40" onClick={() => setMobileOpen(false)} />}
 
       <aside
-        className={`print:hidden fixed inset-y-0 right-0 z-40 w-64 bg-gradient-to-b from-brand-950 to-[#1a0304] flex flex-col transition-transform lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 right-0 z-40 w-64 bg-brand-950 flex flex-col transition-transform lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-4 h-20 border-b border-white/10">
+        <div className="flex items-center justify-between px-4 h-20">
           <Link href="/" className="flex items-center gap-3">
             <Image src={BRAND.logoOnDark} alt={BRAND.short} width={72} height={40} priority className="h-9 w-auto" />
-            <span className="text-xs leading-tight text-neutral-300">{BRAND.tagline}</span>
+            <span className="text-xs leading-tight text-sand">{BRAND.tagline}</span>
           </Link>
           <button onClick={() => setMobileOpen(false)} className="lg:hidden text-neutral-400" aria-label="إغلاق">
             <X size={20} />
           </button>
         </div>
+
+        <SaduBand tone="bright" size={14} />
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1" onClick={(e) => (e.target as HTMLElement).closest("a") && setMobileOpen(false)}>
           <Link href="/" className={linkCls(pathname === "/")}>
@@ -72,7 +75,7 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
           {pendingApprovals > 0 && (
             <Link href="/employees/leaves" className={linkCls(pathname === "/employees/leaves")}>
               <Inbox size={18} /> طلبات بانتظار موافقتي
-              <span className="mr-auto rounded-full bg-amber-400 px-2 text-xs font-bold text-neutral-900">{pendingApprovals}</span>
+              <span className="mr-auto rounded-full bg-brand-600 px-2 text-xs font-bold text-white">{pendingApprovals}</span>
             </Link>
           )}
 
@@ -89,7 +92,7 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
                   <ChevronDown size={16} className={`transition ${expanded ? "rotate-180" : ""}`} />
                 </button>
                 {expanded && (
-                  <div className="mr-6 mt-1 space-y-1 border-r border-white/15 pr-2">
+                  <div className="mr-6 mt-1 space-y-1 border-r border-sand/20 pr-2">
                     {s.subs.map((sub) => {
                       const href = `/${s.slug}/${sub.slug}`;
                       return (
@@ -106,7 +109,7 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
 
           {isAdmin && (
             <div className="pt-3 mt-3 border-t border-white/10 space-y-1">
-              <p className="px-3 text-xs text-neutral-500">الإعدادات</p>
+              <p className="px-3 text-xs text-sand/80">الإعدادات</p>
               <Link href="/settings/users" className={linkCls(pathname === "/settings/users")}>
                 <Settings size={18} /> المستخدمون والصلاحيات
               </Link>
@@ -117,7 +120,7 @@ export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprova
           )}
         </nav>
 
-        <p className="px-4 py-3 text-center text-[11px] text-neutral-500 border-t border-white/10">{BRAND.slogan}</p>
+        <p className="px-4 py-3 text-center text-xs text-sand/80 border-t border-white/10">{BRAND.slogan}</p>
       </aside>
     </>
   );

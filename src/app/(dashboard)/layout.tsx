@@ -5,6 +5,7 @@ import { canAccess, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pendingForWhere } from "@/lib/leave";
 import { SECTIONS } from "@/lib/nav";
+import { initials } from "@/lib/hr";
 import { logout } from "../login/actions";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,16 +23,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen print:bg-white">
       <Sidebar sections={sections} isAdmin={user.isAdmin} hasEmployee={!!user.employeeId} pendingApprovals={pendingApprovals} teamLead={teamLead} />
       <div className="lg:mr-64 print:mr-0">
-        <header className="print:hidden h-16 bg-white border-b border-neutral-200 flex items-center justify-end gap-4 px-4 lg:px-8">
-          <div className="text-left">
-            <div className="text-sm font-semibold">{user.name}</div>
-            <div className="text-xs text-neutral-500">{user.isAdmin ? "مدير النظام" : employee?.jobTitle ?? "مستخدم"}</div>
+        <header className="print:hidden h-16 bg-white/80 backdrop-blur border-b border-neutral-200 flex items-center justify-end gap-2 px-4 lg:px-8">
+          <div className="flex items-center gap-2.5 ml-2">
+            <span className="size-10 rounded-full bg-brand-800 text-white text-sm font-bold flex items-center justify-center" aria-hidden="true">
+              {initials(user.name)}
+            </span>
+            <div>
+              <div className="text-sm font-semibold">{user.name}</div>
+              <div className="text-xs text-neutral-500">{user.isAdmin ? "مدير النظام" : employee?.jobTitle ?? "مستخدم"}</div>
+            </div>
           </div>
-          <Link href="/account" className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-100">
+          <Link href="/account" className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-100">
             <KeyRound size={16} /> حسابي
           </Link>
           <form action={logout}>
-            <button className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-100">
+            <button className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-100">
               <LogOut size={16} /> خروج
             </button>
           </form>
