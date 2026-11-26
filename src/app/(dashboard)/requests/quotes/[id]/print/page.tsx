@@ -63,7 +63,7 @@ export default async function QuotePrintPage({ params }: { params: Promise<{ id:
             <p className="mb-1 font-bold text-navy-800">مقدّم العرض</p>
             <p className="font-semibold">{sellerName}</p>
             {p.vatNumber && <p><span className="text-neutral-500">الرقم الضريبي: </span><span dir="ltr">{p.vatNumber}</span></p>}
-            {p.crNumber && <p><span className="text-neutral-500">السجل التجاري: </span><span dir="ltr">{p.crNumber}</span></p>}
+            {p.crNumber && <p><span className="text-neutral-500">الرقم الموحد: </span><span dir="ltr">{p.crNumber}</span></p>}
             {p.address && <p>{p.address}</p>}
             {(p.phone || p.email) && <p dir="ltr" className="text-right">{[p.phone, p.email].filter(Boolean).join(" · ")}</p>}
           </div>
@@ -72,7 +72,8 @@ export default async function QuotePrintPage({ params }: { params: Promise<{ id:
             <p className="font-semibold">{q.company?.name ?? q.client.name}</p>
             {q.company && <p><span className="text-neutral-500">العميل: </span>{q.client.name}</p>}
             {q.company?.vatNumber && <p><span className="text-neutral-500">الرقم الضريبي: </span><span dir="ltr">{q.company.vatNumber}</span></p>}
-            {(q.company?.unifiedNumber || q.company?.crNumber) && <p><span className="text-neutral-500">السجل التجاري: </span><span dir="ltr">{q.company.unifiedNumber ?? q.company.crNumber}</span></p>}
+            {q.company?.unifiedNumber && <p><span className="text-neutral-500">الرقم الموحد: </span><span dir="ltr">{q.company.unifiedNumber}</span></p>}
+            {q.company?.crNumber && !q.company.unifiedNumber && <p><span className="text-neutral-500">السجل التجاري: </span><span dir="ltr">{q.company.crNumber}</span></p>}
             {(q.company?.nationalAddress || q.company?.city) && <p>{[q.company.city, q.company.nationalAddress].filter(Boolean).join(" — ")}</p>}
             {q.client.phone && <p dir="ltr" className="text-right">{q.client.phone}</p>}
           </div>
