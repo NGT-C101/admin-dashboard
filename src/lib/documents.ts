@@ -2,12 +2,24 @@ import type { DocType } from "@prisma/client";
 
 export const MAX_DOCS_PER_OWNER = 10;
 export const MAX_DOCS_PER_CONTRACT = 5;
+export const MAX_DOCS_PER_TRANSACTION = 10;
+export type DocOwnerType = "client" | "company" | "contract" | "employee" | "transaction";
+export function maxDocsFor(owner: DocOwnerType) {
+  return owner === "contract" ? MAX_DOCS_PER_CONTRACT : owner === "transaction" ? MAX_DOCS_PER_TRANSACTION : MAX_DOCS_PER_OWNER;
+}
 // الأنواع المناسبة لكل نوع مالك
 const EMPLOYEE_TYPES: DocType[] = ["NATIONAL_ID", "PASSPORT", "WORK_CONTRACT", "QUALIFICATION", "OTHER"];
 const EMPLOYEE_ONLY: DocType[] = ["PASSPORT", "WORK_CONTRACT", "QUALIFICATION"];
-export function docTypesFor(owner: "client" | "company" | "contract" | "employee"): DocType[] {
+// مخرجات المعاملة: ما تصدره الجهات الحكومية بعد الإنجاز
+const TRANSACTION_TYPES: DocType[] = [
+  "CR", "BALADY_LICENSE", "OTHER_LICENSE", "CERTIFICATE", "LETTER", "PAYMENT_RECEIPT",
+  "NATIONAL_ADDRESS", "ZAKAT_CERT", "VAT_CERT", "CONTRACT", "OTHER",
+];
+const TRANSACTION_ONLY: DocType[] = ["CERTIFICATE", "LETTER", "PAYMENT_RECEIPT"];
+export function docTypesFor(owner: DocOwnerType): DocType[] {
   if (owner === "employee") return EMPLOYEE_TYPES;
-  return (Object.keys(DOC_TYPE_LABELS) as DocType[]).filter((t) => !EMPLOYEE_ONLY.includes(t));
+  if (owner === "transaction") return TRANSACTION_TYPES;
+  return (Object.keys(DOC_TYPE_LABELS) as DocType[]).filter((t) => !EMPLOYEE_ONLY.includes(t) && !TRANSACTION_ONLY.includes(t));
 }
 
 export const DOC_TYPE_LABELS: Record<DocType, string> = {
@@ -23,10 +35,14 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
   WORK_CONTRACT: "عقد العمل",
   QUALIFICATION: "مؤهل علمي / شهادة",
   OTHER: "مستند آخر",
+  CERTIFICATE: "شهادة",
+  LETTER: "خطاب / إفادة",
+  PAYMENT_RECEIPT: "إيصال سداد",
 };
 
-// المستند تبع مين (عميل، شركة، عقد، موظف)
-export function documentOwner(doc: { clientId: string | null; companyId: string | null; contractId: string | null; employeeId: string | null }) {
+// المستند تبع مين (عميل، شركة، عقد، موظف، معاملة)
+export function documentOwner(doc: { clientId: string | null; companyId: string | null; contractId: string | null; employeeId: string | null; transactionId: string | null }) {
+  if (doc.transactionId) return { type: "transaction" as const, id: doc.transactionId };
   if (doc.employeeId) return { type: "employee" as const, id: doc.employeeId };
   if (doc.contractId) return { type: "contract" as const, id: doc.contractId };
   if (doc.companyId) return { type: "company" as const, id: doc.companyId };

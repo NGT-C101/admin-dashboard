@@ -13,6 +13,7 @@ const schema = z.object({
   order: z.coerce.number().int().min(0).default(0),
   active: z.string().optional().transform((v) => v !== "off"),
   kind: z.enum(["OPEN", "DONE", "CANCELLED"]).optional(),
+  readyForDelivery: z.string().optional().transform((v) => v === "on"),
   govEntityId: z.string().optional().transform((v) => (v ? v : null)),
 });
 
@@ -20,9 +21,9 @@ export async function saveListItem(_prev: FormState, formData: FormData): Promis
   await requireAdmin();
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstError(parsed.error) };
-  const { list, id, kind, govEntityId, ...data } = parsed.data;
+  const { list, id, kind, govEntityId, readyForDelivery, ...data } = parsed.data;
   const full =
-    list === "stage" ? { ...data, kind: kind ?? "OPEN" }
+    list === "stage" ? { ...data, kind: kind ?? "OPEN", readyForDelivery }
     : list === "serviceType" ? { ...data, govEntityId }
     : data;
 

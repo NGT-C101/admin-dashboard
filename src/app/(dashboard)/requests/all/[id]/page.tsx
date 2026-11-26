@@ -6,6 +6,8 @@ import { Field } from "@/components/ui/Field";
 import PageHeader from "@/components/ui/PageHeader";
 import StageBadge from "@/components/ui/StageBadge";
 import { isOverdue } from "@/components/TransactionsTable";
+import DeliveriesSection, { DELIVERY_INCLUDE } from "@/components/DeliveriesSection";
+import DocumentsSection from "@/components/DocumentsSection";
 import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatSAR, txNumber } from "@/lib/format";
@@ -23,13 +25,16 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
       assignee: { select: { name: true } },
       createdBy: { select: { name: true } },
       events: { orderBy: { createdAt: "desc" }, include: { stage: true, user: { select: { name: true } } } },
+      documents: { orderBy: { createdAt: "asc" }, include: { uploadedBy: { select: { name: true } } } },
+      deliveries: { orderBy: { deliveredAt: "desc" }, include: DELIVERY_INCLUDE },
     },
   });
   if (!tx) notFound();
 
-  const [stages, options] = await Promise.all([
+  const [stages, options, doneStage] = await Promise.all([
     db.stage.findMany({ where: { OR: [{ active: true }, { id: tx.stageId }] }, orderBy: { order: "asc" } }),
     loadTxOptions(db, undefined, tx),
+    db.stage.findFirst({ where: { active: true, kind: "DONE" }, orderBy: { order: "asc" }, select: { name: true } }),
   ]);
   const total = tx.fee || tx.govFees ? Number(tx.fee ?? 0) + Number(tx.govFees ?? 0) : null;
 
@@ -56,7 +61,7 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
         actions={<StageBadge name={tx.stage.name} kind={tx.stage.kind} />}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         <div className="lg:col-span-2 space-y-6">
           <div className="card p-5">
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -75,6 +80,17 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
               <TransactionFields tx={tx} options={options} />
             </ActionForm>
           </Collapsible>}
+
+          <DocumentsSection
+            ownerType="transaction" ownerId={tx.id} title="المخرجات" documents={tx.documents} userId={user.id}
+            canUpload={can(user, "requests", "EDIT")} canManage={can(user, "requests", "MANAGE")}
+            deliveredIds={new Set(tx.deliveries.flatMap((d) => d.documents.map((x) => x.id)))}
+          />
+
+          <DeliveriesSection
+            tx={tx} deliveries={tx.deliveries} outputs={tx.documents} doneStageName={doneStage?.name}
+            canEdit={can(user, "requests", "EDIT")} canManage={can(user, "requests", "MANAGE")}
+          />
         </div>
 
         <div className="space-y-6">

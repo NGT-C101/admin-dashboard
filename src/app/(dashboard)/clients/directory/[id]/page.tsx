@@ -15,7 +15,8 @@ import { can, requireSection } from "@/lib/auth";
 import { getClientAlerts } from "@/lib/client-alerts";
 import { CLIENT_STATUS_LABELS, CLIENT_STATUS_STYLES, saudizationRate, whatsappLink } from "@/lib/clients";
 import { db } from "@/lib/db";
-import { formatDate, formatDateTime, formatSAR } from "@/lib/format";
+import { CHANNEL_LABELS, CHANNEL_STYLES, deliveryNumber, itemLines } from "@/lib/deliveries";
+import { formatDate, formatDateTime, formatSAR, txNumber } from "@/lib/format";
 import { createCompany, toggleArchiveClient, updateClient } from "../../actions";
 import { ClientFields, CompanyFields } from "../../fields";
 
@@ -225,7 +226,42 @@ export default async function ClientPage({ params, searchParams }: {
   }
 
   async function Transactions() {
-    const transactions = await db.transaction.findMany({ where: txWhere, include: TX_INCLUDE, orderBy: { createdAt: "desc" } });
-    return <TransactionsTable transactions={transactions} showCompany />;
+    const [transactions, deliveries] = await Promise.all([
+      db.transaction.findMany({ where: txWhere, include: TX_INCLUDE, orderBy: { createdAt: "desc" } }),
+      db.delivery.findMany({
+        where: { transaction: txWhere },
+        include: { transaction: { select: { id: true, number: true, title: true } }, _count: { select: { documents: true } } },
+        orderBy: { deliveredAt: "desc" },
+      }),
+    ]);
+    const seeRequests = can(user, "requests");
+    return (
+      <div className="space-y-6">
+        <TransactionsTable transactions={transactions} showCompany />
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">سجل تسليم المخرجات <span className="text-sm font-normal text-neutral-500">({deliveries.length})</span></h2>
+          <div className="card overflow-x-auto">
+            <table className="table">
+              <thead><tr><th>رقم التسليم</th><th>التاريخ</th><th>المعاملة</th><th>المستلم</th><th>الطريقة</th><th>المخرجات</th></tr></thead>
+              <tbody>
+                {deliveries.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-neutral-500">لا توجد تسليمات</td></tr>}
+                {deliveries.map((d) => (
+                  <tr key={d.id}>
+                    <td dir="ltr" className="text-right whitespace-nowrap">
+                      {seeRequests ? <Link href={`/requests/deliverables/${d.id}/receipt`} className="link">{deliveryNumber(d.number)}</Link> : deliveryNumber(d.number)}
+                    </td>
+                    <td className="whitespace-nowrap text-sm">{formatDateTime(d.deliveredAt)}</td>
+                    <td><Link href={`/requests/all/${d.transaction.id}`} className="link" dir="ltr">{txNumber(d.transaction.number)}</Link> {d.transaction.title}</td>
+                    <td>{d.recipientName}</td>
+                    <td><Badge className={CHANNEL_STYLES[d.channel]}>{CHANNEL_LABELS[d.channel]}</Badge></td>
+                    <td>{d._count.documents + itemLines(d.items).length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
   }
 }

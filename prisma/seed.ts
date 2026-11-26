@@ -50,6 +50,17 @@ async function main() {
   await migratePermissions();
   await seedHolidays();
   await seedPositions();
+  await markDeliveryStage();
+}
+
+// مرة واحدة: مرحلة «صدرت / معتمدة» تعني أن المخرجات جاهزة للتسليم للعميل
+// (قابلة للتغيير لاحقاً من الإعدادات ← القوائم والمراحل)
+async function markDeliveryStage() {
+  const KEY = "deliveries-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  const { count } = await prisma.stage.updateMany({ where: { name: "صدرت / معتمدة" }, data: { readyForDelivery: true } });
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log(`✔ مرحلة الجاهزية للتسليم (${count})`);
 }
 
 // الهيكل القيادي الافتراضي لشركة استشارات إدارية (قابل للتعديل من المنصة)

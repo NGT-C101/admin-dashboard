@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { saveListItem } from "./actions";
 
-type Item = { id: string; name: string; order: number; active: boolean; kind?: string; govEntityId?: string | null };
+type Item = { id: string; name: string; order: number; active: boolean; kind?: string; govEntityId?: string | null; readyForDelivery?: boolean };
 type ListKey = "serviceType" | "govEntity" | "stage";
 type Entity = { id: string; name: string };
 
@@ -22,6 +22,12 @@ function ItemFields({ list, item, nextOrder, entities, entityId }: {
       {list === "stage" && (
         <select name="kind" defaultValue={item?.kind ?? "OPEN"} className="input w-auto" title="نوع المرحلة">
           {Object.entries(KINDS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+      )}
+      {list === "stage" && (
+        <select name="readyForDelivery" defaultValue={item?.readyForDelivery ? "on" : "off"} className="input w-auto" title="هل المخرجات جاهزة للتسليم في هذه المرحلة؟">
+          <option value="off">—</option>
+          <option value="on">جاهزة للتسليم</option>
         </select>
       )}
       {list === "serviceType" && entities && (
@@ -98,7 +104,7 @@ export default async function ListsPage() {
       </p>
 
       <ListCard title="مراحل المعاملة" list="stage" items={stages}
-        hint="تبدأ المعاملة الجديدة من أول مرحلة جارية، ولا تظهر المراحل المكتملة والملغاة في لوحة المتابعة." />
+        hint="تبدأ المعاملة الجديدة من أول مرحلة جارية، ولا تظهر المراحل المكتملة والملغاة في لوحة المتابعة. المعاملات في المراحل المعلَّمة «جاهزة للتسليم» تظهر في صفحة تسليم المخرجات." />
 
       <ListCard title="الجهات والمنصات الحكومية" list="govEntity" items={entities}
         hint="الجهات الحكومية التي تُنجز لديها المعاملات" />

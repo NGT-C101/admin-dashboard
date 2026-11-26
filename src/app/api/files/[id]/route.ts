@@ -13,6 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   // مستند الموظف: لصاحب الإدارة الكاملة على الموظفين أو للموظف نفسه
   const allowed = doc.employeeId
     ? can(user, "employees", "MANAGE") || user.employeeId === doc.employeeId
+    : doc.transactionId ? can(user, "requests", "VIEW")
     : can(user, "clients", "VIEW");
   if (!allowed) return new Response("غير مسموح", { status: 403 });
 

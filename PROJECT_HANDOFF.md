@@ -5,7 +5,7 @@
 > Owner company: legal name per VAT certificate **«شركة إن جي تي سي»**; brand/trade name **شركة نصار جروب التجارية للاستشارات الإدارية** (Nassar Group Trading — NGT), Riyadh, Saudi Arabia
 > Product: internal Arabic (RTL) management platform for a Saudi administrative-consulting firm
 > (government-platform transactions, company formation, licenses, HR, etc.)
-> Last full rewrite of this document: **2026-11-26** (end of session 2). Local `main` at `9c3cbbe` (1 commit **not yet pushed**, see §9).
+> Last full rewrite of this document: **2026-11-26** (end of session 2). Updated in session 3 (same day): **تسليم المخرجات (deliverables)** built — see §2.3, §9.
 
 ---
 
@@ -15,10 +15,11 @@
 - **Runs in production** at **https://platform.ngt.sa** on one Hetzner VPS via Docker Compose (`db` Postgres + `app` Next.js standalone + `caddy` auto-HTTPS).
 - **Visual identity:** dark **navy** shell + **gold** accents + NGT **red** primary buttons; light (white) cards on the dark background; real Riyadh skyline photo on the login page and the home banner (§5).
 - **UI language:** formal Modern Standard Arabic (فصحى), RTL, Gregorian dates, Saudi time zone (`Asia/Riyadh`), SAR currency, Latin digits.
-- **Done:** auth & granular permissions · Clients (full CRM) · Transactions (list, tracking board, **quotes/عروض الأسعار**) · Employees/HR (profiles, leadership positions, org chart, leaves, attendance, payroll, performance) · self-service ("خدماتي") · settings (users, lists, **company profile/بيانات المنشأة**) · branding · Excel import/export · printable reports.
-- **Not built yet (placeholder "قيد التطوير" pages):** Transactions → **تسليم المخرجات** (deliverables) · **Administrative Affairs** (الشؤون الإدارية) · **Public Relations** (العلاقات العامة) · **Accounts** (الحسابات).
+- **Done:** auth & granular permissions · Clients (full CRM) · Transactions (list, tracking board, **quotes/عروض الأسعار**, **deliverables/تسليم المخرجات**) · Employees/HR (profiles, leadership positions, org chart, leaves, attendance, payroll, performance) · self-service ("خدماتي") · settings (users, lists, **company profile/بيانات المنشأة**) · branding · Excel import/export · printable reports.
+- **Not built yet (placeholder "قيد التطوير" pages):** **Administrative Affairs** (الشؤون الإدارية) · **Public Relations** (العلاقات العامة) · **Accounts** (الحسابات).
 - **Owner decision (2026-11-26):** **Accounts is postponed until every other module is finished.** When it is built, the platform itself must issue ZATCA Phase-2 e-invoices (native Fatoora integration — not via Daftra).
-- **Next task:** **تسليم المخرجات** (deliverables) — proposed design in §10 (owner has not yet confirmed the details).
+- **Competitor analysis «تحليل منصة جهات»** (Jehat platform: 20 tutorial videos + presentation + user guide + 4 recent screen recordings) is a private artifact in the owner's claude.ai account: https://claude.ai/artifact/5hxxKfeh22KNajVxmY1TwE — its §«كيف ندمجها في خطتنا» **is the agreed roadmap** (see §6 Pending).
+- **Next task:** **transaction actions upgrade** — internal vs external comments, assignment with history, extension requests with approval, priority, confidential flag, auto-distribution, and **receipt of transaction with pledge (استلام المعاملة بتعهد)** — ideas 1–3 of the Jehat analysis. Confirm details with the owner first.
 - The owner is **non-technical**, uses a Mac, and communicates in **Egyptian Arabic**; explain steps in simple Arabic, give one copy-paste command per code block, and tell them exactly what to run on the server after each push.
 - **Pushing to GitHub in this cloud environment requires an explicit approval message from the owner for each push** (the owner sends: «موافق، ارفع التعديلات الجديدة على GitHub»). Never put server IPs, secrets or personal data in the repo (it is public; the push classifier blocks it).
 
@@ -92,6 +93,8 @@ admin-dashboard/
    │     ├─ requests/                 # المعاملات
    │     │  ├─ actions.ts             #   transaction create/update/events
    │     │  ├─ quote-actions.ts       #   quote create/update/status/convert/duplicate/delete
+   │     │  ├─ delivery-actions.ts    #   recordDelivery (optionally closes the tx to the first DONE stage), deleteDelivery (MANAGE)
+   │     │  ├─ deliverables/          #   تسليم المخرجات: page (awaiting list + delivery log + KPIs), [id]/receipt/ (A4 delivery receipt)
    │     │  ├─ fields.tsx             #   transaction form fields
    │     │  ├─ all/ (list, new, [id]) #   transactions
    │     │  ├─ tracking/              #   Kanban board
@@ -120,7 +123,8 @@ admin-dashboard/
 | `time.ts` | Riyadh date helpers (UTC+3 fixed): `riyadhToday`, `dateKey`, `parseDateKey`, `riyadhHM`, `riyadhDateTime`, `isWeekend` (Fri/Sat), `monthBounds`, `currentMonthKey`, `minutesText`, `GREGORIAN_MONTHS`, `monthLabel`, `DAY_MS` |
 | `clients.ts` | client/contract/interaction labels & styles, `contractState`, `saudizationRate`, `whatsappLink`, `daysUntil`, `inDays`, `endOfToday`, **`daysText` (Arabic number agreement for days)** |
 | `client-alerts.ts` | `getClientAlerts(scope)` — follow-ups, expiring documents & CRs (60d), ending contracts (30d) |
-| `documents.ts` | doc type labels, limits (10 per client/company/employee, 5 per contract), `docTypesFor(owner)`, `documentOwner` |
+| `documents.ts` | doc type labels, limits (10 per client/company/employee/**transaction**, 5 per contract) via `maxDocsFor`, `docTypesFor(owner)` (transaction-only types CERTIFICATE/LETTER/PAYMENT_RECEIPT), `documentOwner` |
+| `deliveries.ts` | `deliveryNumber` (DL-0001), channel labels/styles, `awaitingDeliveryWhere` (stage.readyForDelivery), `itemLines`, `deliveryWhatsapp` (wa.me link with prefilled MSA message) |
 | `storage.ts` | file save/read/delete in `UPLOAD_DIR` (default `./uploads`), magic-byte type detection (PDF/JPG/PNG/WEBP), 10 MB max, random hex keys |
 | `excel.ts` | ExcelJS helpers: RTL sheet with brand header style, `xlsxResponse`, `cellText` |
 | `import-columns.ts` | client import template columns & report type |
@@ -182,7 +186,14 @@ admin-dashboard/
   - **Convert accepted quote → transaction** (once; `Quote.transactionId` unique): title = quote title, description = bullet list of items, fee = subtotal (pre-VAT), govFees = estimate, service/entity = first item with a catalog service, first active OPEN stage, event note «تم إنشاء المعاملة من عرض السعر QT-xxxx». Asks for the company if the quote has none.
   - List: KPIs (open quotes count + value, accepted this month count + value, expired without reply), status filter (السارية/منتهية الصلاحية/المقبولة/المرفوضة-الملغاة/الكل), search (number, title, client, company), days-left hint.
   - **Printable A4 quote / PDF** (`/requests/quotes/[id]/print`): title «عرض سعر / Quotation», number, dates; seller block from company profile (legal name, VAT no., **«الرقم الموحد»**, address, phone/email); buyer block (company or client, client name, company VAT, unified/CR number, city/address, phone); items table (navy header); totals; gov-fees box; payment terms, notes, validity sentence, bank + IBAN; footer; **NGT logo watermark** (red logo, ~6% opacity, rotated, centered, repeats per printed page). Warning on screen if the company profile is incomplete. **This is a quote, not a tax invoice.**
-- Sub-section **تسليم المخرجات** is still a placeholder.
+- **Deliverables (تسليم المخرجات)** `/requests/deliverables` — built in session 3 (2026-11-26), tested locally, **not yet pushed/deployed**:
+  - **Outputs (المخرجات):** files uploaded on the transaction page (reuses `Document` with `transactionId`; same storage, 10 MB, PDF/images; max 10 per transaction; extra types شهادة / خطاب-إفادة / إيصال سداد). Upload = REQUESTS EDIT; delete = MANAGE or uploader; **a file included in a delivery cannot be deleted** (badge «سُلِّم للعميل»). Download via `/api/files/[id]` with REQUESTS VIEW.
+  - **Delivery record (Delivery, DL-0001):** chosen output files + free-text paper originals (one per line, e.g. أصل السجل، ختم الشركة), date/time (Riyadh), channel (باليد / واتساب / البريد / مندوب / المنصة الحكومية / أخرى), recipient name (default = client), recipient ID (optional, 10 digits), phone (default = client phone), message to the client (external note). Several deliveries per transaction allowed (partial delivery). Saving adds a timeline event and, if the box is ticked (default), **moves the transaction to the first active DONE stage («مكتملة ومسلّمة»)**. Delete record = MANAGE (logged in the timeline).
+  - **«جاهزة للتسليم» stage flag** (`Stage.readyForDelivery`, editable in Settings → Lists): seeded once ON for «صدرت / معتمدة» (AppMeta `deliveries-v1`). Awaiting-delivery list = transactions in a flagged, non-cancelled stage. Reason: in the default stage list the only DONE stage is «مكتملة ومسلّمة» (= already delivered), so «صدرت / معتمدة» is the real "ready, not delivered" state; old DONE transactions are intentionally **not** flagged as undelivered.
+  - Page: KPIs (ready awaiting delivery, deliveries this month, waiting > 3 days), tabs «بانتظار التسليم» (oldest first, "ready since", partial-delivery hint) / «سجل التسليمات», search + "mine only".
+  - **WhatsApp:** «إرسال على واتساب» opens wa.me with a formal message (greeting, tx title + TR number + company, the note, list of outputs, signature «فريق شركة نصار جروب التجارية»). Files must be attached manually in WhatsApp (no public file links by design).
+  - **Printable receipt (إيصال تسليم مخرجات)** `/requests/deliverables/[id]/receipt`: A4 with watermark, seller/client blocks, transaction, items table (electronic copy vs original/paper, expiry), notes, acknowledgement sentence, signature lines for recipient and deliverer + stamp.
+  - Shown on: transaction page (sections «المخرجات» + «سجل التسليم» + form), client page → المعاملات tab («سجل تسليم المخرجات»), home «تحتاج إجراء» (count awaiting delivery).
 
 ### 2.4 Employees / HR (الموظفين)
 - **Employee profile** (EMP-0001): personal, identity (ID/iqama + expiry, passport + expiry), contact & emergency, job (title, department, direct manager, employment type, hire date, probation end, contract end, work location), salary (basic/housing/transport/other, bank, IBAN validated, GOSI flag), status (ACTIVE/ON_LEAVE/SUSPENDED/TERMINATED), termination (date + reason → **login auto-disabled**), reinstate, leave carryover. Profile header band is a navy gradient.
@@ -234,6 +245,8 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 | `PayrollStatus` | DRAFT, APPROVED, PAID |
 | `ReviewStatus` | DRAFT, SUBMITTED, ACKNOWLEDGED |
 | `QuoteStatus` | DRAFT, SENT, ACCEPTED, REJECTED, CANCELLED (EXPIRED is derived, not stored) |
+| `DeliveryChannel` | HAND, WHATSAPP, EMAIL, COURIER, PLATFORM, OTHER |
+| `DocType` (added) | CERTIFICATE, LETTER, PAYMENT_RECEIPT (transaction outputs only) |
 
 ### 3.2 Models & relationships (key fields)
 - **User**: email (unique), passwordHash (bcrypt 10 rounds), role, department (legacy, now null), active, mustChangePassword → `permissions[]`, `employee?` (1–1 via Employee.userId), managed clients, created/assigned transactions, events, documents uploaded, contracts created, interactions (creator/assignee), leave requests (creator/decider), attendance edits, payroll runs (creator/approver), reviews given, **createdQuotes[]**.
@@ -257,6 +270,8 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 - **PerformanceReview**: unique (employeeId, period); scores Json, metrics Json, overall Float; reviewer (User).
 - **Quote** (number autoincrement unique) → client (required, RESTRICT), company? (SET NULL), items[] (cascade), createdBy (User), transaction? (`transactionId` unique, SET NULL); title, `issueDate`/`validUntil` `@db.Date`, status, `vatRate` Decimal(5,2) default 15, `subtotal`/`vatAmount`/`total` Decimal(12,2), `govFees` Decimal?, paymentTerms?, notes?, rejectReason?, sentAt?, decidedAt?; indexes on clientId, status.
 - **QuoteItem** → quote (cascade), serviceType? (SET NULL); order, description, quantity Decimal(10,2) default 1, unitPrice Decimal(12,2), lineTotal Decimal(12,2).
+- **Delivery** (number autoincrement unique, DL-0001) → transaction (cascade), deliveredBy (User "DeliveredBy"), documents[] (implicit m2m `_DeliveryDocuments`); deliveredAt, channel, recipientName, recipientIdNo?, recipientPhone?, items? (lines), note?.
+- **Document.transactionId?** (outputs of a transaction, SET NULL) · **Stage.readyForDelivery** Boolean default false.
 - **AppMeta** (key/value) — config & one-time-migration flags.
 
 ### 3.3 AppMeta keys (configuration & one-time migrations)
@@ -266,6 +281,7 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 | `permissions-v1` | legacy role/department → Permission rows migration done |
 | `holidays-v1` | fixed Gregorian holidays seeded |
 | `positions-v1` | default leadership positions seeded |
+| `deliveries-v1` | «صدرت / معتمدة» stage flagged `readyForDelivery` (once) |
 | `work-schedule` | JSON `{start, end, grace}` |
 | `payroll-settings` | JSON `{gosiSaudiRate, gosiNonSaudiRate, gosiCap, deductAbsence, deductLate}` |
 | `company-profile` | JSON `{legalName, vatNumber, crNumber, address, phone, email, bankName, iban, quoteValidityDays, quoteTerms}` |
@@ -273,7 +289,7 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 > Pattern: new one-time data changes go into `prisma/seed.ts` guarded by a new AppMeta key; seed runs at every container start and must stay idempotent and **non-destructive**.
 
 ### 3.4 Migrations (in order)
-`init` → `clients_transactions` → `services_by_entity` → `documents` → `clients_crm` → `client_archive` → `employees_permissions` → `leaves_attendance` → `positions` → `payroll_performance` → `20261126031520_quotes` (enum QuoteStatus, tables Quote & QuoteItem, FKs; additive only). None drop data (one early migration dropped/re-created a unique index on ServiceType name).
+`init` → `clients_transactions` → `services_by_entity` → `documents` → `clients_crm` → `client_archive` → `employees_permissions` → `leaves_attendance` → `positions` → `payroll_performance` → `20261126031520_quotes` (enum QuoteStatus, tables Quote & QuoteItem, FKs; additive only) → `20261126162847_deliveries` (enum DeliveryChannel, 3 DocType values, Document.transactionId, Stage.readyForDelivery, tables Delivery & _DeliveryDocuments; additive only). None drop data (one early migration dropped/re-created a unique index on ServiceType name).
 
 ### 3.5 Configuration / environment
 - Server `.env` (generated by `install.sh`, chmod 600, never committed): `DOMAIN` (= `platform.ngt.sa`), `POSTGRES_USER`, `POSTGRES_PASSWORD`, `SESSION_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
@@ -297,7 +313,7 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 | EDIT | create/update records (clients, companies, contracts, interactions, documents upload, transactions, **quotes incl. send/accept/reject/cancel/convert/duplicate**, employee non-salary data, attendance correction, on-behalf leave requests, performance reviews) |
 | MANAGE | EDIT + delete/archive/renew/cancel, **delete draft quotes, reopen rejected/cancelled quotes**, employee **salaries, IBAN, documents, termination, payroll, carryover, positions, schedule/holidays**, reopen reviews |
 
-- Quotes live under the **REQUESTS** section (`requireSection("requests", …)`); the print page needs VIEW. Company profile = **admin only** (`requireAdmin`).
+- Quotes and deliverables live under the **REQUESTS** section (`requireSection("requests", …)`); print pages (quote, delivery receipt) need VIEW; recording a delivery / uploading outputs = EDIT; deleting a delivery record = MANAGE. Company profile = **admin only** (`requireAdmin`).
 - Helpers: `requireSection(slug, level)` in every action/page; `can(user, slug, level)` for UI gating.
 - **Special rules:** line managers can approve their team's leave and review their team **without** HR permission (`canDecide`, `canReview`); nobody approves/reviews themselves. Employee documents visible to HR-MANAGE or the employee. Payslip visible to HR-MANAGE or the employee after run approval. Granting logins/permissions = admin only. An admin cannot remove their own admin role.
 - **Sensitive-data hiding for HR VIEW:** national ID, birth date, address, emergency contact, salary tab, documents tab.
@@ -322,16 +338,17 @@ PostgreSQL 16, Prisma 6 (`prisma-client-js`, `binaryTargets = ["native", "linux-
 ## 6. Completed vs pending
 
 ### Completed
-Phases (all on `main`): foundation → clients & transactions → server deployment → password page → branding → services by entity → documents → clients CRM batch 1 & 2 → formal Arabic → HR batch 1 (profiles + permission system) → HR batch 2 (leaves + attendance) → leadership positions + Gregorian date fields → HR batch 3 (payroll + performance) → **[2026-11-26]** navy/gold visual identity + new home dashboard + real skyline photo → custom domain `platform.ngt.sa` + server security updates/reboot → handoff update → **quotes (عروض الأسعار) + company profile (بيانات المنشأة)** → quote watermark → «الرقم الموحد» label on printed quotes (**local commit, not pushed yet**).
+Phases (all on `main`): foundation → clients & transactions → server deployment → password page → branding → services by entity → documents → clients CRM batch 1 & 2 → formal Arabic → HR batch 1 (profiles + permission system) → HR batch 2 (leaves + attendance) → leadership positions + Gregorian date fields → HR batch 3 (payroll + performance) → **[2026-11-26]** navy/gold visual identity + new home dashboard + real skyline photo → custom domain `platform.ngt.sa` + server security updates/reboot → handoff update → **quotes (عروض الأسعار) + company profile (بيانات المنشأة)** → quote watermark → «الرقم الموحد» label on printed quotes → full handoff (`e2368f4`, pushed) → **[session 3] deliverables (تسليم المخرجات)** (local, not pushed yet).
 
-Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي identity (superseded) · `e3c7b61` navy/gold identity + new home · `76cd1a5` skyline photo · `e55d743` handoff update · `e893d9b` quotes + company profile (+ SearchBox icon fix) · `0b36088` quote watermark · `9c3cbbe` «الرقم الموحد» label (unpushed).
+Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي identity (superseded) · `e3c7b61` navy/gold identity + new home · `76cd1a5` skyline photo · `e55d743` handoff update · `e893d9b` quotes + company profile (+ SearchBox icon fix) · `0b36088` quote watermark · `9c3cbbe` «الرقم الموحد» label · `e2368f4` handoff (all pushed).
 
-### Pending (not started), in the owner's agreed order
-1. **Transactions → تسليم المخرجات (deliverables)** — next.
-2. **Administrative Affairs (الشؤون الإدارية):** correspondence in/out (الصادر والوارد), archive & documents search, assets & custody (الأصول والعُهد), procurement & suppliers.
+### Pending (not started), in the agreed order (from the Jehat analysis artifact, §0)
+1. **Transaction actions upgrade** — next: internal vs external comments (external visible to the client later), assignment/transfer with history, extension request with manager approval, priority, confidential transaction, expected completion date, «لفت نظر»; **auto-distribution** (per-employee service types + in/out of distribution, least-busy); **receipt with pledge** (employee confirms receiving the transaction and the client's original documents, sets a completion deadline, confidentiality pledge; stored as a fixed record, printable).
+2. **Administrative Affairs (الشؤون الإدارية):** starts with correspondence in/out (الصادر والوارد) with templates, NGT letterhead + hide-logo option, **review → approval cycle**, outgoing number, Hijri + Gregorian date, **QR code to a public verification page**; then archive & documents search, assets & custody (الأصول والعُهد), procurement & suppliers.
 3. **Public Relations (العلاقات العامة):** events & conferences, partnerships & external bodies, campaigns & media content, customer satisfaction surveys.
-4. **Cross-cutting:** global search (header search bar like the owner's mockup), notification center/bell (in-app; later email/WhatsApp), audit log, login hardening.
-5. **Accounts (الحسابات) — LAST, by owner decision:** invoices with **native ZATCA Phase-2 issuance**, payment plans (one-time / installments / monthly subscription from contracts), collections & receivables aging, credit/debit notes, expenses (link payroll), financial reports, Excel export.
+4. **Client portal** (big separate phase): client logs in, sees transactions/status/external comments, uploads requested documents, approves quotes, receives outputs. Also: authorized representatives (المفوضون) per client/company, camera capture of documents, appointments calendar with reminders.
+5. **Cross-cutting:** global search (header search bar like the owner's mockup), notification center/bell (in-app; later email/WhatsApp), audit log, login hardening.
+6. **Accounts (الحسابات) — LAST, by owner decision:** invoices with **native ZATCA Phase-2 issuance**, payment plans (one-time / installments / monthly subscription from contracts), collections & receivables aging, credit/debit notes, expenses (link payroll), financial reports, Excel export.
 
 ### Owner decisions already collected (for Accounts)
 - VAT-registered (effective 2025-09-01, quarterly filing). Company data entered in بيانات المنشأة.
@@ -369,6 +386,8 @@ Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي iden
 22. Quote print is a **quotation only** — not a ZATCA tax invoice (no QR/UUID). Do not let users treat it as an invoice.
 23. Domain email: Hostinger mail DNS records (not created by the owner) were deleted from `ngt.sa`; the company currently has **no email on its domain**. Owner was advised to change the dnet password and ask dnet who added them. Unresolved.
 24. Production contains a quote **QT-0001 «تأسيس شركة»** for a client «شركة NGT للاستشارات الاداريه» created by the owner while testing — the owner may want to cancel/delete it.
+25. Deliveries: WhatsApp button only opens a prefilled chat — files are attached manually (no public links). `Tabs` links drop the search/"mine" filters when switching tabs on the deliverables page. No confirmation dialog on «حذف السجل».
+26. Session-3 local testing used a second local DB (`admin_dashboard2`) because `prisma migrate reset` is blocked by Prisma's AI-consent guard; that is local-only and irrelevant to production.
 
 ---
 
@@ -403,7 +422,8 @@ Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي iden
 
 ## 9. Exact current status (end of 2026-11-26)
 
-- **Code:** local `main` at **`9c3cbbe`** («عرض السعر: تسمية «الرقم الموحد» …») — **1 commit ahead of `origin/main` (`0b36088`) and NOT pushed** (waiting for the owner's push approval; if lost, re-apply: on the quote print page label the company-profile `crNumber` and the buyer company's `unifiedNumber` as «الرقم الموحد», and fall back to «السجل التجاري» for a company `crNumber`). Plus this document (uncommitted until the next commit). Builds cleanly, `tsc` clean, eslint 0 errors / 5 warnings.
+- **Session 3 (2026-11-26):** deliverables built on top of `e2368f4`; `tsc` clean, eslint 0 errors / 5 old warnings, `next build` OK, Playwright E2E passed (upload output → validation → record delivery with auto-close → WhatsApp text → receipt PDF 1 page → log → client tab → home item → stage flag toggle; no horizontal scroll at 390 px). **Not pushed** — this cloud session could only clone read-only (attaching the repo with push access was refused by the permission classifier); the push needs the owner's approval and repo write access. After deploy, `update.sh` applies migration `20261126162847_deliveries` and seed step `deliveries-v1` automatically.
+- **Code (end of session 2):** local `main` at **`9c3cbbe`** («عرض السعر: تسمية «الرقم الموحد» …») — **1 commit ahead of `origin/main` (`0b36088`) and NOT pushed** (waiting for the owner's push approval; if lost, re-apply: on the quote print page label the company-profile `crNumber` and the buyer company's `unifiedNumber` as «الرقم الموحد», and fall back to «السجل التجاري» for a company `crNumber`). Plus this document (uncommitted until the next commit). Builds cleanly, `tsc` clean, eslint 0 errors / 5 warnings.
 - **Production:** `https://platform.ngt.sa`, deployed version **`0b36088`** (quotes + company profile + watermark) — owner ran `update.sh`, opened quotes, filled بيانات المنشأة, printed QT-0001 successfully.
 - **Server:** Hetzner Cloud **CPX22** (2 vCPU / 4 GB), Ubuntu 24.04.5, kernel 6.8.0-151 (security updates applied and rebooted 2026-11-26; "0 updates" afterwards; do **not** run `do-release-upgrade`). IPv4 = what `platform.ngt.sa` resolves to (owner keeps it; not stored here). Server `.env` `DOMAIN=platform.ngt.sa`; the old `sslip.io` hostname no longer works. Deploy key (read-only) on GitHub; SSH key-only from the owner's Mac (use `ssh -o ServerAliveInterval=60 root@<IP>` to avoid idle disconnects); ufw (22/80/443); 2 GB swap; daily backup cron 03:00 → `/root/backups`. Containers `app`, `db` (healthy), `caddy` all up after reboot (restart policy `unless-stopped`).
 - **Domain / DNS:** `ngt.sa` at **dnet** (SaudiNIC registrar), expires **2027-06-10**, name servers `pns01.t2.sa` / `pns02.t2.sa` (dnet-hosted DNS, editable in dnet → التحكم في DNS). Only record now: `A platform.ngt.sa → <server IPv4>` (TTL 3600). No MX (no domain email).
@@ -419,8 +439,8 @@ Commits of session 2 (oldest → newest): `4ba521a` السدو الرقمي iden
 
 ## 10. Recommended next steps
 
-1. **Push `9c3cbbe` + this document** (after the owner's approval message), then the owner runs `update.sh` (no DB migration in this change).
-2. **Build تسليم المخرجات (deliverables)** — proposed design (confirm with the owner first):
+1. **Push the deliverables commit** (after the owner's approval message), then the owner runs `update.sh` (includes a DB migration; takes a backup first). Then the owner checks Settings → Lists that «صدرت / معتمدة» shows «جاهزة للتسليم».
+2. ~~Build تسليم المخرجات~~ **done in session 3** — original proposal kept for reference:
    - When a transaction reaches a DONE stage (or anytime), staff upload **outputs** (license, CR, certificate, letter…) — reuse `Document` storage/limits with a new owner type or a `Deliverable` model linked to `Transaction`.
    - Record **delivery**: recipient name, date/time, channel (WhatsApp / email / by hand / platform), notes, delivered-by user.
    - **"إرسال للعميل على واتساب"** button using `whatsappLink` with a prefilled MSA message (transaction title + TR number).

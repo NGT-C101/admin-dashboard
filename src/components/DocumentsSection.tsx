@@ -4,7 +4,7 @@ import { Download, Eye, FileText, Image as ImageIcon, Trash2 } from "lucide-reac
 import ActionForm from "@/components/ui/ActionForm";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { deleteDocument, uploadDocument } from "@/app/(dashboard)/clients/document-actions";
-import { DOC_TYPE_LABELS, MAX_DOCS_PER_CONTRACT, MAX_DOCS_PER_OWNER, docTypesFor } from "@/lib/documents";
+import { DOC_TYPE_LABELS, type DocOwnerType, docTypesFor, maxDocsFor } from "@/lib/documents";
 import { formatDate } from "@/lib/format";
 
 type Doc = Document & { uploadedBy: { name: string } };
@@ -19,22 +19,24 @@ export function expiryState(d?: Date | null) {
   return days < 0 ? "expired" : days <= 30 ? "soon" : "ok";
 }
 
-export default function DocumentsSection({ ownerType, ownerId, documents, userId, canUpload, canManage }: {
-  ownerType: "client" | "company" | "contract" | "employee";
+export default function DocumentsSection({ ownerType, ownerId, documents, userId, canUpload, canManage, title = "المستندات", deliveredIds }: {
+  ownerType: DocOwnerType;
   ownerId: string;
   documents: Doc[];
   userId: string;
   canUpload: boolean;
   canManage: boolean; // حذف أي مستند
+  title?: string;
+  deliveredIds?: Set<string>; // مخرجات سُلِّمت للعميل: تظهر بشارة ولا تُحذف
 }) {
-  const max = ownerType === "contract" ? MAX_DOCS_PER_CONTRACT : MAX_DOCS_PER_OWNER;
+  const max = maxDocsFor(ownerType);
   const full = documents.length >= max;
-  const canDelete = (d: Doc) => canManage || (ownerType !== "employee" && canUpload && d.uploadedById === userId);
+  const canDelete = (d: Doc) => !deliveredIds?.has(d.id) && (canManage || (ownerType !== "employee" && canUpload && d.uploadedById === userId));
 
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">
-        المستندات <span className="text-sm font-normal text-neutral-500">({documents.length} من {max})</span>
+        {title} <span className="text-sm font-normal text-neutral-500">({documents.length} من {max})</span>
       </h2>
 
       <div className="card overflow-x-auto">
@@ -51,6 +53,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, userId
                   <td>
                     <div className="font-medium">{DOC_TYPE_LABELS[d.type]}</div>
                     {d.title && <div className="text-xs text-neutral-500">{d.title}</div>}
+                    {deliveredIds?.has(d.id) && <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">سُلِّم للعميل</span>}
                   </td>
                   <td>
                     <div className="flex items-center gap-2">
@@ -99,7 +102,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, userId
         </p>
       ) : (
         <details className="card">
-          <summary className="cursor-pointer select-none p-4 font-semibold">+ رفع مستند</summary>
+          <summary className="cursor-pointer select-none p-4 font-semibold">{ownerType === "transaction" ? "+ رفع مخرج" : "+ رفع مستند"}</summary>
           <div className="border-t border-neutral-100 p-4">
             <ActionForm action={uploadDocument} submitLabel="رفع المستند">
               <input type="hidden" name="ownerType" value={ownerType} />
@@ -112,7 +115,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, userId
                   </select>
                 </Field>
                 <Field label="وصف (اختياري)">
-                  <input name="title" placeholder="مثال: رخصة الدفاع المدني" className="input" />
+                  <input name="title" placeholder={ownerType === "transaction" ? "مثال: السجل التجاري بعد التعديل" : "مثال: رخصة الدفاع المدني"} className="input" />
                 </Field>
                 <Field label="تاريخ الانتهاء (اختياري)">
                   <DateField name="expiresAt" />

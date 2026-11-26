@@ -55,6 +55,7 @@ model User {
   interactions         Interaction[]       @relation("InteractionCreator")
   followUps            Interaction[]       @relation("FollowUpAssignee")
   createdQuotes        Quote[]
+  deliveries           Delivery[]          @relation("DeliveredBy")
 }
 
 // ======================= العملاء والشركات =======================
@@ -157,13 +158,14 @@ enum StageKind {
 
 // مراحل المعاملة بالترتيب
 model Stage {
-  id           String             @id @default(cuid())
-  name         String             @unique
-  order        Int                @default(0)
-  kind         StageKind          @default(OPEN)
-  active       Boolean            @default(true)
-  transactions Transaction[]
-  events       TransactionEvent[]
+  id               String             @id @default(cuid())
+  name             String             @unique
+  order            Int                @default(0)
+  kind             StageKind          @default(OPEN)
+  active           Boolean            @default(true)
+  readyForDelivery Boolean            @default(false) // المخرجات صدرت وتنتظر التسليم للعميل
+  transactions     Transaction[]
+  events           TransactionEvent[]
 }
 
 // ======================= المعاملات =======================
@@ -191,6 +193,8 @@ model Transaction {
   dueDate       DateTime?
   events        TransactionEvent[]
   quote         Quote?
+  documents     Document[]
+  deliveries    Delivery[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
@@ -235,34 +239,41 @@ enum DocType {
   WORK_CONTRACT // عقد عمل
   QUALIFICATION // مؤهل علمي / شهادة
   OTHER // أخرى
+  CERTIFICATE // شهادة (مخرجات معاملة)
+  LETTER // خطاب / إفادة (مخرجات معاملة)
+  PAYMENT_RECEIPT // إيصال سداد (مخرجات معاملة)
 }
 
 // مستند مرفوع لعميل أو لشركة (واحد منهم بس)
 model Document {
-  id           String    @id @default(cuid())
-  client       Client?   @relation(fields: [clientId], references: [id])
-  clientId     String?
-  company      Company?  @relation(fields: [companyId], references: [id])
-  companyId    String?
-  contract     Contract? @relation(fields: [contractId], references: [id])
-  contractId   String?
-  employee     Employee? @relation(fields: [employeeId], references: [id])
-  employeeId   String?
-  type         DocType
-  title        String? // وصف إضافي (مثلاً: رخصة الدفاع المدني)
-  expiresAt    DateTime? // تاريخ الانتهاء
-  fileName     String // اسم الملف الأصلي
-  mimeType     String
-  size         Int
-  storageKey   String    @unique // اسم الملف على السيرفر
-  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
-  uploadedById String
-  createdAt    DateTime  @default(now())
+  id            String       @id @default(cuid())
+  client        Client?      @relation(fields: [clientId], references: [id])
+  clientId      String?
+  company       Company?     @relation(fields: [companyId], references: [id])
+  companyId     String?
+  contract      Contract?    @relation(fields: [contractId], references: [id])
+  contractId    String?
+  employee      Employee?    @relation(fields: [employeeId], references: [id])
+  employeeId    String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  transactionId String? // مخرجات المعاملة
+  deliveries    Delivery[]   @relation("DeliveryDocuments")
+  type          DocType
+  title         String? // وصف إضافي (مثلاً: رخصة الدفاع المدني)
+  expiresAt     DateTime? // تاريخ الانتهاء
+  fileName      String // اسم الملف الأصلي
+  mimeType      String
+  size          Int
+  storageKey    String       @unique // اسم الملف على السيرفر
+  uploadedBy    User         @relation(fields: [uploadedById], references: [id])
+  uploadedById  String
+  createdAt     DateTime     @default(now())
 
   @@index([clientId])
   @@index([companyId])
   @@index([contractId])
   @@index([employeeId])
+  @@index([transactionId])
 }
 
 // ======================= العقود =======================
@@ -680,4 +691,36 @@ model QuoteItem {
   lineTotal     Decimal      @db.Decimal(12, 2)
 
   @@index([quoteId])
+}
+
+// طريقة تسليم المخرجات للعميل
+enum DeliveryChannel {
+  HAND // باليد في المكتب
+  WHATSAPP // واتساب
+  EMAIL // البريد الإلكتروني
+  COURIER // مندوب / شحن
+  PLATFORM // عبر المنصة الحكومية
+  OTHER
+}
+
+// سجل تسليم مخرجات معاملة للعميل (ممكن أكثر من تسليم للمعاملة الواحدة)
+model Delivery {
+  id             String          @id @default(cuid())
+  number         Int             @unique @default(autoincrement()) // DL-0001
+  transaction    Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId  String
+  deliveredAt    DateTime
+  channel        DeliveryChannel
+  recipientName  String
+  recipientIdNo  String? // هوية المستلم
+  recipientPhone String?
+  items          String? // أصول ومستندات ورقية مسلَّمة (بند في كل سطر)
+  note           String? // رسالة للعميل (تعليق خارجي)
+  documents      Document[]      @relation("DeliveryDocuments")
+  deliveredBy    User            @relation("DeliveredBy", fields: [deliveredById], references: [id])
+  deliveredById  String
+  createdAt      DateTime        @default(now())
+
+  @@index([transactionId])
+  @@index([deliveredAt])
 }
