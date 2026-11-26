@@ -5,6 +5,7 @@ import {
 import { getClientAlerts } from "@/lib/client-alerts";
 import { getHrAlerts } from "@/lib/hr-alerts";
 import AttendanceWidget from "@/components/AttendanceWidget";
+import { ButtonLink, Dot, Icon, List, ListRow, Panel, PanelEmpty, Stat, StatGroup, TONE_BG, TONE_TEXT, type Tone } from "@/components/ds";
 import MonthlyChart, { type MonthPoint } from "@/components/MonthlyChart";
 import Image from "next/image";
 import { GREGORIAN_MONTHS, currentMonthKey, dateKey, monthBounds, riyadhHM, riyadhToday } from "@/lib/time";
@@ -133,7 +134,6 @@ export default async function HomePage() {
     can(user, "clients") && clientAlerts.counts.expired > 0 && { tone: "rose", title: `${countText(clientAlerts.counts.expired, ["عنصر واحد منتهي الصلاحية", "عنصران منتهيا الصلاحية", "عناصر منتهية الصلاحية", "عنصراً منتهي الصلاحية"])} في تنبيهات العملاء`, href: "/clients/alerts" },
     canAccess(user, findSection("employees")!) && hrAlerts.length > 0 && { tone: "amber", title: `${countText(hrAlerts.length, ["تنبيه واحد", "تنبيهان", "تنبيهات", "تنبيهاً"])} على وثائق الموظفين وعقودهم`, href: "/employees/profiles" },
   ].filter(Boolean) as { tone: "rose" | "amber" | "sky"; title: string; href: string }[];
-  const DOT = { rose: "bg-rose-400", amber: "bg-gold-400", sky: "bg-sky-400" };
 
   // بيانات الرسم الشهري
   const created = new Map<string, number>();
@@ -168,36 +168,30 @@ export default async function HomePage() {
 
   const hour = Number(riyadhHM(new Date()).slice(0, 2));
   const greeting = hour < 12 ? "صباح الخير" : "مساء الخير";
-  const stageDot = { OPEN: "bg-sky-400", DONE: "bg-emerald-400", CANCELLED: "bg-navy-300" } as const;
+  const ACTION_TONE: Record<"rose" | "amber" | "sky", Tone> = { rose: "danger", amber: "accent", sky: "info" };
+  const STAGE_TONE: Record<"OPEN" | "DONE" | "CANCELLED", Tone> = { OPEN: "info", DONE: "success", CANCELLED: "neutral" };
   const total = openTx + doneTx + cancelledTx;
   const share = (n: number) => (total ? `${(n / total) * 100}%` : "0%");
 
   return (
-    <div className="mx-auto max-w-[1240px] space-y-6 font-sans">
-      {/* الترويسة: تحية + التاريخ الهجري والميلادي + الإجراءات السريعة */}
-      <header className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-navy-950/40">
+    <div className="mx-auto max-w-[1240px] space-y-6">
+      {/* الترويسة */}
+      <header className="relative overflow-hidden rounded-ds-panel border border-ds-line bg-ds-surface shadow-ds-panel">
         <Image src={BRAND.skyline} alt="" fill priority sizes="(min-width: 1024px) 75vw, 100vw"
-          className="object-cover object-[center_70%] opacity-25 [mask-image:linear-gradient(to_left,transparent,black_70%)]" />
+          className="object-cover object-[center_70%] opacity-20 [mask-image:linear-gradient(to_left,transparent_15%,black_75%)]" />
         <div className="relative flex flex-wrap items-end justify-between gap-6 px-6 py-7 sm:px-8">
-          <div className="space-y-1.5">
-            <p className="text-[13px] text-navy-200 tabular-nums">{formatDateLong(new Date())} · {formatHijri(new Date())}</p>
-            <h1 className="font-sans text-[28px] font-semibold leading-tight tracking-tight text-white sm:text-[32px]">{greeting}، {user.name}</h1>
-            <p className="text-[15px] text-navy-100">
+          <div className="space-y-2">
+            <p className="text-[13px] text-ds-muted tabular-nums">{formatDateLong(new Date())}<span className="mx-2 text-ds-faint" aria-hidden="true">|</span>{formatHijri(new Date())}</p>
+            <h1 className="font-heading text-[28px] font-medium leading-tight text-ds-text sm:text-[32px]">{greeting}، {user.name}</h1>
+            <p className="text-[15px] text-ds-muted">
               {actions.length > 0
-                ? <>لديك <span className="font-semibold text-gold-300">{countText(actions.length, ["أمر واحد", "أمران", "أمور", "أمراً"])}</span> بانتظار إجرائك اليوم.</>
+                ? <>لديك <span className="font-medium text-ds-accent">{countText(actions.length, ["أمر واحد", "أمران", "أمور", "أمراً"])}</span> بانتظار إجرائك اليوم.</>
                 : "لا توجد أمور عاجلة اليوم."}
             </p>
           </div>
           {quick.length > 0 && (
             <nav aria-label="إجراءات سريعة" className="flex flex-wrap gap-2">
-              {quick.map((q) => (
-                <Link key={q.href} href={q.href}
-                  className={q.primary
-                    ? "btn-primary !rounded-lg !px-4 !py-2 text-sm"
-                    : "inline-flex items-center gap-2 rounded-lg border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-gold-400"}>
-                  {q.primary && <Plus size={16} aria-hidden="true" />} {q.label}
-                </Link>
-              ))}
+              {quick.map((q) => <ButtonLink key={q.href} href={q.href} variant={q.primary ? "primary" : "secondary"} icon={q.primary ? Plus : undefined}>{q.label}</ButtonLink>)}
             </nav>
           )}
         </div>
@@ -205,68 +199,38 @@ export default async function HomePage() {
 
       {user.employeeId && me && me.status !== "TERMINATED" && <AttendanceWidget employeeId={user.employeeId} />}
 
-      {/* المؤشرات: لوحة واحدة مقسّمة بدل مربعات منفصلة */}
       {stats.length > 0 && (
-        <section aria-label="المؤشرات" className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]">
-          {/* صفوف مرنة: آخر صف يتمدد ليملأ العرض مهما كان عدد المؤشرات حسب الصلاحيات */}
-          <div className="flex flex-wrap gap-px bg-white/[0.06]">
-            {stats.map(({ label, value, icon: Icon, href, alert }) => (
-              <Link key={label} href={href}
-                className="group flex min-w-[9.5rem] flex-1 basis-[calc(20%-1px)] flex-col gap-3 bg-navy-950/80 px-5 py-4 transition-colors hover:bg-navy-900 focus-visible:relative focus-visible:ring-2 focus-visible:ring-gold-400">
-                <span className="flex items-center justify-between gap-2 text-[13px] text-navy-200">
-                  <span className="truncate">{label}</span>
-                  <Icon size={15} className="shrink-0 text-navy-300 transition-colors group-hover:text-navy-100" aria-hidden="true" />
-                </span>
-                <span className={`text-[26px] font-semibold leading-none tabular-nums ${alert ? "text-rose-300" : "text-white"}`}>{value}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <StatGroup label="المؤشرات">
+          {stats.map(({ label, value, icon, href, alert }) => <Stat key={label} label={label} value={value} href={href} icon={icon} alert={alert} />)}
+        </StatGroup>
       )}
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12 [&>*]:min-w-0">
-        {/* يحتاج إجراءك — أهم لوحة في الصفحة */}
         <Panel title="يحتاج إجراءك" count={actions.length} className="xl:col-span-5">
-          {actions.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-navy-200">لا توجد أمور عاجلة. يظهر هنا ما ينتظر موافقتك أو استلامك أو تسليمك.</p>
-          ) : (
-            <ul className="divide-y divide-white/[0.06]">
+          {actions.length === 0 ? <PanelEmpty>لا توجد أمور عاجلة. يظهر هنا ما ينتظر موافقتك أو استلامك أو تسليمك.</PanelEmpty> : (
+            <List>
               {actions.map((a) => (
-                <li key={a.title}>
-                  <Link href={a.href} className="group flex items-center gap-3 px-5 py-3.5 text-sm transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.05] focus-visible:outline-none">
-                    <span className={`size-2 shrink-0 rounded-full ${DOT[a.tone]}`} aria-hidden="true" />
-                    <span className="min-w-0 flex-1 text-white">{a.title}</span>
-                    <ArrowLeft size={15} className="shrink-0 text-navy-300 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
-                  </Link>
-                </li>
+                <ListRow key={a.title} href={a.href} leading={<Dot tone={ACTION_TONE[a.tone]} />} title={a.title}
+                  trailing={<Icon icon={ArrowLeft} className="text-ds-faint transition-transform group-hover:-translate-x-0.5" />} />
               ))}
-            </ul>
+            </List>
           )}
         </Panel>
 
         {seeRequests && (
           <Panel title="المعاملات الحديثة" href="/requests/all" className="xl:col-span-7">
-            {recent.length === 0 ? <p className="px-5 py-8 text-center text-sm text-navy-200">لا توجد معاملات بعد. ابدأ بإضافة أول معاملة.</p> : (
-              <ul className="divide-y divide-white/[0.06]">
+            {recent.length === 0 ? <PanelEmpty>لا توجد معاملات بعد. ابدأ بإضافة أول معاملة.</PanelEmpty> : (
+              <List>
                 {recent.map((t) => {
                   const late = t.stage.kind === "OPEN" && t.dueDate && t.dueDate < new Date();
                   return (
-                    <li key={t.id}>
-                      <Link href={`/requests/all/${t.id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-3 transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.05] focus-visible:outline-none">
-                        <span dir="ltr" className="w-16 text-[12px] text-navy-300 tabular-nums">{txNumber(t.number)}</span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-white">{t.title}</span>
-                          <span className="block truncate text-[12.5px] text-navy-200">{t.company.name}</span>
-                        </span>
-                        <span className="flex items-center gap-2 whitespace-nowrap text-[12.5px] text-navy-100">
-                          <span className={`size-1.5 rounded-full ${late ? "bg-rose-400" : stageDot[t.stage.kind]}`} aria-hidden="true" />
-                          {late ? "متأخرة" : t.stage.name}
-                        </span>
-                      </Link>
-                    </li>
+                    <ListRow key={t.id} href={`/requests/all/${t.id}`}
+                      leading={<span dir="ltr" className="w-16 text-[12px] text-ds-faint tabular-nums">{txNumber(t.number)}</span>}
+                      title={t.title} subtitle={t.company.name}
+                      trailing={<span className="flex items-center gap-2"><Dot tone={late ? "danger" : STAGE_TONE[t.stage.kind]} size="sm" />{late ? "متأخرة" : t.stage.name}</span>} />
                   );
                 })}
-              </ul>
+              </List>
             )}
           </Panel>
         )}
@@ -275,33 +239,29 @@ export default async function HomePage() {
       {seeRequests && (
         <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12 [&>*]:min-w-0">
           <Panel title="حركة المعاملات" meta="آخر 12 شهراً" className="xl:col-span-8">
-            <div className="px-5 pb-4 pt-3"><MonthlyChart data={chart} tone="dark" W={640} H={210} /></div>
+            {/* على الجوال يتمرر الرسم داخل اللوحة بدل تصغير نصوصه، ويبدأ من أحدث شهر (الحاوية ltr والمحتوى rtl) */}
+            <div dir="ltr" className="overflow-x-auto px-5 pb-4 pt-3"><div dir="rtl" className="min-w-[540px]"><MonthlyChart data={chart} tone="dark" W={640} H={210} /></div></div>
           </Panel>
 
-          {/* نظرة عامة: شريط واحد مقسّم بدل الدائرة */}
           <Panel title="نظرة عامة" className="xl:col-span-4">
-            <div className="space-y-5 px-5 py-5">
+            <div className="space-y-5 p-5">
               <div>
-                <p className="text-[13px] text-navy-200">نسبة الإنجاز</p>
-                <p className="mt-1 text-[34px] font-semibold leading-none text-white tabular-nums">{rate === null ? "—" : `${rate}%`}</p>
-                <p className="mt-1.5 text-[12.5px] text-navy-300">المكتملة من مجموع المكتملة والجارية، دون الملغاة.</p>
+                <p className="text-[13px] text-ds-muted">نسبة الإنجاز</p>
+                <p className="mt-1 font-heading text-[34px] font-medium leading-none text-ds-text tabular-nums">{rate === null ? "—" : `${rate}%`}</p>
+                <p className="mt-1.5 text-[12.5px] text-ds-faint">المكتملة من مجموع المكتملة والجارية، دون الملغاة.</p>
               </div>
-              <div className="flex h-2 overflow-hidden rounded-full bg-white/[0.06]" role="img"
-                aria-label={`جارية ${openTx}، مكتملة ${doneTx}، ملغاة ${cancelledTx}`}>
-                <span className="bg-emerald-400" style={{ width: share(doneTx) }} />
-                <span className="bg-sky-400" style={{ width: share(openTx) }} />
-                <span className="bg-navy-400" style={{ width: share(cancelledTx) }} />
+              <div className="flex h-2 overflow-hidden rounded-full bg-ds-line" role="img" aria-label={`مكتملة ${doneTx}، جارية ${openTx}، ملغاة ${cancelledTx}`}>
+                <span className={TONE_BG.success} style={{ width: share(doneTx) }} />
+                <span className={TONE_BG.info} style={{ width: share(openTx) }} />
+                <span className={TONE_BG.neutral} style={{ width: share(cancelledTx) }} />
               </div>
               <dl className="space-y-2.5 text-sm">
-                {[
-                  { label: "مكتملة", value: doneTx, dot: "bg-emerald-400" },
-                  { label: "جارية", value: openTx, dot: "bg-sky-400" },
-                  { label: "متأخرة من الجارية", value: overdueTx, dot: "bg-rose-400" },
-                  { label: "ملغاة", value: cancelledTx, dot: "bg-navy-400" },
-                ].map((r) => (
-                  <div key={r.label} className="flex items-center justify-between gap-2">
-                    <dt className="flex items-center gap-2 text-navy-100"><span className={`size-2 rounded-full ${r.dot}`} aria-hidden="true" />{r.label}</dt>
-                    <dd className="font-medium text-white tabular-nums">{r.value}</dd>
+                {([
+                  ["مكتملة", doneTx, "success"], ["جارية", openTx, "info"], ["متأخرة من الجارية", overdueTx, "danger"], ["ملغاة", cancelledTx, "neutral"],
+                ] as [string, number, Tone][]).map(([label, value, tone]) => (
+                  <div key={label} className="flex items-center justify-between gap-2">
+                    <dt className="flex items-center gap-2 text-ds-muted"><Dot tone={tone} />{label}</dt>
+                    <dd className="font-medium text-ds-text tabular-nums">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -313,63 +273,36 @@ export default async function HomePage() {
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12 [&>*]:min-w-0">
         {seeRequests && (
           <Panel title="معاملاتي القادمة" href="/requests/all?assignee=me" className="xl:col-span-7">
-            {myUpcoming.length === 0 ? <p className="px-5 py-8 text-center text-sm text-navy-200">لا توجد معاملات مسندة إليك.</p> : (
-              <ul className="divide-y divide-white/[0.06]">
+            {myUpcoming.length === 0 ? <PanelEmpty>لا توجد معاملات مسندة إليك.</PanelEmpty> : (
+              <List>
                 {myUpcoming.map((t) => {
                   const d = t.dueDate ? daysUntil(t.dueDate) : null;
+                  const tone = d !== null && d < 0 ? TONE_TEXT.danger : d !== null && d <= 3 ? TONE_TEXT.accent : "";
                   return (
-                    <li key={t.id}>
-                      <Link href={`/requests/all/${t.id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.05] focus-visible:outline-none">
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-white">{t.title}</span>
-                          <span className="block truncate text-[12.5px] text-navy-200">{t.company.name}</span>
-                        </span>
-                        <span className={`shrink-0 text-[12.5px] tabular-nums ${d !== null && d < 0 ? "text-rose-300" : d !== null && d <= 3 ? "text-gold-300" : "text-navy-200"}`}>
-                          {t.dueDate ? (d !== null && d < 0 ? `متأخرة · ${formatDate(t.dueDate)}` : formatDate(t.dueDate)) : "بلا موعد"}
-                        </span>
-                      </Link>
-                    </li>
+                    <ListRow key={t.id} href={`/requests/all/${t.id}`} title={t.title} subtitle={t.company.name}
+                      trailing={<span className={`tabular-nums ${tone}`}>{t.dueDate ? (d !== null && d < 0 ? `متأخرة · ${formatDate(t.dueDate)}` : formatDate(t.dueDate)) : "بلا موعد"}</span>} />
                   );
                 })}
-              </ul>
+              </List>
             )}
           </Panel>
         )}
 
         <Panel title="أقسام المنصة" className={seeRequests ? "xl:col-span-5" : "xl:col-span-12"}>
-          <ul className="grid grid-cols-1 gap-px bg-white/[0.06] sm:grid-cols-2">
-            {sectionTiles.map(({ title, href, icon: Icon }) => (
-              <li key={href} className="bg-navy-950/80">
-                <Link href={href} className="group flex items-center gap-3 px-5 py-3.5 text-sm text-white transition-colors hover:bg-navy-900 focus-visible:bg-navy-900 focus-visible:outline-none">
-                  <Icon size={17} className="text-navy-200 transition-colors group-hover:text-gold-300" aria-hidden="true" />
+          <ul className="grid grid-cols-1 gap-px bg-ds-line sm:grid-cols-2">
+            {sectionTiles.map(({ title, href, icon }) => (
+              <li key={href} className="bg-ds-surface">
+                <Link href={href} className="group flex min-h-12 items-center gap-3 px-5 text-sm text-ds-text transition-colors hover:bg-ds-hover/60 focus-visible:bg-ds-hover focus-visible:outline-none">
+                  <Icon icon={icon} className="text-ds-faint transition-colors group-hover:text-ds-accent" />
                   <span className="flex-1">{title}</span>
-                  <ArrowLeft size={14} className="text-navy-400 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                  <Icon icon={ArrowLeft} className="text-ds-faint opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
               </li>
             ))}
-            {sectionTiles.length % 2 === 1 && <li aria-hidden="true" className="hidden bg-navy-950/80 sm:block" />}
+            {sectionTiles.length % 2 === 1 && <li aria-hidden="true" className="hidden bg-ds-surface sm:block" />}
           </ul>
         </Panel>
       </div>
     </div>
-  );
-}
-
-// لوحة موحّدة: حد رفيع، ترويسة بعنوان وعدد أو رابط، ومحتوى بلا حشو إضافي
-function Panel({ title, href, count, meta, className = "", children }: {
-  title: string; href?: string; count?: number; meta?: string; className?: string; children: React.ReactNode;
-}) {
-  return (
-    <section className={`overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] ${className}`}>
-      <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3.5">
-        <h2 className="flex items-center gap-2 font-sans text-[15px] font-semibold text-white">
-          {title}
-          {count !== undefined && count > 0 && <span className="rounded-md bg-gold-500/15 px-1.5 text-[12px] font-semibold text-gold-300 tabular-nums">{count}</span>}
-        </h2>
-        {href && <Link href={href} className="flex items-center gap-1 text-[13px] text-navy-200 transition-colors hover:text-white">عرض الكل <ArrowLeft size={13} aria-hidden="true" /></Link>}
-        {meta && <span className="text-[12.5px] text-navy-300">{meta}</span>}
-      </div>
-      {children}
-    </section>
   );
 }
