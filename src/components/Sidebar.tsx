@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  ChevronDown, ClipboardList, FolderOpen, Handshake, LayoutDashboard, ListChecks,
+  ChevronDown, ClipboardList, FolderOpen, Handshake, Inbox, LayoutDashboard, ListChecks, UserCircle,
   Megaphone, Menu, Settings, Users, Wallet, X,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
@@ -16,7 +16,9 @@ const ICONS = {
   folder: FolderOpen, wallet: Wallet, megaphone: Megaphone,
 };
 
-export default function Sidebar({ sections, isAdmin }: { sections: Section[]; isAdmin: boolean }) {
+export default function Sidebar({ sections, isAdmin, hasEmployee, pendingApprovals = 0 }: {
+  sections: Section[]; isAdmin: boolean; hasEmployee: boolean; pendingApprovals?: number;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<string | null>(pathname.split("/")[1] || null);
@@ -56,6 +58,17 @@ export default function Sidebar({ sections, isAdmin }: { sections: Section[]; is
           <Link href="/" className={linkCls(pathname === "/")}>
             <LayoutDashboard size={18} /> الرئيسية
           </Link>
+          {hasEmployee && (
+            <Link href="/me" className={linkCls(pathname === "/me")}>
+              <UserCircle size={18} /> خدماتي
+            </Link>
+          )}
+          {pendingApprovals > 0 && (
+            <Link href="/employees/leaves" className={linkCls(pathname === "/employees/leaves")}>
+              <Inbox size={18} /> طلبات بانتظار موافقتي
+              <span className="mr-auto rounded-full bg-amber-400 px-2 text-xs font-bold text-neutral-900">{pendingApprovals}</span>
+            </Link>
+          )}
 
           {sections.map((s) => {
             const Icon = ICONS[s.icon];

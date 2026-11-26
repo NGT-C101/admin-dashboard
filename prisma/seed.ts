@@ -48,6 +48,23 @@ async function main() {
   }
   await syncCatalog();
   await migratePermissions();
+  await seedHolidays();
+}
+
+// العطلات الرسمية الثابتة بالتاريخ الميلادي (الأعياد هجرية فبتتضاف من الإعدادات كل سنة)
+async function seedHolidays() {
+  const KEY = "holidays-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  const y = new Date().getFullYear();
+  const d = (s: string) => new Date(`${s}T00:00:00Z`);
+  for (const yr of [y, y + 1]) {
+    await prisma.holiday.createMany({ data: [
+      { name: "يوم التأسيس", startDate: d(`${yr}-02-22`), endDate: d(`${yr}-02-22`) },
+      { name: "اليوم الوطني", startDate: d(`${yr}-09-23`), endDate: d(`${yr}-09-23`) },
+    ] });
+  }
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log("✔ العطلات الرسمية الثابتة");
 }
 
 // تحويل المستخدمين القدام لنظام الصلاحيات الجديد (مرة واحدة):

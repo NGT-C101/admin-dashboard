@@ -3,6 +3,7 @@ import { KeyRound, LogOut } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { canAccess, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { pendingForWhere } from "@/lib/leave";
 import { SECTIONS } from "@/lib/nav";
 import { logout } from "../login/actions";
 
@@ -10,13 +11,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // صفحة "حسابي" لازم تفضل متاحة لو المستخدم مطلوب منه يغيّر كلمة المرور
   const user = await requireUser({ allowPasswordChange: true });
   const sections = SECTIONS.filter((s) => canAccess(user, s));
-  const employee = user.employeeId
-    ? await db.employee.findUnique({ where: { id: user.employeeId }, select: { jobTitle: true } })
-    : null;
+  const [employee, pendingApprovals] = await Promise.all([
+    user.employeeId ? db.employee.findUnique({ where: { id: user.employeeId }, select: { jobTitle: true } }) : null,
+    db.leaveRequest.count({ where: pendingForWhere(user) }),
+  ]);
 
   return (
     <div className="min-h-screen print:bg-white">
-      <Sidebar sections={sections} isAdmin={user.isAdmin} />
+      <Sidebar sections={sections} isAdmin={user.isAdmin} hasEmployee={!!user.employeeId} pendingApprovals={pendingApprovals} />
       <div className="lg:mr-64 print:mr-0">
         <header className="print:hidden h-16 bg-white border-b border-neutral-200 flex items-center justify-end gap-4 px-4 lg:px-8">
           <div className="text-left">

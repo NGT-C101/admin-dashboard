@@ -45,6 +45,9 @@ model User {
   employee             Employee?
   mustChangePassword   Boolean            @default(false) // لازم يغيّر كلمة المرور أول دخول
   managedClients       Client[]           @relation("ClientManager")
+  submittedRequests    LeaveRequest[]     @relation("RequestCreator")
+  decidedRequests      LeaveRequest[]     @relation("RequestDecider")
+  editedAttendance     Attendance[]
   createdContracts     Contract[]
   interactions         Interaction[]      @relation("InteractionCreator")
   followUps            Interaction[]      @relation("FollowUpAssignee")
@@ -408,10 +411,96 @@ model Employee {
   iban               String?
   gosiRegistered     Boolean        @default(false)
   notes              String?
+  leaveCarryover     Int            @default(0) // رصيد إجازة سنوية مرحّل (أيام)
   documents          Document[]
+  leaveRequests      LeaveRequest[]
+  attendance         Attendance[]
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
   @@index([managerId])
   @@index([status])
+}
+
+// ======================= الإجازات والأذونات =======================
+
+enum RequestKind {
+  LEAVE // إجازة (أيام)
+  PERMISSION // استئذان (ساعات)
+}
+
+enum LeaveType {
+  ANNUAL // سنوية
+  SICK // مرضية
+  UNPAID // بدون راتب
+  MARRIAGE // زواج
+  BEREAVEMENT // وفاة
+  PATERNITY // مولود
+  MATERNITY // وضع
+  HAJJ // حج
+  EXAM // امتحانات
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING // بانتظار الموافقة
+  APPROVED // معتمد
+  REJECTED // مرفوض
+  CANCELLED // ملغى
+}
+
+model LeaveRequest {
+  id           String        @id @default(cuid())
+  number       Int           @unique @default(autoincrement())
+  employee     Employee      @relation(fields: [employeeId], references: [id])
+  employeeId   String
+  kind         RequestKind   @default(LEAVE)
+  type         LeaveType?
+  startDate    DateTime      @db.Date
+  endDate      DateTime      @db.Date
+  days         Int           @default(0) // أيام العمل المحسوبة
+  startTime    String? // للاستئذان HH:MM
+  endTime      String?
+  minutes      Int?
+  reason       String?
+  status       RequestStatus @default(PENDING)
+  createdBy    User          @relation("RequestCreator", fields: [createdById], references: [id])
+  createdById  String
+  decidedBy    User?         @relation("RequestDecider", fields: [decidedById], references: [id])
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+  createdAt    DateTime      @default(now())
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate])
+}
+
+// العطلات الرسمية
+model Holiday {
+  id        String   @id @default(cuid())
+  name      String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+}
+
+// ======================= الحضور والانصراف =======================
+
+model Attendance {
+  id         String    @id @default(cuid())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  employeeId String
+  date       DateTime  @db.Date // اليوم بتوقيت السعودية
+  checkIn    DateTime?
+  checkOut   DateTime?
+  source     String    @default("SELF") // SELF = الموظف نفسه، MANUAL = تعديل يدوي
+  note       String?
+  editedBy   User?     @relation(fields: [editedById], references: [id])
+  editedById String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([date])
 }

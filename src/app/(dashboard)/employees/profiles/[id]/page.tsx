@@ -23,6 +23,10 @@ import {
 } from "@/lib/hr";
 import { getHrAlerts } from "@/lib/hr-alerts";
 import { PERMISSION_SECTIONS } from "@/lib/permissions";
+import LeaveBalanceCard from "@/components/LeaveBalanceCard";
+import MonthAttendance from "@/components/MonthAttendance";
+import RequestsTable, { REQUEST_INCLUDE } from "@/components/RequestsTable";
+import { currentMonthKey } from "@/lib/time";
 import { updateAccess } from "@/app/(dashboard)/settings/users/actions";
 import { grantLogin, reinstateEmployee, setEmployeeStatus, terminateEmployee, updateEmployee, updateSalary } from "../../actions";
 import { ContactFields, IdentityFields, JobFields, PersonalFields, SalaryFields } from "../../fields";
@@ -49,7 +53,7 @@ function InfoGrid({ items }: { items: [string, React.ReactNode][] }) {
 
 export default async function EmployeePage({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; month?: string }>;
 }) {
   const user = await requireSection("employees");
   const { id } = await params;
@@ -71,6 +75,7 @@ export default async function EmployeePage({ params, searchParams }: {
   const tabs = [
     { key: "overview", label: "البيانات الشخصية" },
     { key: "job", label: "البيانات الوظيفية" },
+    ...(canEdit ? [{ key: "leave", label: "الإجازات والحضور" }] : []),
     ...(canManage ? [{ key: "salary", label: "الراتب ومستحقات الخدمة" }, { key: "documents", label: "المستندات", count: e._count.documents }] : []),
     ...(user.isAdmin ? [{ key: "access", label: "حساب الدخول والصلاحيات" }] : []),
   ];
@@ -174,6 +179,7 @@ export default async function EmployeePage({ params, searchParams }: {
       )}
 
       {tab === "job" && <JobTab />}
+      {tab === "leave" && canEdit && <LeaveTab />}
       {tab === "salary" && canManage && <SalaryTab />}
       {tab === "documents" && canManage && <DocumentsTab />}
       {tab === "access" && user.isAdmin && <AccessTab />}
@@ -338,6 +344,28 @@ export default async function EmployeePage({ params, searchParams }: {
             <SalaryFields e={e!} />
           </ActionForm>
         </Collapsible>
+      </div>
+    );
+  }
+
+  async function LeaveTab() {
+    const month = /^\d{4}-\d{2}$/.test(sp.month ?? "") ? sp.month! : currentMonthKey();
+    const requests = await db.leaveRequest.findMany({ where: { employeeId: id }, include: REQUEST_INCLUDE, orderBy: { createdAt: "desc" }, take: 30 });
+    return (
+      <div className="space-y-5">
+        <LeaveBalanceCard employee={e!} />
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h3 className="font-semibold">سجل الحضور</h3>
+            <form className="flex gap-2"><input type="hidden" name="tab" value="leave" />
+              <input type="month" name="month" defaultValue={month} className="input w-auto !py-1.5" /><button className="btn-secondary !py-1.5">عرض</button></form>
+          </div>
+          <MonthAttendance employee={e!} month={month} />
+        </div>
+        <div className="space-y-3">
+          <h3 className="font-semibold">طلبات الإجازة والاستئذان</h3>
+          <RequestsTable rows={requests} user={user} showEmployee={false} />
+        </div>
       </div>
     );
   }

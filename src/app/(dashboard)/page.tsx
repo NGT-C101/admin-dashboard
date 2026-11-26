@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { AlertTriangle, BellRing, Building, CalendarClock, ClipboardList, Handshake, IdCard, UserCheck, Users } from "lucide-react";
+import { AlertTriangle, BellRing, Building, CalendarClock, ClipboardList, Handshake, IdCard, Plane, UserCheck, Users } from "lucide-react";
 import { getClientAlerts } from "@/lib/client-alerts";
 import { getHrAlerts } from "@/lib/hr-alerts";
+import AttendanceWidget from "@/components/AttendanceWidget";
+import { riyadhToday } from "@/lib/time";
 import { endOfToday } from "@/lib/clients";
 import { canAccess, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -10,7 +12,8 @@ import { SECTIONS, findSection } from "@/lib/nav";
 export default async function HomePage() {
   const user = await requireUser();
   const open = { stage: { kind: "OPEN" as const } };
-  const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps, staff, hrAlerts] = await Promise.all([
+  const today = riyadhToday();
+  const [clients, companies, openTx, overdueTx, myTx, clientAlerts, myFollowUps, staff, hrAlerts, onLeave, me] = await Promise.all([
     db.client.count({ where: { archivedAt: null } }),
     db.company.count({ where: { client: { archivedAt: null } } }),
     db.transaction.count({ where: open }),
@@ -20,6 +23,8 @@ export default async function HomePage() {
     db.interaction.count({ where: { assigneeId: user.id, followUpDone: false, followUpAt: { not: null, lte: endOfToday() } } }),
     db.employee.count({ where: { status: { not: "TERMINATED" } } }),
     getHrAlerts(),
+    db.leaveRequest.count({ where: { kind: "LEAVE", status: "APPROVED", startDate: { lte: today }, endDate: { gte: today } } }),
+    user.employeeId ? db.employee.findUnique({ where: { id: user.employeeId }, select: { status: true } }) : null,
   ]);
 
   const allStats = [
@@ -32,6 +37,7 @@ export default async function HomePage() {
     { label: "متابعاتي المستحقة", value: myFollowUps, icon: CalendarClock, href: "/clients/communications", alert: myFollowUps > 0 },
     { label: "الموظفون الحاليون", value: staff, icon: Users, href: "/employees/profiles" },
     { label: "تنبيهات الموظفين", value: hrAlerts.length, icon: IdCard, href: "/employees/profiles", alert: hrAlerts.some((a) => a.date < new Date()) },
+    { label: "في إجازة اليوم", value: onLeave, icon: Plane, href: "/employees/leaves?tab=away" },
   ];
   // كل رقم يظهر بس للي عنده صلاحية على القسم بتاعه
   const stats = allStats.filter((s) => canAccess(user, findSection(s.href.split("/")[1])!));
@@ -42,6 +48,8 @@ export default async function HomePage() {
         <h1 className="text-2xl font-bold">أهلاً، {user.name} 👋</h1>
         <p className="text-neutral-500 mt-1">نظرة عامة على أداء الشركة</p>
       </div>
+
+      {user.employeeId && me && me.status !== "TERMINATED" && <AttendanceWidget employeeId={user.employeeId} />}
 
       {stats.length > 0 && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, href, alert }) => (

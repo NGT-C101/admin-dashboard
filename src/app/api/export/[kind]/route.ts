@@ -5,13 +5,16 @@ import { db } from "@/lib/db";
 import { ExcelJS, addSheet, xlsxResponse } from "@/lib/excel";
 import { IMPORT_COLUMNS } from "@/lib/import-columns";
 import { findSection } from "@/lib/nav";
+import { attendanceData, dayState, monthSummary } from "@/lib/attendance";
+import { DAY_MS, currentMonthKey, dateKey, monthBounds } from "@/lib/time";
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
-export async function GET(_req: Request, { params }: { params: Promise<{ kind: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ kind: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !canAccess(user, findSection("clients")!)) return new Response("غير مسموح", { status: 403 });
   const { kind } = await params;
+  const section = kind === "attendance" ? "employees" : "clients";
+  if (!user || !canAccess(user, findSection(section)!)) return new Response("غير مسموح", { status: 403 });
   const wb = new ExcelJS.Workbook();
   wb.creator = "NGT";
   const today = new Date().toISOString().slice(0, 10);
@@ -63,6 +66,34 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
       autoRenew: c.autoRenew ? "نعم" : "", state: CONTRACT_STATE_LABELS[contractState(c)], terms: c.terms,
     })));
     return xlsxResponse(wb, `عقود-NGT-${today}.xlsx`);
+  }
+
+  if (kind === "attendance") {
+    const m = new URL(req.url).searchParams.get("month") ?? "";
+    const month = /^\d{4}-\d{2}$/.test(m) ? m : currentMonthKey();
+    const { start, end } = monthBounds(month);
+    const last = new Date(end.getTime() - DAY_MS);
+    const emps = await db.employee.findMany({ where: { status: { not: "TERMINATED" } }, orderBy: { fullName: "asc" }, select: { id: true, number: true, fullName: true, jobTitle: true, hireDate: true } });
+    const data = await attendanceData(emps.map((e) => e.id), start, last);
+    addSheet(wb, `الحضور ${month}`, [
+      { header: "الرقم الوظيفي", key: "no", width: 12 }, { header: "الموظف", key: "name", width: 26 }, { header: "المسمى", key: "title", width: 24 },
+      { header: "أيام العمل", key: "workdays", width: 11 }, { header: "حضور", key: "present", width: 9 }, { header: "إجازة", key: "leave", width: 9 },
+      { header: "غياب", key: "absent", width: 9 }, { header: "مرات التأخير", key: "lateCount", width: 12 }, { header: "دقائق التأخير", key: "lateMinutes", width: 12 },
+    ], emps.map((e) => ({ no: `EMP-${String(e.number).padStart(4, "0")}`, name: e.fullName, title: e.jobTitle, ...monthSummary(e, start, last, data) })));
+    // ورقة تفصيلية: كل يوم لكل موظف
+    const detail: Record<string, unknown>[] = [];
+    for (const e of emps) for (let t = start.getTime(); t <= last.getTime(); t += DAY_MS) {
+      const day = new Date(t);
+      const st = dayState({ day, hireDate: e.hireDate, today: data.today, schedule: data.schedule, holidays: data.holidays,
+        record: data.rec.get(`${e.id}|${dateKey(day)}`), leave: data.leaveOn(e.id, day), trackingStart: data.trackingStart });
+      if (["future", "before-hire"].includes(st.kind)) continue;
+      detail.push({ name: e.fullName, date: day, state: st.label, in: st.kind === "present" ? st.checkIn : "", out: st.kind === "present" ? st.checkOut ?? "" : "", late: st.kind === "present" ? st.late : "" });
+    }
+    addSheet(wb, "التفاصيل اليومية", [
+      { header: "الموظف", key: "name", width: 26 }, { header: "التاريخ", key: "date", date: true, width: 13 }, { header: "الحالة", key: "state", width: 16 },
+      { header: "الحضور", key: "in", width: 10 }, { header: "الانصراف", key: "out", width: 10 }, { header: "التأخير (دقيقة)", key: "late", width: 14 },
+    ], detail);
+    return xlsxResponse(wb, `حضور-NGT-${month}.xlsx`);
   }
 
   if (kind === "template") {
