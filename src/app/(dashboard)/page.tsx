@@ -7,7 +7,7 @@ import { getClientAlerts } from "@/lib/client-alerts";
 import { getHrAlerts } from "@/lib/hr-alerts";
 import AttendanceWidget from "@/components/AttendanceWidget";
 import MonthlyChart, { type MonthPoint } from "@/components/MonthlyChart";
-import Skyline from "@/components/ui/Skyline";
+import Image from "next/image";
 import StageBadge from "@/components/ui/StageBadge";
 import { GREGORIAN_MONTHS, currentMonthKey, dateKey, monthBounds, riyadhToday } from "@/lib/time";
 import { daysUntil, endOfToday } from "@/lib/clients";
@@ -153,7 +153,7 @@ export default async function HomePage() {
     <div className="space-y-6">
       {/* البانر الرئيسي */}
       <section className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/40">
-        <Skyline className="absolute inset-0 h-full w-full" />
+        <Image src={BRAND.skyline} alt="" fill priority sizes="(min-width: 1024px) 75vw, 100vw" className="object-cover object-[center_70%]" />
         <div className="absolute inset-0 bg-gradient-to-l from-navy-950/95 via-navy-950/60 to-navy-950/10" />
         <div className="relative flex min-h-60 flex-wrap items-end justify-between gap-6 p-6 sm:p-8">
           <div className="space-y-2">

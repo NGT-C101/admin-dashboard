@@ -4,7 +4,6 @@ import Image from "next/image";
 import { startTransition, useActionState, useState } from "react";
 import { Eye, EyeOff, Handshake, Lock, LogIn, Rocket, ShieldCheck, TrendingUp, User } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import Skyline from "@/components/ui/Skyline";
 import { login } from "./actions";
 
 const FEATURES = [
@@ -21,9 +20,8 @@ export default function LoginPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-navy-950 text-white">
       {/* المشهد الخلفي: أفق الرياض ليلاً */}
-      <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-[#1b2457] to-[#5b3a6e]" />
-      <Skyline sky={false} className="absolute inset-x-0 bottom-0 h-[62%] w-full" />
-      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/70 via-navy-950/30 to-navy-950/90" />
+      <Image src={BRAND.skyline} alt="" fill priority sizes="100vw" className="object-cover object-bottom" />
+      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/60 via-navy-950/20 to-navy-950/85" />
       <div className="absolute inset-0 bg-gradient-to-l from-navy-950/80 via-transparent to-transparent" />
 
       <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-4 py-10 lg:grid-cols-[440px_1fr] lg:px-10">
