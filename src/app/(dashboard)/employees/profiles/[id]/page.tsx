@@ -1,3 +1,4 @@
+import DateField, { MonthField } from "@/components/ui/DateField";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Briefcase, CalendarDays, Hash, Mail, MessageCircle, Phone, UserRound } from "lucide-react";
@@ -22,6 +23,7 @@ import {
   endOfServiceBenefit, formatIban, serviceParts, serviceText, totalWage, type TerminationReason,
 } from "@/lib/hr";
 import { getHrAlerts } from "@/lib/hr-alerts";
+import { loadLeaders } from "@/lib/leaders";
 import { PERMISSION_SECTIONS } from "@/lib/permissions";
 import LeaveBalanceCard from "@/components/LeaveBalanceCard";
 import MonthAttendance from "@/components/MonthAttendance";
@@ -67,6 +69,7 @@ export default async function EmployeePage({ params, searchParams }: {
       manager: { select: { id: true, fullName: true, jobTitle: true } },
       reports: { where: { status: { not: "TERMINATED" } }, select: { id: true, fullName: true, jobTitle: true }, orderBy: { fullName: "asc" } },
       user: { include: { permissions: true } },
+      position: { select: { title: true } },
       _count: { select: { documents: true } },
     },
   });
@@ -97,6 +100,7 @@ export default async function EmployeePage({ params, searchParams }: {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{e.fullName}</h1>
               <Badge className={EMPLOYEE_STATUS_STYLES[e.status]}>{EMPLOYEE_STATUS_LABELS[e.status]}</Badge>
+              {e.position && <Badge className="bg-brand-700 text-white ring-brand-700">{e.position.title}</Badge>}
             </div>
             {e.fullNameEn && <p className="text-sm text-neutral-500" dir="ltr">{e.fullNameEn}</p>}
             <p className="text-neutral-700">{e.jobTitle}{e.orgDepartment && <span className="text-neutral-500"> — {e.orgDepartment}</span>}</p>
@@ -205,9 +209,10 @@ export default async function EmployeePage({ params, searchParams }: {
   }
 
   async function JobTab() {
-    const managers = await db.employee.findMany({
-      where: { status: { not: "TERMINATED" }, id: { not: id } }, select: { id: true, fullName: true, jobTitle: true }, orderBy: { fullName: "asc" },
-    });
+    const [managers, leaders] = await Promise.all([
+      db.employee.findMany({ where: { status: { not: "TERMINATED" }, id: { not: id } }, select: { id: true, fullName: true, jobTitle: true }, orderBy: { fullName: "asc" } }),
+      loadLeaders(),
+    ]);
     return (
       <div className="space-y-5">
         <div className="card p-5">
@@ -257,7 +262,7 @@ export default async function EmployeePage({ params, searchParams }: {
           <Collapsible label="تعديل البيانات الوظيفية">
             <ActionForm action={updateEmployee} submitLabel="حفظ التعديلات" resetOnSuccess={false}>
               <EditHidden except="job" />
-              <JobFields e={e!} managers={managers} />
+              <JobFields e={e!} managers={managers} leaders={leaders} />
             </ActionForm>
           </Collapsible>
         )}
@@ -273,7 +278,7 @@ export default async function EmployeePage({ params, searchParams }: {
               <input type="hidden" name="id" value={id} />
               <p className="text-sm text-amber-800 bg-amber-50 rounded-lg p-3">سيُوقف حساب دخول الموظف تلقائياً، ويبقى ملفه محفوظاً في السجل.</p>
               <FieldGrid>
-                <Field label="تاريخ انتهاء الخدمة *"><input name="terminationDate" type="date" required defaultValue={dateInputValue(new Date())} className="input" /></Field>
+                <Field label="تاريخ انتهاء الخدمة *"><DateField name="terminationDate" defaultValue={dateInputValue(new Date())} required /></Field>
                 <Field label="السبب *">
                   <select name="terminationReason" required defaultValue="" className="input">
                     <option value="" disabled>اختر السبب</option>
@@ -358,7 +363,7 @@ export default async function EmployeePage({ params, searchParams }: {
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h3 className="font-semibold">سجل الحضور</h3>
             <form className="flex gap-2"><input type="hidden" name="tab" value="leave" />
-              <input type="month" name="month" defaultValue={month} className="input w-auto !py-1.5" /><button className="btn-secondary !py-1.5">عرض</button></form>
+              <MonthField name="month" defaultValue={month} /><button className="btn-secondary !py-1.5">عرض</button></form>
           </div>
           <MonthAttendance employee={e!} month={month} />
         </div>

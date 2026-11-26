@@ -1,3 +1,4 @@
+import DateField from "@/components/ui/DateField";
 import type { Document } from "@prisma/client";
 import { Download, Eye, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import ActionForm from "@/components/ui/ActionForm";
@@ -114,7 +115,7 @@ export default function DocumentsSection({ ownerType, ownerId, documents, userId
                   <input name="title" placeholder="مثال: رخصة الدفاع المدني" className="input" />
                 </Field>
                 <Field label="تاريخ الانتهاء (اختياري)">
-                  <input name="expiresAt" type="date" className="input" />
+                  <DateField name="expiresAt" />
                 </Field>
                 <Field label="الملف * (PDF أو صورة، بحد أقصى 10 ميجابايت)" wide>
                   <input name="file" type="file" required accept=".pdf,image/jpeg,image/png,image/webp"

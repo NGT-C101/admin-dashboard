@@ -49,6 +49,37 @@ async function main() {
   await syncCatalog();
   await migratePermissions();
   await seedHolidays();
+  await seedPositions();
+}
+
+// الهيكل القيادي الافتراضي لشركة استشارات إدارية (قابل للتعديل من المنصة)
+async function seedPositions() {
+  const KEY = "positions-v1";
+  if (await prisma.appMeta.findUnique({ where: { key: KEY } })) return;
+  type P = [string, "EXECUTIVE" | "SENIOR" | "DEPARTMENT", string, string | null];
+  const tree: P[] = [
+    ["المدير التنفيذي", "EXECUTIVE", "القيادة العليا ورسم الاستراتيجية وتمثيل الشركة", null],
+    ["المدير العام", "EXECUTIVE", "إدارة العمليات اليومية وتنفيذ الخطط ومتابعة الأقسام", "المدير التنفيذي"],
+    ["المدير الإداري", "SENIOR", "الموارد البشرية والشؤون الإدارية والخدمات المساندة", "المدير العام"],
+    ["المدير المالي", "SENIOR", "الحسابات والميزانيات والتقارير المالية والزكاة والضريبة", "المدير العام"],
+    ["مدير العمليات والمعاملات الحكومية", "SENIOR", "تنفيذ المعاملات ومتابعة المنصات الحكومية", "المدير العام"],
+    ["مدير الموارد البشرية", "DEPARTMENT", "التوظيف وشؤون الموظفين والرواتب والتدريب", "المدير الإداري"],
+    ["مدير الشؤون الإدارية", "DEPARTMENT", "المراسلات والأرشيف والأصول والمشتريات", "المدير الإداري"],
+    ["مدير تقنية المعلومات", "DEPARTMENT", "الأنظمة والأجهزة وأمن المعلومات", "المدير الإداري"],
+    ["مدير الحسابات", "DEPARTMENT", "القيود والفواتير والتحصيل والمصروفات", "المدير المالي"],
+    ["مدير خدمة العملاء", "DEPARTMENT", "استقبال العملاء ومتابعة طلباتهم ورضاهم", "مدير العمليات والمعاملات الحكومية"],
+    ["مدير المعاملات الحكومية", "DEPARTMENT", "إنجاز المعاملات لدى الجهات الحكومية", "مدير العمليات والمعاملات الحكومية"],
+    ["مدير العلاقات العامة", "DEPARTMENT", "الشراكات والفعاليات وصورة الشركة", "المدير العام"],
+    ["مدير التسويق والإعلام", "DEPARTMENT", "الحملات والمحتوى ووسائل التواصل", "المدير العام"],
+  ];
+  const ids = new Map<string, string>();
+  for (const [order, [title, level, scope, parent]] of tree.entries()) {
+    const existing = await prisma.position.findUnique({ where: { title } });
+    const p = existing ?? await prisma.position.create({ data: { title, level, scope, order, parentId: parent ? ids.get(parent) ?? null : null } });
+    ids.set(title, p.id);
+  }
+  await prisma.appMeta.create({ data: { key: KEY, value: new Date().toISOString() } });
+  console.log("✔ المناصب القيادية");
 }
 
 // العطلات الرسمية الثابتة بالتاريخ الميلادي (الأعياد هجرية فبتتضاف من الإعدادات كل سنة)

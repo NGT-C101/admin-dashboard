@@ -33,7 +33,7 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
   const [employees, depts, counts, alerts] = await Promise.all([
     db.employee.findMany({
       where: { AND: and }, orderBy: [{ status: "asc" }, { fullName: "asc" }],
-      include: { user: { select: { role: true, active: true, permissions: true } }, manager: { select: { fullName: true } } },
+      include: { user: { select: { role: true, active: true, permissions: true } }, manager: { select: { fullName: true } }, position: { select: { title: true } } },
     }),
     db.employee.findMany({ where: { orgDepartment: { not: null } }, select: { orgDepartment: true }, distinct: ["orgDepartment"] }),
     db.employee.groupBy({ by: ["status"], _count: true }),
@@ -97,6 +97,7 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
                   <div className="font-semibold truncate">{e.fullName}</div>
                   <div className="text-sm text-neutral-600 truncate">{e.jobTitle}</div>
                   {e.orgDepartment && <div className="text-xs text-neutral-500 truncate">{e.orgDepartment}</div>}
+                  {e.position && <div className="mt-1 inline-block rounded-full bg-brand-700 px-2 py-0.5 text-[11px] text-white">{e.position.title}</div>}
                 </div>
                 <Badge className={EMPLOYEE_STATUS_STYLES[e.status]}>{EMPLOYEE_STATUS_LABELS[e.status]}</Badge>
               </div>

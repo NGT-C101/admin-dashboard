@@ -412,6 +412,7 @@ model Employee {
   gosiRegistered     Boolean        @default(false)
   notes              String?
   leaveCarryover     Int            @default(0) // رصيد إجازة سنوية مرحّل (أيام)
+  position           Position? // المنصب القيادي اللي بيشغله
   documents          Document[]
   leaveRequests      LeaveRequest[]
   attendance         Attendance[]
@@ -503,4 +504,26 @@ model Attendance {
 
   @@unique([employeeId, date])
   @@index([date])
+}
+
+// ======================= المناصب القيادية =======================
+
+enum PositionLevel {
+  EXECUTIVE // الإدارة التنفيذية العليا
+  SENIOR // الإدارة الوسطى العليا (المدير الإداري، المالي...)
+  DEPARTMENT // مديرو الأقسام
+}
+
+model Position {
+  id        String        @id @default(cuid())
+  title     String        @unique
+  level     PositionLevel @default(DEPARTMENT)
+  scope     String? // نطاق المسؤولية
+  parent    Position?     @relation("PositionTree", fields: [parentId], references: [id])
+  parentId  String? // المنصب الأعلى (يرفع تقاريره إليه)
+  children  Position[]    @relation("PositionTree")
+  holder    Employee?     @relation(fields: [holderId], references: [id])
+  holderId  String?       @unique // الموظف الذي يشغل المنصب
+  order     Int           @default(0)
+  createdAt DateTime      @default(now())
 }

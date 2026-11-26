@@ -1,6 +1,7 @@
 "use client";
 
 // طلب إجازة أو استئذان (بالساعات)
+import DateField from "@/components/ui/DateField";
 import { useState } from "react";
 import ActionForm from "@/components/ui/ActionForm";
 import { Field, FieldGrid } from "@/components/ui/Field";
@@ -38,12 +39,12 @@ export default function RequestForm({ leaveTypes, employees, today }: {
                   {leaveTypes.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </Field>
-              <Field label="من تاريخ *"><input name="startDate" type="date" required min={employees ? undefined : today} className="input" /></Field>
-              <Field label="إلى تاريخ *"><input name="endDate" type="date" required min={employees ? undefined : today} className="input" /></Field>
+              <Field label="من تاريخ *"><DateField name="startDate" required /></Field>
+              <Field label="إلى تاريخ *"><DateField name="endDate" required /></Field>
             </>
           ) : (
             <>
-              <Field label="التاريخ *"><input name="date" type="date" required defaultValue={today} className="input" /></Field>
+              <Field label="التاريخ *"><DateField name="date" defaultValue={today} required /></Field>
               <Field label="من الساعة *"><input name="startTime" type="time" required className="input" /></Field>
               <Field label="إلى الساعة *"><input name="endTime" type="time" required className="input" /></Field>
             </>

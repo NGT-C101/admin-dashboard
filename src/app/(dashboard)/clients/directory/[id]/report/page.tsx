@@ -1,3 +1,4 @@
+import { MonthField } from "@/components/ui/DateField";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -72,7 +73,7 @@ export default async function ClientReport({ params, searchParams }: {
         <div className="text-sm"><Link href={`/clients/directory/${id}`} className="link">← العودة إلى ملف العميل</Link></div>
         <form className="flex items-end gap-2">
           <label className="text-sm space-y-1"><span className="block text-neutral-600">الشهر</span>
-            <input type="month" name="month" defaultValue={month} className="input w-auto" /></label>
+            <MonthField name="month" defaultValue={month} /></label>
           <button className="btn-secondary">عرض</button>
           <PrintButton />
         </form>

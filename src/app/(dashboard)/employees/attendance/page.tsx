@@ -1,3 +1,4 @@
+import DateField, { MonthField } from "@/components/ui/DateField";
 import Link from "next/link";
 import { FileDown, Trash2 } from "lucide-react";
 import EmployeeAvatar from "@/components/EmployeeAvatar";
@@ -57,7 +58,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={nav(-1)} className="btn-secondary !py-1.5">→ اليوم السابق</Link>
-          <form className="flex gap-2"><input type="date" name="date" defaultValue={dateKey(day)} className="input w-auto" /><button className="btn-secondary !py-1.5">عرض</button></form>
+          <form className="flex gap-2"><DateField name="date" defaultValue={dateKey(day)} /><button className="btn-secondary !py-1.5">عرض</button></form>
           {day < today && <Link href={nav(1)} className="btn-secondary !py-1.5">اليوم التالي ←</Link>}
           <span className="text-sm text-neutral-600 mr-2">{formatDate(day)} · الدوام {data.schedule.start} – {data.schedule.end}</span>
         </div>
@@ -116,7 +117,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-2">
           <form className="flex items-end gap-2"><input type="hidden" name="tab" value="monthly" />
-            <input type="month" name="month" defaultValue={month} className="input w-auto" /><button className="btn-secondary">عرض</button></form>
+            <MonthField name="month" defaultValue={month} /><button className="btn-secondary">عرض</button></form>
           {/* تحميل ملف: لازم رابط عادي مش تنقّل بين الصفحات */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href={`/api/export/attendance?month=${month}`} className="btn-secondary"><FileDown size={16} /> تصدير Excel</a>
@@ -176,8 +177,8 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
           <ActionForm action={addHoliday} submitLabel="إضافة عطلة">
             <FieldGrid>
               <Field label="الاسم"><input name="name" required placeholder="مثال: إجازة عيد الفطر" className="input" /></Field>
-              <Field label="من"><input type="date" name="startDate" required className="input" /></Field>
-              <Field label="إلى"><input type="date" name="endDate" required className="input" /></Field>
+              <Field label="من"><DateField name="startDate" required /></Field>
+              <Field label="إلى"><DateField name="endDate" required /></Field>
             </FieldGrid>
           </ActionForm>
         </section>

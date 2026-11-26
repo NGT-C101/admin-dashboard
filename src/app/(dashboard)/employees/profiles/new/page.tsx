@@ -3,15 +3,17 @@ import LoginFields from "@/components/LoginFields";
 import PageHeader from "@/components/ui/PageHeader";
 import { can, requireSection } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { loadLeaders } from "@/lib/leaders";
 import { PERMISSION_SECTIONS } from "@/lib/permissions";
 import { createEmployee } from "../../actions";
 import { ContactFields, FormSection, IdentityFields, JobFields, PersonalFields, SalaryFields } from "../../fields";
 
 export default async function NewEmployeePage() {
   const user = await requireSection("employees", "EDIT");
-  const managers = await db.employee.findMany({
-    where: { status: { not: "TERMINATED" } }, select: { id: true, fullName: true, jobTitle: true }, orderBy: { fullName: "asc" },
-  });
+  const [managers, leaders] = await Promise.all([
+    db.employee.findMany({ where: { status: { not: "TERMINATED" } }, select: { id: true, fullName: true, jobTitle: true }, orderBy: { fullName: "asc" } }),
+    loadLeaders(),
+  ]);
   return (
     <div className="space-y-6 max-w-5xl">
       <PageHeader title="إضافة موظف" crumbs={[{ label: "سجل الموظفين", href: "/employees/profiles" }, { label: "إضافة موظف" }]} />
@@ -19,7 +21,7 @@ export default async function NewEmployeePage() {
         <FormSection title="البيانات الشخصية"><PersonalFields /></FormSection>
         <FormSection title="الهوية والجواز" hint="تُستخدم للتنبيه قبل انتهاء الإقامة أو الجواز بـ 60 يوماً"><IdentityFields /></FormSection>
         <FormSection title="بيانات التواصل"><ContactFields /></FormSection>
-        <FormSection title="البيانات الوظيفية"><JobFields managers={managers} /></FormSection>
+        <FormSection title="البيانات الوظيفية"><JobFields managers={managers} leaders={leaders} /></FormSection>
         {can(user, "employees", "MANAGE") && (
           <FormSection title="الراتب والحساب البنكي" hint="بيانات سرية لا تظهر إلا لمن لديه صلاحية الإدارة الكاملة على قسم الموظفين"><SalaryFields /></FormSection>
         )}

@@ -1,3 +1,4 @@
+import DateField from "@/components/ui/DateField";
 import type { Contract } from "@prisma/client";
 import ClientCompanyPicker from "@/components/ClientCompanyPicker";
 import { Field, FieldGrid } from "@/components/ui/Field";
@@ -35,10 +36,10 @@ export default function ContractFields({ contract, clients, clientId, companyId 
         <input name="value" inputMode="decimal" dir="ltr" defaultValue={contract?.value?.toString() ?? ""} className="input" />
       </Field>
       <Field label="تاريخ البداية *">
-        <input name="startDate" type="date" required defaultValue={dateInputValue(contract?.startDate ?? new Date())} className="input" />
+        <DateField name="startDate" defaultValue={dateInputValue(contract?.startDate ?? new Date())} required />
       </Field>
       <Field label="تاريخ النهاية (اتركه فارغاً للعقد المفتوح)">
-        <input name="endDate" type="date" defaultValue={dateInputValue(contract?.endDate)} className="input" />
+        <DateField name="endDate" defaultValue={dateInputValue(contract?.endDate)} />
       </Field>
       <label className="flex items-center gap-2 text-sm self-end pb-2">
         <input type="checkbox" name="autoRenew" defaultChecked={contract?.autoRenew} className="size-4 accent-brand-600" />

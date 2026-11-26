@@ -15,6 +15,7 @@ export const SECTIONS: Section[] = [
   {
     slug: "employees", title: "الموظفين", department: "EMPLOYEES", icon: "users",
     subs: [
+      { slug: "management", title: "الإدارة والمناصب القيادية" },
       { slug: "profiles", title: "سجل الموظفين" },
       { slug: "org-chart", title: "الهيكل التنظيمي" },
       { slug: "attendance", title: "الحضور والانصراف" },

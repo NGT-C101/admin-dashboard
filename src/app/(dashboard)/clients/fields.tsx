@@ -1,4 +1,5 @@
 // حقول فورم العميل والشركة (مستخدمة في الإضافة والتعديل)
+import DateField from "@/components/ui/DateField";
 import type { Client, Company } from "@prisma/client";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { CLIENT_SOURCES, CLIENT_STATUS_LABELS, NITAQAT_OPTIONS } from "@/lib/clients";
@@ -105,7 +106,7 @@ export function CompanyFields({ company, clients, clientId }: {
         <input name="crNumber" inputMode="numeric" maxLength={10} dir="ltr" defaultValue={company?.crNumber ?? ""} className="input" />
       </Field>
       <Field label="تاريخ انتهاء السجل">
-        <input name="crExpiry" type="date" defaultValue={dateInputValue(company?.crExpiry)} className="input" />
+        <DateField name="crExpiry" defaultValue={dateInputValue(company?.crExpiry)} />
       </Field>
       <Field label="الرقم الموحد (700)">
         <input name="unifiedNumber" inputMode="numeric" maxLength={10} dir="ltr" defaultValue={company?.unifiedNumber ?? ""} className="input" />

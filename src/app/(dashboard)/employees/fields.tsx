@@ -1,3 +1,4 @@
+import DateField from "@/components/ui/DateField";
 import type { Employee } from "@prisma/client";
 import { Field, FieldGrid } from "@/components/ui/Field";
 import { dateInputValue } from "@/lib/format";
@@ -28,7 +29,7 @@ export function PersonalFields({ e }: { e?: Employee }) {
           {Object.entries(GENDER_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </Field>
-      <Field label="تاريخ الميلاد"><input name="birthDate" type="date" defaultValue={dateInputValue(e?.birthDate)} className="input" /></Field>
+      <Field label="تاريخ الميلاد"><DateField name="birthDate" defaultValue={dateInputValue(e?.birthDate)} /></Field>
       <Field label="الحالة الاجتماعية">
         <select name="maritalStatus" defaultValue={e?.maritalStatus ?? ""} className="input">
           <option value="">—</option>
@@ -46,10 +47,10 @@ export function IdentityFields({ e }: { e?: Employee }) {
       <Field label="رقم الهوية / الإقامة">
         <input name="nationalId" inputMode="numeric" maxLength={10} dir="ltr" defaultValue={e?.nationalId ?? ""} className="input" />
       </Field>
-      <Field label="تاريخ انتهاء الهوية / الإقامة"><input name="idExpiry" type="date" defaultValue={dateInputValue(e?.idExpiry)} className="input" /></Field>
+      <Field label="تاريخ انتهاء الهوية / الإقامة"><DateField name="idExpiry" defaultValue={dateInputValue(e?.idExpiry)} /></Field>
       <span className="hidden lg:block" />
       <Field label="رقم جواز السفر"><input name="passportNumber" dir="ltr" defaultValue={e?.passportNumber ?? ""} className="input" /></Field>
-      <Field label="تاريخ انتهاء الجواز"><input name="passportExpiry" type="date" defaultValue={dateInputValue(e?.passportExpiry)} className="input" /></Field>
+      <Field label="تاريخ انتهاء الجواز"><DateField name="passportExpiry" defaultValue={dateInputValue(e?.passportExpiry)} /></Field>
     </FieldGrid>
   );
 }
@@ -68,7 +69,14 @@ export function ContactFields({ e }: { e?: Employee }) {
   );
 }
 
-export function JobFields({ e, managers }: { e?: Employee; managers: { id: string; fullName: string; jobTitle: string }[] }) {
+export type Leader = { title: string; holder: { id: string; fullName: string } | null };
+
+export function JobFields({ e, managers, leaders = [] }: {
+  e?: Employee;
+  managers: { id: string; fullName: string; jobTitle: string }[];
+  leaders?: Leader[]; // المناصب القيادية بالترتيب
+}) {
+  const leaderIds = new Set(leaders.map((l) => l.holder?.id).filter(Boolean));
   return (
     <FieldGrid>
       <Field label="المسمى الوظيفي *"><input name="jobTitle" required defaultValue={e?.jobTitle} placeholder="مثال: أخصائي معاملات حكومية" className="input" /></Field>
@@ -79,7 +87,18 @@ export function JobFields({ e, managers }: { e?: Employee; managers: { id: strin
       <Field label="المدير المباشر">
         <select name="managerId" defaultValue={e?.managerId ?? ""} className="input">
           <option value="">—</option>
-          {managers.filter((m) => m.id !== e?.id).map((m) => <option key={m.id} value={m.id}>{m.fullName} — {m.jobTitle}</option>)}
+          {leaders.length > 0 && (
+            <optgroup label="الإدارة والمناصب القيادية">
+              {leaders.map((l) => (
+                <option key={l.title} value={l.holder?.id ?? ""} disabled={!l.holder || l.holder.id === e?.id}>
+                  {l.title} — {l.holder ? l.holder.fullName : "شاغر"}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label="الموظفون">
+            {managers.filter((m) => m.id !== e?.id && !leaderIds.has(m.id)).map((m) => <option key={m.id} value={m.id}>{m.fullName} — {m.jobTitle}</option>)}
+          </optgroup>
         </select>
       </Field>
       <Field label="نوع التعاقد">
@@ -87,9 +106,9 @@ export function JobFields({ e, managers }: { e?: Employee; managers: { id: strin
           {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </Field>
-      <Field label="تاريخ الالتحاق *"><input name="hireDate" type="date" required defaultValue={dateInputValue(e?.hireDate ?? new Date())} className="input" /></Field>
-      <Field label="نهاية فترة التجربة"><input name="probationEnd" type="date" defaultValue={dateInputValue(e?.probationEnd)} className="input" /></Field>
-      <Field label="تاريخ انتهاء العقد"><input name="contractEnd" type="date" defaultValue={dateInputValue(e?.contractEnd)} className="input" /></Field>
+      <Field label="تاريخ الالتحاق *"><DateField name="hireDate" defaultValue={dateInputValue(e?.hireDate ?? new Date())} required /></Field>
+      <Field label="نهاية فترة التجربة"><DateField name="probationEnd" defaultValue={dateInputValue(e?.probationEnd)} /></Field>
+      <Field label="تاريخ انتهاء العقد"><DateField name="contractEnd" defaultValue={dateInputValue(e?.contractEnd)} /></Field>
       <Field label="مقر العمل"><input name="workLocation" defaultValue={e?.workLocation ?? ""} placeholder="مثال: المقر الرئيسي — الرياض" className="input" /></Field>
       <Field label="ملاحظات" wide><textarea name="notes" rows={2} defaultValue={e?.notes ?? ""} className="input" /></Field>
     </FieldGrid>

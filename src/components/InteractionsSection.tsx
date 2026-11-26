@@ -1,3 +1,4 @@
+import DateField from "@/components/ui/DateField";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { Building2, CalendarClock, Check, Mail, MapPin, MessageCircle, Phone, Trash2, Users } from "lucide-react";
@@ -55,13 +56,13 @@ export function InteractionForm({ clients, clientId, companies, users }: {
           </select>
         </Field>
         <Field label="التاريخ والوقت">
-          <input name="occurredAt" type="datetime-local" defaultValue={localNow()} className="input" />
+          <DateField name="occurredAt" withTime defaultValue={localNow()} />
         </Field>
         <Field label="الملخص *" wide>
           <textarea name="summary" required rows={2} placeholder="ملخص ما تمت مناقشته وما تم الاتفاق عليه" className="input" />
         </Field>
         <Field label="موعد المتابعة (اختياري)">
-          <input name="followUpAt" type="datetime-local" className="input" />
+          <DateField name="followUpAt" withTime />
         </Field>
         <Field label="مسؤول المتابعة">
           <select name="assigneeId" defaultValue="" className="input">

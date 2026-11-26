@@ -1,3 +1,4 @@
+import DateField from "@/components/ui/DateField";
 import type { Transaction } from "@prisma/client";
 import ServicePicker from "@/components/ServicePicker";
 import { Field, FieldGrid } from "@/components/ui/Field";
@@ -58,7 +59,7 @@ export default function TransactionFields({ tx, options, companyId }: {
         <input name="govFees" inputMode="decimal" dir="ltr" defaultValue={tx?.govFees?.toString() ?? ""} className="input" />
       </Field>
       <Field label="الموعد المستهدف للإنجاز">
-        <input name="dueDate" type="date" defaultValue={dateInputValue(tx?.dueDate)} className="input" />
+        <DateField name="dueDate" defaultValue={dateInputValue(tx?.dueDate)} />
       </Field>
       <Field label="التفاصيل" wide>
         <textarea name="description" rows={3} defaultValue={tx?.description ?? ""} className="input" />
